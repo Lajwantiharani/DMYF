@@ -8,6 +8,6 @@ const router = express.Router();
 
 //routes
 
-router.post("create-inventory", authMiddleware, createInventoryController);
+router.post('/create-inventory', authMiddleware, createInventoryController);
 
 module.exports = router;

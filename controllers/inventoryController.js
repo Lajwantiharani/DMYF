@@ -32,7 +32,7 @@ const createInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in create inventory API",
-      error: error.message, // Send the error message for debugging
+      error // Send the error message for debugging
     });
   }
 };
