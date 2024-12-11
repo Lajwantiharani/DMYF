@@ -10,7 +10,7 @@ import ProtectedRoute from './components/Routes/ProtectedRoute';
 
 function App() {
   return (
-    <div>
+    <div className="App">
       <ToastContainer />
       <Routes>
         <Route path='/' element={
@@ -21,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login/>} />
         <Route path="/register" element={<Register/>} />
       </Routes>
-    </div> 
+    </div>
   );
 }
 

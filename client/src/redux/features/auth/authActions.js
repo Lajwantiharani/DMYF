@@ -3,7 +3,7 @@ import API from "../../../services/API";
 import { toast } from "react-toastify";
 
 export const userLogin = createAsyncThunk(
-  "auth/login",
+  'auth/login',
   async ({ role, email, password }, { rejectWithValue }) => {
     try {
       const { data } = await API.post("/auth/login", { role, email, password });
@@ -26,14 +26,16 @@ export const userLogin = createAsyncThunk(
 
 //register
 export const userRegister = createAsyncThunk(
-  "auth/register",
+  'auth/register',
   async (
     {
       name,
       role,
       email,
       password,
-      organizationName,
+      phone,
+      organisationName,
+      address,
       hospitalName,
       website,
       address,
@@ -42,21 +44,21 @@ export const userRegister = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const { data } = await API.post   ("/auth/register", {
+      const { data } = await API.post("/auth/register", {
         name,
         role,
         email,
         password,
-        organizationName,
+        phone,
+        organisationName,
+        address,
         hospitalName,
         website,
-        address,
-        phone
       });
       if (data?.success) {
         alert("User Registerd Successfully");
         window.location.replace("/login");
-        // toast.success("User Registerd Successfully");
+        toast.success("User Registerd Successfully");
       }
     } catch (error) {
       console.log(error);
@@ -71,11 +73,11 @@ export const userRegister = createAsyncThunk(
 
 //current user
 export const getCurrentUser = createAsyncThunk(
-  "auth/getCurrentUser",
+  'auth/getCurrentUser',
   async ({ rejectWithValue }) => {
     try {
-      const res = await API.get("/auth/current-user");
-      if (res.data) {
+      const res = await API.get('/auth/current-user');
+      if (res?.data) {
         return res?.data;
       }
     } catch (error) {
