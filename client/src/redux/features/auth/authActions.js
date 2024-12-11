@@ -33,30 +33,30 @@ export const userRegister = createAsyncThunk(
       role,
       email,
       password,
-      phone,
-      organisationName,
-      address,
+      organizationName,
       hospitalName,
       website,
+      address,
+      phone
     },
     { rejectWithValue }
   ) => {
     try {
-      const { data } = await API.post("/auth/register", {
+      const { data } = await API.post   ("/auth/register", {
         name,
         role,
         email,
         password,
-        phone,
-        organisationName,
-        address,
+        organizationName,
         hospitalName,
         website,
+        address,
+        phone
       });
       if (data?.success) {
         alert("User Registerd Successfully");
         window.location.replace("/login");
-        toast.success("User Registerd Successfully");
+        // toast.success("User Registerd Successfully");
       }
     } catch (error) {
       console.log(error);

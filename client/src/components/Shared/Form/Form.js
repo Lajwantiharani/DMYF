@@ -9,7 +9,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
   const [name, setName] = useState("");
-  const [organization, setOrganization] = useState("");
+  const [organizationName, setOrganization] = useState("");
   const [hospitalName, setHospitalName] = useState("");
   const [website, setWebsite] = useState("");
   const [address, setAddress] = useState("");
@@ -28,7 +28,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               role,
               email,
               password,
-              organization,
+              organizationName,
               hospitalName,
               website,
               address,
@@ -150,7 +150,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 labelFor={"forOrganization"}
                 inputType={"text"}
                 name={"organization"}
-                value={organization}
+                value={organizationName}
                 onChange={(e) => setOrganization(e.target.value)}
               />
             )}

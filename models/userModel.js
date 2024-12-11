@@ -52,7 +52,8 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, "phone number  is required"],
+      required: [false, "phone number  is required"],
+      //not working for true
     },
   },
   { timestamps: true }

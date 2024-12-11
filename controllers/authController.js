@@ -98,6 +98,6 @@ const currentUserController = async (req, res) => {
       error,
     });
   }
-};  
+};
 
 module.exports = { registerController, loginController, currentUserController };
