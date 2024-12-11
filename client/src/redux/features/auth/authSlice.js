@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getCurrentUser, userLogin, userRegister } from "./authActions";
 
-const token = localStorage.getItem('token')
-  ? localStorage.getItem('token')
+const token = localStorage.getItem("token")
+  ? localStorage.getItem("token")
   : null;
 
 const initialState = {
@@ -17,7 +17,11 @@ const authSlice = createSlice({
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
+<<<<<<< Updated upstream
     // login user
+=======
+    // Login User
+>>>>>>> Stashed changes
     builder.addCase(userLogin.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -31,8 +35,8 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = payload;
     });
-    
-    // REGISTER user
+
+    // Register User
     builder.addCase(userRegister.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -46,8 +50,7 @@ const authSlice = createSlice({
       state.error = payload;
     });
 
-
-    // CURRENT user
+    // Get Current User
     builder.addCase(getCurrentUser.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -63,4 +66,4 @@ const authSlice = createSlice({
   },
 });
 
-export default authSlice;
+export default authSlice.reducer;

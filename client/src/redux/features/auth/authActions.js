@@ -2,16 +2,16 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../services/API";
 import { toast } from "react-toastify";
 
+// User Login
 export const userLogin = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async ({ role, email, password }, { rejectWithValue }) => {
     try {
       const { data } = await API.post("/auth/login", { role, email, password });
-      //store token
       if (data.success) {
-        alert(data.message);
+        toast.success(data.message);
         localStorage.setItem("token", data.token);
-        window.location.replace("/");
+        window.location.replace("/"); // Or use navigate from react-router-dom
       }
       return data;
     } catch (error) {
@@ -24,9 +24,9 @@ export const userLogin = createAsyncThunk(
   }
 );
 
-//register
+// User Registration
 export const userRegister = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (
     {
       name,
@@ -34,7 +34,11 @@ export const userRegister = createAsyncThunk(
       email,
       password,
       phone,
+<<<<<<< Updated upstream
       organisationName,
+=======
+      organization,
+>>>>>>> Stashed changes
       address,
       hospitalName,
       website,
@@ -56,9 +60,14 @@ export const userRegister = createAsyncThunk(
         website,
       });
       if (data?.success) {
+<<<<<<< Updated upstream
         alert("User Registerd Successfully");
         window.location.replace("/login");
         toast.success("User Registerd Successfully");
+=======
+        toast.success("User Registered Successfully");
+        window.location.replace("/login");
+>>>>>>> Stashed changes
       }
     } catch (error) {
       console.log(error);
@@ -71,15 +80,13 @@ export const userRegister = createAsyncThunk(
   }
 );
 
-//current user
+// Get Current User
 export const getCurrentUser = createAsyncThunk(
-  'auth/getCurrentUser',
-  async ({ rejectWithValue }) => {
+  "auth/getCurrentUser",
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get('/auth/current-user');
-      if (res?.data) {
-        return res?.data;
-      }
+      const res = await API.get("/auth/current-user");
+      return res?.data;
     } catch (error) {
       console.log(error);
       if (error.response && error.response.data.message) {
