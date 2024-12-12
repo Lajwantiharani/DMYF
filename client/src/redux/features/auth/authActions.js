@@ -33,17 +33,11 @@ export const userRegister = createAsyncThunk(
       role,
       email,
       password,
-      phone,
-<<<<<<< Updated upstream
-      organisationName,
-=======
-      organization,
->>>>>>> Stashed changes
-      address,
+      organizationName,
       hospitalName,
       website,
       address,
-      phone
+      phone,
     },
     { rejectWithValue }
   ) => {
@@ -53,21 +47,16 @@ export const userRegister = createAsyncThunk(
         role,
         email,
         password,
-        phone,
-        organisationName,
-        address,
+        organizationName,
         hospitalName,
         website,
+        address,
+        phone,
       });
       if (data?.success) {
-<<<<<<< Updated upstream
         alert("User Registerd Successfully");
         window.location.replace("/login");
         toast.success("User Registerd Successfully");
-=======
-        toast.success("User Registered Successfully");
-        window.location.replace("/login");
->>>>>>> Stashed changes
       }
     } catch (error) {
       console.log(error);

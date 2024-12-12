@@ -44,4 +44,4 @@ export const handleRegister = (
   } catch (error) {
     console.log(error);
   }
-};  
+}; 

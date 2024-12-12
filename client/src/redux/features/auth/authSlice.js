@@ -17,11 +17,7 @@ const authSlice = createSlice({
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
-<<<<<<< Updated upstream
     // login user
-=======
-    // Login User
->>>>>>> Stashed changes
     builder.addCase(userLogin.pending, (state) => {
       state.loading = true;
       state.error = null;
