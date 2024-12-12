@@ -33,9 +33,7 @@ export const userRegister = createAsyncThunk(
       role,
       email,
       password,
-      phone,
-      organisationName,
-      address,
+      organizationName,
       hospitalName,
       website,
       address,
@@ -49,11 +47,11 @@ export const userRegister = createAsyncThunk(
         role,
         email,
         password,
-        phone,
-        organisationName,
-        address,
+        organizationName,
         hospitalName,
         website,
+        address,
+        phone
       });
       if (data?.success) {
         alert("User Registerd Successfully");
