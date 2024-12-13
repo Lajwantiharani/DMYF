@@ -6,7 +6,7 @@ const token = localStorage.getItem("token")
   : null;
 
 const initialState = {
-  loading: true,
+  loading: false,
   user: null,
   token,
   error: null,
