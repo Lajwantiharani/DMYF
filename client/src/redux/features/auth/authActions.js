@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../services/API";
-import { toast } from "react-toastify";
+//import { toast } from "react-toastify";
 
 // User Login
 export const userLogin = createAsyncThunk(
@@ -9,7 +9,7 @@ export const userLogin = createAsyncThunk(
     try {
       const { data } = await API.post("/auth/login", { role, email, password });
       if (data.success) {
-        toast.success(data.message);
+      alert(data.message);
         localStorage.setItem("token", data.token);
         window.location.replace("/"); // Or use navigate from react-router-dom
       }
@@ -37,7 +37,7 @@ export const userRegister = createAsyncThunk(
       hospitalName,
       website,
       address,
-      phone
+      phone,
     },
     { rejectWithValue }
   ) => {
@@ -54,14 +54,9 @@ export const userRegister = createAsyncThunk(
         phone
       });
       if (data?.success) {
-<<<<<<< Updated upstream
         alert("User Registerd Successfully");
         window.location.replace("/login");
-        toast.success("User Registerd Successfully");
-=======
-        toast.success("User Registered Successfully");
-        window.location.replace("/login");
->>>>>>> Stashed changes
+       // toast.success("User Registerd Successfully");
       }
     } catch (error) {
       console.log(error);
