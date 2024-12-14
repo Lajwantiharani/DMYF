@@ -5,7 +5,7 @@
 }
 /* 
 ========
-=====form========
+=====  form  ========
 ========== */
 
 .form-banner img {
@@ -21,7 +21,7 @@
 }
 
 /* loader */
-
+/* 
 .loader-container {
   display: flex;
   align-items: center;
@@ -46,4 +46,18 @@
   100% {
     transform: rotate(360deg);
   }
+} */
+
+/* ======================
+--------- navbar 
+=================== */
+
+.navbar {
+  background-color: black !important;
+  color: white !important;
+}
+.nav-link,
+.navbar-brand {
+  background-color: black !important;
+  color: white !important;
 }
