@@ -1,17 +1,17 @@
 export const userMenu = [
     {
         name: 'Inventory',
-        path: '/',
+        path: "/",
         icon: 'fa-solid fa-warehouse'
     },
     {
         name: 'Donor',
-        path: '/donar',
+        path: "/donar",
         icon: 'fa-solid fa-hand-holding-dollar'
     },
     {
         name: 'Hospital',
-        path: '/hospital',
+        path: "/hospital",
         icon: 'fa-solid fa-hospital'
     }
 ]

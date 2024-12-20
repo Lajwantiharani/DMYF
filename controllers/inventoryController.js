@@ -3,18 +3,20 @@ const userModel = require("../models/userModel");
 
 const createInventoryController = async (req, res) => {
   try {
-    const { email, inventoryType } = req.body;
+    const { email,inventoryType} = req.body;
 
     // Check if the user exists
     const user = await userModel.findOne({ email });
+   
+
     if (!user) {
       throw new Error("User not found");
     }
 
     // Check if the user role is valid for the inventory type
-    if (inventoryType === "in" && user.role !== "donor") {
-      throw new Error("Not a donor account");
-    }
+    // if (inventoryType === "in" && user.role !== "donor") {
+    //   throw new Error("Not a donor account");
+    // }
     if (inventoryType === "out" && user.role !== "hospital") {
       throw new Error("Not a hospital account");
     }

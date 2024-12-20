@@ -1,10 +1,10 @@
 import React from 'react';
 import { BiDonateBlood, BiUserCircle } from "react-icons/bi";
 import { useNavigate } from 'react-router-dom';
-// import {useSelector} from 'react-redux';
+ //import {useSelector} from 'react-redux';
 
 const Header = () => {
-  // const {user} = useSelector(state => state.auth);
+ //  const {user} = useSelector(state => state.auth);
   const navigate = useNavigate(); 
 
   // Logout handler
@@ -24,9 +24,9 @@ const Header = () => {
           <ul className='navbar-nav flex-row'>
             <li className='nav-item mx-3'>
               <p className='nav-link'><BiUserCircle /> Welcome </p>
-
-                {/* This is not working because of the same reason as loading */}
-              {/* <p className='nav-link'><BiUserCircle /> Welcome 
+{/* 
+                This is not working because of the same reason as loading *
+              <p className='nav-link'><BiUserCircle /> Welcome 
                 {user?.name || user?.hospitalName || user?.organisationName}
                 &nbsp;
                 <span className="badge bg-secondary">{user?.role}</span>
