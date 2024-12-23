@@ -31,8 +31,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = payload;
     });
-
-    // Register User
+    // REGISTER user
     builder.addCase(userRegister.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -45,8 +44,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = payload;
     });
-
-    // Get Current User
+    // CURRENT user
     builder.addCase(getCurrentUser.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -62,4 +60,4 @@ const authSlice = createSlice({
   },
 });
 
-export default authSlice.reducer;
+export default authSlice;

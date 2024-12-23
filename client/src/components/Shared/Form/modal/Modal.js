@@ -44,6 +44,7 @@ const Modal = () => {
 
         }
   } catch (error) {
+    alert(error.response.data.message);
     window.location.reload();
        console.log(error);
     }
@@ -107,7 +108,9 @@ const Modal = () => {
                 aria-label="Default select example"
                 onChange={(e) => setBloodGroup(e.target.value)}
               >
-                <option selected>Open this select menu</option>
+                <option defaultValue={"Open this select menu"}>
+                  Open this select menu
+                </option>
                 <option value={"O-"}>O-</option>
                 <option value={"O+"}>O+</option>
                 <option value={"AB+"}>AB+</option>
@@ -145,7 +148,7 @@ const Modal = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                 onClick={handleModalSubmit}
+                onClick={handleModalSubmit}
               >
                 Submit
               </button>
