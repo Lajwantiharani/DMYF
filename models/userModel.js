@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
         return false;
       },
     },
-    organization: {
+    organizationName: {
       type: String,
       required: function () {
         if (this.role === "organization") {

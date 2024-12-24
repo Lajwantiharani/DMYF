@@ -4,7 +4,7 @@ const userModel = require("../models/userModel");
 
 const createInventoryController = async (req, res) => {
   try {
-    const { email, inventoryType } = req.body;
+    const { email } = req.body;
 
     // Check if the user exists
     const user = await userModel.findOne({ email });
@@ -67,6 +67,8 @@ const createInventoryController = async (req, res) => {
       }
 
       req.body.hospital = user?._id;
+    } else {
+      req.body.donor = user?._id;
     }
 
     // Save the inventory record
@@ -112,4 +114,31 @@ const getInventoryController = async (req, res) => {
   }
 };
 
-module.exports = { createInventoryController, getInventoryController };
+//GET DONOR RECORD
+const getDonorsController = async (req, res) => {
+  try {
+    const organization = req.body.userId;
+    //find donor
+    const donorId = await InventoryModel.distinct("donor", { organization });
+    //console.log(donorId);
+    const donors = await userModel.find({ _id: { $in: donorId } });
+    return res.status(200).send({
+      success: true,
+      message: "Get donors successfully",
+      donors,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in get donors irecords ",
+      error,
+    });
+  }
+};
+
+module.exports = {
+  createInventoryController,
+  getInventoryController,
+  getDonorsController,
+};
