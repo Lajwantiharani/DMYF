@@ -5,23 +5,30 @@ const {
   getInventoryController,
   getDonorsController,
   getHospitalController,
+  getOrgnaizationController,
+  getOrgnaisationForHospitalController,
 } = require("../controllers/inventoryController");
 
 const router = express.Router();
 
 //routes
-//add inventory || POST 
-router.post('/create-inventory', authMiddleware, createInventoryController);
-
-
-
+//add inventory || POST
+router.post("/create-inventory", authMiddleware, createInventoryController);
 
 //get ALL BLOOD DONORS
 
-router.get('/get-inventory',authMiddleware,getInventoryController);
+router.get("/get-inventory", authMiddleware, getInventoryController);
 //get donor records
 router.get("/get-donors", authMiddleware, getDonorsController);
 //get hospital  records
 router.get("/get-hospitals", authMiddleware, getHospitalController);
+//get organization  records
+router.get("/get-organization", authMiddleware, getOrgnaizationController);
 
+//get organization  records
+router.get(
+  "/get-organization-for-hospital",
+  authMiddleware,
+  getOrgnaisationForHospitalController
+);
 module.exports = router;

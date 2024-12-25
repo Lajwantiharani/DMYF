@@ -162,11 +162,57 @@ const getHospitalController = async (req, res) => {
     });
   }
 };
-
+const getOrgnaizationController = async (req, res) => {
+  try {
+    const donor = req.body.userId;
+    const orgId = await InventoryModel.distinct("organization", { donor });
+    //find org
+    const organizations = await userModel.find({
+      _id: { $in: orgId },
+    });
+    return res.status(200).send({
+      success: true,
+      message: "Org Data Fetched Successfully",
+      organizations,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error In ORG API",
+      error,
+    });
+  }
+};
+// GET ORG for Hospital
+const getOrgnaisationForHospitalController = async (req, res) => {
+  try {
+    const hospital = req.body.userId;
+    const orgId = await inventoryModel.distinct("organization", { hospital });
+    //find org
+    const organizations = await userModel.find({
+      _id: { $in: orgId },
+    });
+    return res.status(200).send({
+      success: true,
+      message: "Hospital Org Data Fetched Successfully",
+      organizations,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error In Hospital ORG API",
+      error,
+    });
+  }
+};
 
 module.exports = {
   createInventoryController,
   getInventoryController,
   getDonorsController,
   getHospitalController,
+  getOrgnaizationController,
+  getOrgnaisationForHospitalController,
 };

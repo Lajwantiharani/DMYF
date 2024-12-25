@@ -8,12 +8,21 @@ import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
 import Donor from "./pages/Dashboard/Donor";
 import Hospital from "./pages/Dashboard/Hospital";
+import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 
 function App() {
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
+        <Route
+          path="/organization"
+          element={
+            <ProtectedRoute>
+              <OrganizationPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/hospital"
           element={
