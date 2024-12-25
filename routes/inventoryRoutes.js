@@ -7,6 +7,7 @@ const {
   getHospitalController,
   getOrgnaizationController,
   getOrgnaisationForHospitalController,
+  getInventoryHospitalController,
 } = require("../controllers/inventoryController");
 
 const router = express.Router();
@@ -18,6 +19,14 @@ router.post("/create-inventory", authMiddleware, createInventoryController);
 //get ALL BLOOD DONORS
 
 router.get("/get-inventory", authMiddleware, getInventoryController);
+
+//get hospital  BLOOD DONORS
+
+router.post(
+  "/get-inventory-hospital",
+  authMiddleware,
+  getInventoryHospitalController
+);
 //get donor records
 router.get("/get-donors", authMiddleware, getDonorsController);
 //get hospital  records

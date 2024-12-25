@@ -9,12 +9,30 @@ import ProtectedRoute from "./components/Routes/ProtectedRoute";
 import Donor from "./pages/Dashboard/Donor";
 import Hospital from "./pages/Dashboard/Hospital";
 import OrganizationPage from "./pages/Dashboard/OrganizationPage";
+import Consumer from "./pages/Dashboard/Consumer";
+import Donation from "./pages/Dashboard/Donation";
 
 function App() {
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
+        <Route
+          path="/consumer"
+          element={
+            <ProtectedRoute>
+              <Consumer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/donation"
+          element={
+            <ProtectedRoute>
+              <Donation />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/organization"
           element={
