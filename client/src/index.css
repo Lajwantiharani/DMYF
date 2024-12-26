@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+ 
 }
 /* 
 ========
@@ -21,7 +22,7 @@
 }
 
 /* loader */
-/* 
+
 .loader-container {
   display: flex;
   align-items: center;
@@ -46,7 +47,7 @@
   100% {
     transform: rotate(360deg);
   }
-} */
+}
 
 /* ======================
 --------- navbar 

@@ -11,12 +11,57 @@ import Hospital from "./pages/Dashboard/Hospital";
 import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 import Consumer from "./pages/Dashboard/Consumer";
 import Donation from "./pages/Dashboard/Donation";
+import Analytics from "./pages/Dashboard/Analytics";
+import DonorList from "./pages/Admin/DonorList";
+import HospitalList from "./pages/Admin/HospitalList";
+import OrgList from "./pages/Admin/OrgList";
+import AdminHome from "./pages/Admin/AdminHome";
 
 function App() {
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/donor-list"
+          element={
+            <ProtectedRoute>
+              <DonorList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hospital-list"
+          element={
+            <ProtectedRoute>
+              <HospitalList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/org-list"
+          element={
+            <ProtectedRoute>
+              <OrgList />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/consumer"
           element={
