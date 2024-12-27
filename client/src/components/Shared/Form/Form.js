@@ -92,6 +92,19 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               Organization
             </label>
           </div>
+          <div className="form-check ms-2">
+            <input
+              type="radio"
+              className="form-check-input"
+              name="role"
+              id="receiverRadio"
+              value={"receiver"}
+              onChange={(e) => setRole(e.target.value)}
+            />
+            <label htmlFor="receiverRadio" className="form-check-label">
+              Receiver
+            </label>
+          </div>
         </div>
         {/* Conditional rendering based on formType */}
         {formType === "login" && (
@@ -164,6 +177,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setHospitalName(e.target.value)}
               />
             )}
+            
 
             <InputType
               labelText={"Website"}
