@@ -54,6 +54,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
           path="/org-list"
           element={

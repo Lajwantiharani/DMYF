@@ -33,7 +33,8 @@ const location = useLocation();
             {location.pathname === "/" ||
             location.pathname === "/donor" ||
             location.pathname === "/hospital" ||
-            location.pathname === "/admin" ? (
+            location.pathname === "/admin" ||
+            location.pathname === "/receiver" ? (
               <li className="nav-item mx-3">
                 <Link to="/analytics" className="nav-link">
                   Analytics
