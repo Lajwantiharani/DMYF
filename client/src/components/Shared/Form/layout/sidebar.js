@@ -51,6 +51,14 @@ const Sidebar = () => {
               </div>
               <div
                 className={`menu-item ${
+                  location.pathname === "/receiver-list" && "active"
+                }`}
+              >
+                <i className="fa-solid fa-warehouse"></i>
+                <Link to="/receiver-list">Receiver List</Link>
+              </div>
+              <div
+                className={`menu-item ${
                   location.pathname === "/hospital-list" && "active"
                 }`}
               >

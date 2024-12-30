@@ -4,7 +4,7 @@ import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
 const HospitalList = () => {
   const [data, setData] = useState([]);
-  //find donar records
+  //find donor records
   const getDonors = async () => {
     try {
       const { data } = await API.get("/admin/hospital-list");

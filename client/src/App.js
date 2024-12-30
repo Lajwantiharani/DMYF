@@ -16,6 +16,7 @@ import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
+import ReceiverList from "./pages/Admin/ReceiverLIst";
 
 function App() {
   return (
@@ -27,6 +28,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receiver-list"
+          element={
+            <ProtectedRoute>
+              <ReceiverList />
             </ProtectedRoute>
           }
         />
@@ -46,6 +55,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/hospital-list"
           element={
@@ -54,7 +64,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/org-list"
           element={

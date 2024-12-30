@@ -39,6 +39,7 @@ const OrgList = () => {
 
   return (
     <Layout>
+      <h2 className="text-center">Organization Records</h2>
       <table className="table ">
         <thead>
           <tr>

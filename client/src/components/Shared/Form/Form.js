@@ -146,7 +146,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {(role === "admin" || role === "donor") && (
+            {(role === "admin" || role === "donor" || role === "receiver") && (
               <InputType
                 labelText={"Name"}
                 labelFor={"forName"}
@@ -177,7 +177,6 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setHospitalName(e.target.value)}
               />
             )}
-            
 
             <InputType
               labelText={"Website"}

@@ -85,10 +85,64 @@ const deleteDonorController = async (req, res) => {
   }
 };
 
+
+
+
+const getReceiverListController = async (req, res) => {
+  try {
+    const receiverData = await userModel
+      .find({ role: "receiver" })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).send({
+      success: true,
+      TotalCount: receiverData.length,
+      message: "Receiver List Fetched Successfully",
+      receiverData,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error In Receiver List API",
+      error,
+    });
+  }
+};
+
+// ADD RECEIVER RECORD
+const addReceiverController = async (req, res) => {
+  try {
+    const { name, email, phone, address, bloodGroup } = req.body;
+    const newReceiver = new userModel({
+      name,
+      email,
+      phone,
+      address,
+      bloodGroup,
+      role: "receiver",
+    });
+    await newReceiver.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Receiver Record Added Successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error Adding Receiver Record",
+      error,
+    });
+  }
+};
 //EXPORT
 module.exports = {
   getDonorsListController,
   getHospitalListController,
   getOrgListController,
   deleteDonorController,
+  getReceiverListController,
+  addReceiverController,
 };

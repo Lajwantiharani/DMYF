@@ -41,7 +41,7 @@ const loginController = async (req, res) => {
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "Invalid Credentials",
+        message: "User not Registered!",
       });
     }
     //check role
