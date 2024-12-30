@@ -33,7 +33,8 @@ const navigate = useNavigate()
 
   return (
     <Layout>
-      {user?.role === 'admin' && navigate("/admin")}
+      {(user?.role === "admin" && navigate("/admin")) &&
+        (user?.role === "receiver" && navigate("/receiver"))}
       {/* Error Message */}
       {error && <span>{alert(error)}</span>}
       {fetchError && <div className="alert alert-danger">{fetchError}</div>}

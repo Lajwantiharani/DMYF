@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -16,9 +16,15 @@ import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-import ReceiverList from "./pages/Admin/ReceiverLIst";
+
+
+import ReceiverList from "./pages/Admin/ReceiverList";
+import Receiver from "./pages/Admin/Receiver";
+
+
 
 function App() {
+  
   return (
     <div className="App">
       <ToastContainer />
@@ -44,6 +50,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receiver"
+          element={
+            <ProtectedRoute>
+              <Receiver />
             </ProtectedRoute>
           }
         />

@@ -113,8 +113,17 @@ const Sidebar = () => {
               </div>
             </>
           )}
+             {user?.role === "receiver" && (
+            
+              <div
+                className={`menu-item ${location.pathname === "/" && "active"}`}
+              >
+                <i className="fa-solid fa-warehouse"></i>
+                <Link to="/">Inventory</Link>
+              </div>
+)}
 
-          {/* {userMenu.map((menu) => {
+          {/* {/* /* {userMenu.map((menu) => {
             const isActive = location.pathname === menu.path;
             return (
               <div
@@ -125,7 +134,7 @@ const Sidebar = () => {
                 <Link to={menu.path}>{menu.name}</Link>
               </div>
             );
-          })} */}
+          })} */ } 
         </div>
       </div>
     </div>

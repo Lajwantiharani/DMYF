@@ -1,6 +1,13 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
-const { getDonorsListController, getHospitalListController, getOrgListController, deleteDonorController, addReceiverController, getReceiverListController } = require("../controllers/adminController");
+const {
+  getDonorsListController,
+  getHospitalListController,
+  getOrgListController,
+  deleteDonorController,
+  addReceiverController,
+  getReceiverListController,
+} = require("../controllers/adminController");
 const adminMiddleware = require("../middlewares/adminMiddleware");
 const { getHospitalController } = require("../controllers/inventoryController");
 //router object
@@ -23,13 +30,13 @@ router.get(
   getHospitalListController
 );
 
-router.get(
-  "/org-list",
+router.get("/org-list", authMiddleware, adminMiddleware, getOrgListController);
+router.delete(
+  "/delete-donor/:id",
   authMiddleware,
   adminMiddleware,
-  getOrgListController
+  deleteDonorController
 );
-router.delete('/delete-donor/:id', authMiddleware, adminMiddleware, deleteDonorController);
 
 router.get(
   "/receiver-list",
