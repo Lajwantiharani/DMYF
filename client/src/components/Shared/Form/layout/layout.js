@@ -2,8 +2,6 @@ import React from 'react';
 import header from './header'; 
 import Sidebar from './sidebar';
 
-
-
 const Layout = ({ children }) => {
   const Header = header; 
 
