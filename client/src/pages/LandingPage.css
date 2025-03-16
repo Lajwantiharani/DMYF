@@ -1,0 +1,341 @@
+/***** Navbar  ******/
+
+/* Navbar styles */
+.navbar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center; /* Center the logo */
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ec6e6e;
+    border-radius: 25px;
+    width: 80%;
+    margin: 0 auto;
+    z-index: 1000;
+}
+
+/* Logo Styles */
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-container .logo img {
+    width: 50px; /* Increased from 40px to 50px */
+    margin-right: 15px; /* Slightly increased margin for balance */
+}
+
+.logo-text {
+    font-weight: bold;
+    color: #333;
+    font-size: 1.5rem; /* Increased from default to 1.5rem */
+}
+
+/* Ensure centering in mobile view */
+@media (max-width: 768px) {
+    .navbar-container {
+        justify-content: center; /* Center in mobile view */
+    }
+
+    .navbar-container .logo img {
+        width: 40px; /* Slightly smaller for mobile */
+        margin-right: 10px;
+    }
+
+    .logo-text {
+        font-size: 1.2rem; /* Slightly smaller for mobile */
+    }
+}
+
+/**** First Section with image *****/
+
+.donate-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 80px 80px 40px; /* Reduced bottom padding to decrease space */
+}
+
+.donate-text {
+    flex-basis: 50%;
+}
+
+.donate-text p {
+    color: #222;
+    text-align: left;
+}
+
+.donate-text h1 {
+    color: #222;
+    text-align: left;
+}
+
+.donate-text h3 {
+    color: #ff0000;
+    text-align: left;
+}
+
+.donate-image {
+    flex-basis: 50%;
+}
+
+.donate-image img {
+    width: 85%;
+    height: auto;
+}
+
+.donate-image img:hover {
+    transform: scale(1.1);
+}
+
+/* Register Link Inside Donate Section */
+.register-link-container {
+    margin-top: 15px; /* Reduced margin to bring it closer to the paragraph */
+}
+
+.register-link-container #donate-button {
+    background-color: #ff0000;
+    color: #333;
+    font-weight: bold;
+    text-decoration: none;
+    width: 120px; /* Reduced width */
+    height: 40px; /* Reduced height */
+    border-radius: 20px;
+    display: inline-block;
+    text-align: center;
+    line-height: 40px;
+    font-size: 1rem; /* Reduced text size */
+}
+
+.register-link-container .action-link:hover {
+    background-color: #ff4d4d; /* Vibrant red hover */
+    color: #ffffff; /* White text for contrast */
+    transform: scale(1.05); /* Slight pop effect */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    border-radius: 20px; /* Match the button's radius */
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+/* Desktop-specific styling for register link */
+@media (min-width: 769px) {
+    .register-link-container {
+        text-align: left; /* Move to the left in desktop view */
+    }
+
+    .register-link-container #donate-button {
+        width: 150px; /* Reduced width for desktop */
+        height: 50px; /* Reduced height for desktop */
+        font-size: 1.2rem; /* Reduced text size for desktop */
+        line-height: 50px; /* Adjust line height to match height */
+    }
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .donate-section {
+        flex-direction: column;
+        padding: 20px 20px 10px; /* Reduced bottom padding for mobile */
+        padding-top: 100px;
+    }
+
+    .donate-text,
+    .donate-image {
+        flex-basis: 100%;
+    }
+
+    .donate-image {
+        margin-top: 20px;
+    }
+
+    .register-link-container {
+        text-align: center; /* Center in mobile view */
+        margin-top: 10px; /* Slightly smaller margin for mobile */
+    }
+
+    .register-link-container #donate-button {
+        width: 100px; /* Further reduced width for mobile */
+        height: 35px; /* Further reduced height for mobile */
+        font-size: 0.9rem; /* Further reduced text size for mobile */
+        line-height: 35px; /* Adjust line height to match height */
+    }
+}
+
+/**** MISSION *****/
+
+.mission {
+    display: flex;
+    padding-top: 0px; /* Reduced top padding to bring it closer */
+    align-items: center;
+    justify-content: center;
+    color: #222;
+}
+
+.mission-text {
+    flex-basis: 85%;
+    text-align: left;
+}
+
+.mission-text #black-text {
+    color: black;
+}
+
+.mission-text #red-text {
+    color: red;
+}
+
+/* Blood Type Section */
+.blood-type-heading h1 {
+    text-align: center;
+    color: #222;
+}
+
+.blood-type {
+    margin-top: 10px;
+}
+
+.blood-type table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgb(255, 254, 254);
+}
+
+.blood-type table th,
+.blood-type table td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.blood-type table th {
+    background-color: #ec6e6e;
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.blood-type table td {
+    text-align: center;
+    color: #333;
+}
+
+.blood-type table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.blood-type table tbody tr:hover {
+    background-color: #f1c1c1;
+}
+
+.blood-type table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .blood-type table th,
+    .blood-type table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .blood-type table {
+        width: 100%;
+    }
+
+    .mission {
+        padding-top: 0; /* Reduced top padding for mobile */
+    }
+}
+
+/***** Footer styles ******/
+
+.footer {
+    background-color: #333;
+    display: flex;
+    align-items: center; /* Center items vertically */
+    justify-content: center; /* Center items horizontally */
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 30px; /* Increased gap between logo and facebook-info */
+}
+
+.footer .logo {
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+}
+
+.footer .logo img {
+    width: 60px; /* Increased logo image size */
+    margin-right: 10px;
+}
+
+.footer #logo-text {
+    font-size: 28px; /* Increased text size */
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.facebook-info {
+    color: #ffffff;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-style: italic;
+}
+
+.facebook-info .facebook-icon {
+    color: #3b5998; /* Facebook blue */
+    background-color: #ffffff; /* White circular background */
+    border-radius: 50%; /* Make it circular */
+    width: 24px; /* Size of the circle */
+    height: 24px; /* Size of the circle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px; /* Adjust icon size */
+    padding: 5px; /* Ensure the icon fits well inside the circle */
+}
+
+/* Remove underline and keep icon styling on hover */
+.facebook-info a {
+    text-decoration: none;
+    color: inherit; /* Inherit color from parent to avoid blue link color */
+}
+
+.facebook-info a:hover .facebook-icon {
+    background-color: #f0f0f0; /* Slightly darker white on hover */
+    transition: background-color 0.3s ease;
+}
+
+/* Mobile view adjustments */
+@media (max-width: 768px) {
+    .footer {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px; /* Reduced gap for mobile */
+    }
+
+    .footer .logo img {
+        width: 50px; /* Slightly reduced logo size for mobile */
+    }
+
+    .footer #logo-text {
+        font-size: 24px; /* Slightly reduced text size for mobile */
+    }
+
+    .facebook-info {
+        margin: 0;
+    }
+}

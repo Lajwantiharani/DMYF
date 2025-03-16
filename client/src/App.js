@@ -1,7 +1,7 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
-// import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
 import HomePage from "./pages/HomePage";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import { ToastContainer } from "react-toastify";
@@ -17,19 +17,23 @@ import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-
-
 import ReceiverList from "./pages/Admin/ReceiverList";
 import Receiver from "./pages/Admin/Receiver";
 
-
-
 function App() {
-  
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
+        {/* Redirect root path to /landingpage */}
+        <Route path="/" element={<Navigate to="/landingpage" />} />
+
+        {/* Public routes */}
+        <Route path="/landingpage" element={<LandingPage />} /> {/* Public landing page */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected routes */}
         <Route
           path="/analytics"
           element={
@@ -70,7 +74,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/hospital-list"
           element={
@@ -79,7 +82,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/org-list"
           element={
@@ -136,8 +138,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
       </Routes>
     </div>
   );
