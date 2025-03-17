@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
-  // Destructure props here
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
@@ -38,74 +37,26 @@ const Form = ({ formType, submitBtn, formTitle }) => {
       >
         <h1 className="text-center">{formTitle}</h1>
         <hr />
-        <div className="d-flex mb-3">
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="donorRadio"
-              value={"donor"}
-              onChange={(e) => setRole(e.target.value)}
-              defaultChecked
-            />
-            <label htmlFor="donorRadio" className="form-check-label">
-              Donor
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="adminRadio"
-              value={"admin"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="adminRadio" className="form-check-label">
-              Admin
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="hospitalRadio"
-              value={"hospital"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="hospitalRadio" className="form-check-label">
-              Hospital
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="organizationRadio"
-              value={"organization"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="organizationRadio" className="form-check-label">
-              Organization
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="receiverRadio"
-              value={"receiver"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="receiverRadio" className="form-check-label">
-              Receiver
-            </label>
-          </div>
+        {/* Role selection using dropdown */}
+        <div className="mb-3">
+          <label htmlFor="roleSelect" className="form-label">
+            Select Role
+          </label>
+          <select
+            className="form-select"
+            id="roleSelect"
+            name="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            <option value="donor">Donor</option>
+            <option value="admin">Admin</option>
+            <option value="hospital">Hospital</option>
+            <option value="organization">Organization</option>
+            <option value="receiver">Receiver</option>
+          </select>
         </div>
+
         {/* Conditional rendering based on formType */}
         {formType === "login" && (
           <>
@@ -205,7 +156,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
           </>
         )}
 
-        <div className="d-flex flex-row justify-content-between">
+        <div className="d-flex flex-row justify-content-between align-items-center">
           {formType === "login" ? (
             <p style={{ color: "#34495e" }}>
               Not registered yet?{" "}
