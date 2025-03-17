@@ -13,28 +13,38 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [website, setWebsite] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [secretkey, setSecretKey] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formType === "login") {
+      return handleLogin(e, email, password, role);
+    } else if (formType === "register") {
+      // Validate secret key for admin role
+      if (role === "admin" && secretkey !== "DMYF") {
+        alert("Invalid Admin! Enter the right key.");
+        return; // Stop the submission if the key is incorrect
+      }
+      // Proceed with registration if validation passes
+      return handleRegister(
+        e,
+        name,
+        role,
+        email,
+        password,
+        organizationName,
+        hospitalName,
+        website,
+        address,
+        phone,
+        secretkey
+      );
+    }
+  };
 
   return (
     <div>
-      <form
-        onSubmit={(e) => {
-          if (formType === "login")
-            return handleLogin(e, email, password, role);
-          else if (formType === "register")
-            return handleRegister(
-              e,
-              name,
-              role,
-              email,
-              password,
-              organizationName,
-              hospitalName,
-              website,
-              address,
-              phone
-            );
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         <h1 className="text-center">{formTitle}</h1>
         <hr />
         {/* Role selection using dropdown */}
@@ -49,11 +59,11 @@ const Form = ({ formType, submitBtn, formTitle }) => {
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
-            <option value="donor">Donor</option>
             <option value="admin">Admin</option>
+            <option value="donor">Donor</option>
+            <option value="receiver">Receiver</option>
             <option value="hospital">Hospital</option>
             <option value="organization">Organization</option>
-            <option value="receiver">Receiver</option>
           </select>
         </div>
 
@@ -89,14 +99,6 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <InputType
-              labelText={"Password"}
-              labelFor={"forPassword"}
-              inputType={"password"}
-              name={"password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
             {(role === "admin" || role === "donor" || role === "receiver") && (
               <InputType
                 labelText={"Name"}
@@ -107,10 +109,28 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setName(e.target.value)}
               />
             )}
-
+            <InputType
+              labelText={"Password"}
+              labelFor={"forPassword"}
+              inputType={"password"}
+              name={"password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {role === "admin" && (
+              <InputType
+                labelText={"Secret Key"}
+                placeHolder={"Enter Secret Key"}
+                labelFor={"forKey"}
+                inputType={"text"}
+                name={"secretkey"}
+                value={secretkey}
+                onChange={(e) => setSecretKey(e.target.value)}
+              />
+            )}
             {role === "organization" && (
               <InputType
-                labelText={"Organization"}
+                labelText={"Organization Name"}
                 labelFor={"forOrganization"}
                 inputType={"text"}
                 name={"organization"}
@@ -128,31 +148,38 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setHospitalName(e.target.value)}
               />
             )}
-
-            <InputType
-              labelText={"Website"}
-              labelFor={"forWebsite"}
-              inputType={"text"}
-              name={"website"}
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-            <InputType
-              labelText={"Address"}
-              labelFor={"forAddress"}
-              inputType={"text"}
-              name={"address"}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <InputType
-              labelText={"Phone"}
-              labelFor={"forPhone"}
-              inputType={"text"}
-              name={"phone"}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            {(role === "organization" || role === "hospital") && (
+              <>
+                <InputType
+                  labelText={"Website"}
+                  labelFor={"forWebsite"}
+                  inputType={"text"}
+                  name={"website"}
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </>
+            )}
+            {(role === "donor" || role === "receiver" || role === "organization" || role === "hospital") && (
+              <>
+                <InputType
+                  labelText={"Address"}
+                  labelFor={"forAddress"}
+                  inputType={"text"}
+                  name={"address"}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+                <InputType
+                  labelText={"Phone"}
+                  labelFor={"forPhone"}
+                  inputType={"text"}
+                  name={"phone"}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </>
+            )}
           </>
         )}
 
@@ -162,7 +189,10 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               Not registered yet?{" "}
               <Link
                 to="/register"
-                style={{ color: "rgba(106, 11, 55, 0.7)", textDecoration: "none" }}
+                style={{
+                  color: "rgba(106, 11, 55, 0.7)",
+                  textDecoration: "none",
+                }}
               >
                 Register Here!
               </Link>
@@ -172,7 +202,10 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               Already a user? Please{" "}
               <Link
                 to="/login"
-                style={{ color: "rgba(106, 11, 55, 0.7)", textDecoration: "none" }}
+                style={{
+                  color: "rgba(106, 11, 55, 0.7)",
+                  textDecoration: "none",
+                }}
               >
                 Login!
               </Link>

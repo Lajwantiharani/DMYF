@@ -10,10 +10,16 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: function () {
-        if (this.role === "user" || this.role === "admin") {
+        if (this.role === "admin" || this.role === "donor" || this.role === "receiver") {
           return true;
         }
         return false;
+      },
+    },
+    secretkey: {
+      type: String,
+      required: function () {
+        return this.role === "admin";
       },
     },
     organizationName: {
@@ -48,12 +54,21 @@ const userSchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: [true, "address is required"],
+      required: function () {
+        if (this.role === "donor" || this.role === "receiver" || this.role === "hospital" || this.role === "organization") {
+          return true;
+        }
+        return false;
+      },
     },
     phone: {
       type: String,
-      required: [false, "phone number  is required"],
-      //not working for true
+      required: function () {
+        if (this.role === "donor" || this.role === "receiver" || this.role === "hospital" || this.role === "organization") {
+          return true;
+        }
+        return false;
+      },
     },
   },
   { timestamps: true }

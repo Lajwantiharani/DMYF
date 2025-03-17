@@ -16,7 +16,7 @@ const getDonorsListController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error In DOnor List API",
+      message: "Error In Donor List API",
       error,
     });
   }
