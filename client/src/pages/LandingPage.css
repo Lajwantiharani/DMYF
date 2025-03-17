@@ -99,9 +99,8 @@
 .register-link-container #donate-button {
     background-color: #ff0000;
     color: #333;
-    font-weight: bold;
     text-decoration: none;
-    width: 120px; /* Reduced width */
+    width: 20px; /* Reduced width */
     height: 40px; /* Reduced height */
     border-radius: 20px;
     display: inline-block;
@@ -126,10 +125,10 @@
     }
 
     .register-link-container #donate-button {
-        width: 150px; /* Reduced width for desktop */
-        height: 50px; /* Reduced height for desktop */
+        width: 110px; /* Reduced width for desktop */
+        height: 40px; /* Reduced height for desktop */
         font-size: 1.2rem; /* Reduced text size for desktop */
-        line-height: 50px; /* Adjust line height to match height */
+        line-height: 37px; /* Adjust line height to match height */
     }
 }
 
@@ -156,7 +155,7 @@
     }
 
     .register-link-container #donate-button {
-        width: 100px; /* Further reduced width for mobile */
+        width: 80px; /* Further reduced width for mobile */
         height: 35px; /* Further reduced height for mobile */
         font-size: 0.9rem; /* Further reduced text size for mobile */
         line-height: 35px; /* Adjust line height to match height */

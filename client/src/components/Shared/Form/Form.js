@@ -207,16 +207,24 @@ const Form = ({ formType, submitBtn, formTitle }) => {
 
         <div className="d-flex flex-row justify-content-between">
           {formType === "login" ? (
-            <p>
-              {" "}
-              Not registered yet ? Register
-              <Link to="/register"> Here !</Link>
+            <p style={{ color: "#34495e" }}>
+              Not registered yet?{" "}
+              <Link
+                to="/register"
+                style={{ color: "rgba(106, 11, 55, 0.7)", textDecoration: "none" }}
+              >
+                Register Here!
+              </Link>
             </p>
           ) : (
-            <p>
-              {" "}
-              Already User Please
-              <Link to="/login"> Login !</Link>
+            <p style={{ color: "#34495e" }}>
+              Already a user? Please{" "}
+              <Link
+                to="/login"
+                style={{ color: "rgba(106, 11, 55, 0.7)", textDecoration: "none" }}
+              >
+                Login!
+              </Link>
             </p>
           )}
           <button className="btn btn-primary" type="submit">

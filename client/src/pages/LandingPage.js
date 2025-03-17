@@ -38,7 +38,7 @@ const LandingPage = () => {
             {/* Register Now Link Inside Donate Section */}
             <div className="register-link-container">
               <Link to="/register" id="donate-button" className="action-link">
-                Register Now
+                Register
               </Link>
             </div>
           </div>
@@ -128,7 +128,7 @@ const LandingPage = () => {
           <span id="logo-text">DMYF</span>
         </div>
         <div className="facebook-info">
-          <a href="https://facebook.com/yourpage" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.facebook.com/Pak.DMYF" target="_blank" rel="noopener noreferrer">
             <FontAwesomeIcon icon={faFacebookF} className="facebook-icon" />
           </a>
           Follow us on Facebook for updates!
