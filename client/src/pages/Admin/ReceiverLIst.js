@@ -46,35 +46,37 @@ const ReceiverList = () => {
       <h2 className="text-center">Receiver Records</h2>
 
       <table className="table ">
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Phone</th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.map((record) => (
-                  <tr key={record._id}>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Date</th>
+            <th scope="col">Blood Group</th>
 
-                    <td>{record.name}</td>
-                    <td>{record.email}</td>
-                    <td>{record.phone}</td>
-                    <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
-                    <td>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleDelete(record._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data?.map((record) => (
+            <tr key={record._id}>
+              <td>{record.name}</td>
+              <td>{record.email}</td>
+              <td>{record.phone}</td>
+              <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
+              
+              <td>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleDelete(record._id)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </Layout>
   );
 };

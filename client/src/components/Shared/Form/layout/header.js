@@ -1,57 +1,59 @@
-import React from 'react';
+// Header.jsx
+import React from "react";
 import { BiDonateBlood, BiUserCircle } from "react-icons/bi";
-import { useNavigate,useLocation ,Link} from 'react-router-dom';
- import {useSelector} from 'react-redux';
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import "./Sidebar.css";
 
-const Header = () => {
-  const {user} = useSelector(state => state.auth);
-  const navigate = useNavigate(); 
-const location = useLocation();
+const Header = ({ toggleSidebar, isSidebarOpen }) => {
+  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Logout handler
   const handleLogout = () => {
     localStorage.clear();
     alert("Logout successfully");
-    navigate('/login'); 
+    navigate("/login");
   };
 
   return (
     <>
       <nav className="navbar">
         <div className="container-fluid">
-          <div className="navbar-brand h1">
+          <div className="navbar-brand h1 d-md-block">
             <BiDonateBlood color="red" /> Blood Bank App
           </div>
+          {/* Hamburger button for mobile */}
+          <button className="hamburger d-md-none" onClick={toggleSidebar}>
+            <i className={`fas ${isSidebarOpen ? "fa-times" : "fa-bars"}`}></i>
+          </button>
           <ul className="navbar-nav flex-row">
-            <li className="nav-item mx-3">
-              <p className="nav-link">
-                <BiUserCircle /> Welcome{" "}
-                {user?.name || user?.hospitalName || user?.organizationName}
-                &nbsp;
+            <li className="nav-item mx-3 d-flex align-items-center">
+              <p className="nav-link mb-0">
+               Welcome{" "}
+                {user?.name || user?.hospitalName || user?.organizationName} 
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>
-            </li>
-            {location.pathname === "/" ||
-            location.pathname === "/donor" ||
-            location.pathname === "/hospital" ||
-            location.pathname === "/admin" ||
-            location.pathname === "/receiver" ? (
-              <li className="nav-item mx-3">
-                <Link to="/analytics" className="nav-link">
-                  Analytics
-                </Link>
-              </li>
-            ) : (
-              <li className="nav-item mx-3">
-                <Link to="/" className="nav-link">
-                  Home
-                </Link>
-              </li>
-            )}
-            <li className="nav-item mx-3">
-              <button className="btn btn-danger" onClick={handleLogout}>
+              <button
+                className="btn btn-danger ms-3"
+                onClick={handleLogout}
+                style={{ marginLeft: "10px" }}
+              >
                 Logout
               </button>
             </li>
+            {location.pathname !== "/" &&
+              location.pathname !== "/donor" &&
+              location.pathname !== "/hospital" &&
+              location.pathname !== "/admin" &&
+              location.pathname !== "/receiver" && (
+                <li className="nav-item mx-3">
+                  <Link to="/" className="nav-link">
+                    Home
+                  </Link>
+                </li>
+              )}
           </ul>
         </div>
       </nav>
