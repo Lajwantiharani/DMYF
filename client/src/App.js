@@ -1,12 +1,14 @@
 import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+// import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
-import Donor from "./pages/Dashboard/Donor";
+import DonorProfile from "./pages/Dashboard/Donor";
 import Hospital from "./pages/Dashboard/Hospital";
 import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 import Consumer from "./pages/Dashboard/Consumer";
@@ -16,19 +18,28 @@ import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-
-
 import ReceiverList from "./pages/Admin/ReceiverList";
 import Receiver from "./pages/Admin/Receiver";
 
-
-
 function App() {
-  
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
+        {/* Public routes */}
+        <Route path="/landingpage" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/analytics"
           element={
@@ -46,7 +57,7 @@ function App() {
           }
         />
         <Route
-          path="/admin"
+          path="/adminprofile"
           element={
             <ProtectedRoute>
               <AdminHome />
@@ -69,7 +80,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/hospital-list"
           element={
@@ -78,7 +88,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/org-list"
           element={
@@ -120,23 +129,15 @@ function App() {
           }
         />
         <Route
-          path="/donor"
+          path="/donorprofile"
           element={
             <ProtectedRoute>
-              <Donor />
+              <DonorProfile />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Remove the default redirect to /landingpage for authenticated users */}
+        {/* <Route path="/" element={<Navigate to="/landingpage" />} /> */}
       </Routes>
     </div>
   );

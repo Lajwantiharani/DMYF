@@ -12,6 +12,16 @@ const registerController = async (req, res) => {
         message: "User ALready exists",
       });
     }
+    // Validate secret key for admin role
+    if (req.body.role === "admin") {
+      const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || "DMYF"; // Use environment variable
+      if (req.body.secretkey !== ADMIN_SECRET_KEY) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid secret key for admin registration",
+        });
+      }
+    }
     //hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);

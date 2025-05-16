@@ -1,43 +1,50 @@
 import React from "react";
 import Layout from "../../components/Shared/Form/layout/layout";
 import { useSelector } from "react-redux";
+import moment from "moment";
+
 const AdminHome = () => {
   const { user } = useSelector((state) => state.auth);
+
   return (
     <Layout>
-      <div className="container">
-        <div className="d-felx flex-column mt-4">
-          <h1>
-            Welcome Admin <i className="text-success">{user?.name}</i>
-          </h1>
-          <h3>Manage Blood Bank App </h3>
+      <div className="container mt-4">
+        <div className="d-flex flex-column">
+          <h2 className="mb-3">
+            Welcome Admin <span className="text-success">{user?.name}</span>
+          </h2>
+          <h4 className="mb-4">Admin Dashboard - Manage Blood Bank App</h4>
+
+          {user ? (
+            <div className="card shadow p-4 mb-4">
+              <h5 className="mb-3">Admin Profile</h5>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <strong>Name:</strong> {user.name}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Email:</strong> {user.email}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Phone:</strong> {user.phone || "N/A"}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Role:</strong> {user.role}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Registered On:</strong>{" "}
+                  {moment(user.createdAt).format("DD/MM/YYYY hh:mm A")}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p>Loading profile...</p>
+          )}
+
           <hr />
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad
-            explicabo animi blanditiis incidunt dicta quia, quibusdam facere
-            corporis! Dolores, reprehenderit cum sed repellat laudantium
-            architecto natus est nostrum accusamus, odio aspernatur minima
-            fugiat quam molestiae nisi. Temporibus impedit dolorem quia.
-            Distinctio modi non excepturi illo odio voluptatum quae nostrum a
-            temporibus sequi! Explicabo, quasi consequatur ad qui quos labore
-            distinctio voluptates alias nostrum ab dicta aspernatur molestias
-            adipisci quibusdam error ipsa. Totam, tenetur dolores eaque tempora
-            officiis deserunt assumenda? Rerum nemo est nihil laudantium
-            necessitatibus. Possimus, voluptatem voluptates blanditiis quas
-            aspernatur, quam, quaerat minus maiores ipsam sint perferendis
-            dolor. Dignissimos voluptatem doloribus sint in quis omnis, atque
-            neque praesentium voluptatum suscipit. Quas esse, accusantium maxime
-            obcaecati iure officiis aperiam minus alias quod cum quos qui
-            voluptatibus, numquam, ad id dolore odit! Minima laudantium sunt,
-            explicabo nesciunt quos voluptatibus qui libero eligendi praesentium
-            debitis obcaecati similique assumenda nobis labore totam dolore
-            perferendis adipisci fugiat quibusdam tempore doloremque voluptatum
-            accusantium. Accusamus, incidunt sequi. Esse sunt officia fuga,
-            officiis saepe tempora repellat suscipit aliquid cupiditate
-            perferendis, asperiores architecto molestiae rem iste eaque
-            molestias reiciendis. Laborum modi asperiores, reprehenderit
-            assumenda numquam, vitae exercitationem illum nesciunt, dolorum
-            deleniti accusamus consequatur id. Necessitatibus dolore ad fugit?
+          <p className="text-muted">
+            Welcome to the Blood Bank Admin Panel. From here you can manage users,
+            view inventory, and control system-wide configurations.
           </p>
         </div>
       </div>

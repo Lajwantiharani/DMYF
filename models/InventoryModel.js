@@ -5,7 +5,7 @@ const inventorySchema = new mongoose.Schema(
   {
     inventoryType: {
       type: String,
-      required: [true, "inventory type require"],
+      required: [true, "inventory type is require"],
       enum: ["in", "out"],
     },
     bloodGroup: {
