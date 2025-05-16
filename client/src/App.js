@@ -8,7 +8,7 @@ import Register from "./pages/auth/Register";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
-import Donor from "./pages/Dashboard/Donor";
+import DonorProfile from "./pages/Dashboard/Donor";
 import Hospital from "./pages/Dashboard/Hospital";
 import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 import Consumer from "./pages/Dashboard/Consumer";
@@ -57,7 +57,7 @@ function App() {
           }
         />
         <Route
-          path="/admin"
+          path="/adminprofile"
           element={
             <ProtectedRoute>
               <AdminHome />
@@ -129,10 +129,10 @@ function App() {
           }
         />
         <Route
-          path="/donor"
+          path="/donorprofile"
           element={
             <ProtectedRoute>
-              <Donor />
+              <DonorProfile />
             </ProtectedRoute>
           }
         />
