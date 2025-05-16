@@ -103,9 +103,9 @@ export const userLogin = createAsyncThunk(
 
         // Role-based redirection
         if (role === "admin") {
-          window.location.replace("/admin");
+          window.location.replace("/adminprofile");
         } else if (role === "donor") {
-          window.location.replace("/donor");
+          window.location.replace("/donorprofile");
         } else if (role === "receiver") {
           window.location.replace("/consumer");
         } else if (role === "hospital") {

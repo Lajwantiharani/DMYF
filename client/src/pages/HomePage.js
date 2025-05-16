@@ -122,10 +122,14 @@ const HomePage = () => {
     getBloodRecords();
     // Role-based redirection after component mounts
     if (user?.role === "admin") {
-      navigate("/admin");
-    } else if (user?.role === "receiver") {
+      navigate("/adminprofile");
+    } 
+    else if (user?.role === "receiver") {
       navigate("/receiver");
     }
+    // else if (user?.role === "donor") {
+    //   navigate("/donorprofile");
+    // }
     // For donor and other roles, stay on the current page (/)
   }, [user, navigate]);
 
