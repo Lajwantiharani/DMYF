@@ -7,6 +7,7 @@ const {
   deleteDonorController,
   addReceiverController,
   getReceiverListController,
+ 
 } = require("../controllers/adminController");
 const adminMiddleware = require("../middlewares/adminMiddleware");
 const { getHospitalController } = require("../controllers/inventoryController");

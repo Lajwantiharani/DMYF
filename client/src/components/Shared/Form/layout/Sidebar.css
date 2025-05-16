@@ -1,0 +1,539 @@
+/* Sidebar.css */
+
+/* General Reset for Consistency */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Sidebar styling inspired by WhatsApp */
+.sidebar {
+  width: 270px;
+  height: 100vh; /* Full height for sidebar */
+  background: linear-gradient(to bottom, rgb(70, 5, 45), rgb(153, 23, 71)); /* Dark gradient */
+  color: #fff; /* White text */
+  padding: 20px;
+  position: fixed; /* Fix sidebar on desktop */
+  top: 0;
+  left: 0;
+  box-shadow: 2px 0 5px rgb(250, 249, 249); /* Subtle shadow for depth */
+  overflow-y: auto; /* Scroll if content overflows */
+  transition: transform 0.3s ease; /* Smooth transition for mobile toggle */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sidebar branding */
+.sidebar .navbar-brand {
+  font-size: 24px; /* Larger font for branding */
+  margin-bottom: 30px; /* Space below branding */
+  color: #fff; /* Ensure white text */
+}
+
+/* Close icon inside the sidebar */
+.sidebar .close-icon {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  display: none; /* Hidden by default */
+}
+
+.sidebar.active .close-icon {
+  display: block; /* Show close icon when sidebar is active */
+}
+
+/* Menu container styling */
+.menu {
+  margin-top: 0;
+  color: #fff; /* White text for menu container */
+  display: flex;
+  flex-direction: column; /* Ensure consistent stacking */
+  gap: 8px; /* Add consistent spacing between menu items */
+}
+
+/* Menu items styling */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  margin-bottom: 0; /* Remove margin-bottom since we're using gap */
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  border: none; /* Ensure no borders */
+  color: #ffffff; /* White text for menu item */
+}
+
+.menu-item i {
+  margin-right: 12px;
+  font-size: 18px;
+  color: #ffffff; /* White icon color for consistency in desktop view */
+}
+
+.menu-item a {
+  color: #ffffff !important; /* White text for links, with !important to override any other styles */
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background-color: #5a1e3a; /* Darker shade for hover, ensuring contrast with white text */
+}
+
+.menu-item.active {
+  background-color: #a1124a; /* Slightly lighter shade for active, ensuring contrast with white text */
+}
+
+/* Navbar styling */
+.navbar {
+  background: linear-gradient(to right, rgb(70, 5, 45), rgb(153, 23, 71)); /* Keep your gradient */
+  padding: 15px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  position: fixed; /* Fix navbar at the top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Ensure navbar is above sidebar */
+}
+
+/* Hamburger icon styling */
+.hamburger {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container-fluid {
+  background-color: transparent !important; /* Remove background from container */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.navbar-brand {
+  background-color: transparent !important; /* Remove background */
+  display: flex;
+  align-items: center;
+  color: #fff !important; /* White text */
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.navbar-brand svg {
+  margin-right: 10px;
+}
+
+.navbar-nav {
+  background-color: transparent !important; /* Remove background */
+  display: flex;
+  align-items: center;
+}
+
+.nav-item {
+  margin-left: 20px; /* Increased spacing for desktop */
+}
+
+.nav-link {
+  background-color: transparent !important; /* Remove background */
+  color: #fff !important; /* White text */
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+  border-radius: 5px;
+}
+
+.nav-link svg {
+  margin-right: 5px;
+}
+
+.badge {
+  margin-left: 5px;
+  background-color: #fff !important;
+  color: #ec6e6e !important; /* Contrast with the badge */
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.btn-danger {
+  background-color: #6d0441 !important;
+  border: none;
+  padding: 8px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+}
+
+.btn-danger:hover {
+  background-color: #e71ba3 !important;
+}
+
+/* Main content area adjustment */
+.main-content {
+  margin-top: 80px; /* Adjust for navbar height */
+  margin-left: 270px; /* Adjust for sidebar width */
+  padding: 20px;
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  min-height: calc(100vh - 80px); /* Ensure it takes full height minus navbar */
+  width: calc(100% - 270px); /* Ensure main content takes remaining width */
+  transition: filter 0.3s ease; /* Smooth transition for blur effect */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.main-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card container styling */
+.card-container {
+  display: grid; /* Use CSS Grid for strict 4x2 layout */
+  grid-template-columns: repeat(4, 1fr); /* 4 columns */
+  grid-template-rows: repeat(2, auto); /* 2 rows */
+  gap: 1rem; /* Space between cards */
+  width: 100%; /* Ensure container takes full width */
+}
+
+/* Card styling */
+.card {
+  width: 100%; /* Take full width of grid cell */
+  min-width: 0; /* Allow card to shrink if necessary */
+  margin: 0; /* Remove default margin to use gap */
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling for responsiveness */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background-color: #fff; /* White background for table */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for table */
+}
+
+table th,
+table td {
+  padding: 12px 15px; /* Increased padding for better readability */
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px; /* Default font size for desktop */
+}
+
+table th {
+  background-color: #f5f5f5; /* Light gray background for headers */
+  font-weight: bold;
+  color: #333; /* Darker text for better contrast */
+  text-transform: uppercase; /* Make headers uppercase for emphasis */
+  letter-spacing: 0.5px; /* Slight letter spacing for readability */
+}
+
+table td {
+  color: #555; /* Slightly lighter text for table data */
+}
+
+table td button {
+  background-color: #700045;
+  border: none;
+  padding: 6px 12px;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+table td button:hover {
+  background-color: #790151;
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+  .hamburger {
+    display: none; /* Hide hamburger on desktop */
+  }
+
+  .sidebar {
+    transform: translateX(0); /* Sidebar always visible on desktop */
+  }
+
+  /* Ensure white text/icons in desktop view */
+  .menu-item {
+    color: #ffffff; /* White text for menu item */
+  }
+
+  .menu-item i {
+    color: #ffffff; /* White icons in desktop view */
+  }
+
+  .menu-item a {
+    color: #ffffff !important; /* White text for links */
+  }
+}
+
+/* Mobile View */
+@media (max-width: 767px) {
+  .row {
+    margin: 0 !important; /* Override Bootstrap's default margins */
+  }
+
+  .col-md-3 {
+    width: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 100vh; /* Full height for mobile to cover the screen */
+    position: fixed;
+    top: 0; /* Start from the top, covering the navbar */
+    left: 0;
+    transform: translateX(-100%); /* Hidden by default on mobile */
+    z-index: 999; /* Below navbar but above content */
+    background: linear-gradient(to bottom, rgb(70, 5, 45), rgb(153, 23, 71)); /* Keep the gradient */
+    padding: 60px 15px 15px; /* Reduced top padding since logo is removed */
+    box-sizing: border-box; /* Ensure padding is included in height */
+  }
+
+  .sidebar.active {
+    transform: translateX(0); /* Show sidebar when active */
+  }
+
+  .sidebar .navbar-brand {
+    display: none; /* Hide the logo in mobile view */
+  }
+
+  /* Blur the main content when the sidebar is active */
+  .sidebar.active ~ .main-content {
+    filter: blur(5px); /* Apply blur effect to the main content */
+    pointer-events: none; /* Disable interactions with the blurred content */
+  }
+
+  /* Menu container styling for a single column (row) */
+  .menu {
+    display: flex;
+    flex-direction: column; /* Stack items vertically in a single column */
+    gap: 16px; /* Increased gap for better spacing between menu items */
+    padding: 0 15px; /* Increased padding to ensure content isn’t too close to edges */
+    width: 100%; /* Ensure menu takes full width */
+    margin-top: 20px; /* Add some top margin to separate from the top of the sidebar */
+  }
+
+  /* Menu items styling */
+  .menu-item {
+    padding: 14px 20px; /* Increased padding for better touch area and clarity */
+    margin-bottom: 0; /* Remove bottom margin since we're using flex gap */
+    border-radius: 8px; /* Slightly larger border-radius for a softer look */
+    transition: background-color 0.3s ease;
+    border: none; /* Remove any borders */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align content to the left */
+    background-color: transparent; /* Ensure no background border effect */
+    min-height: 50px; /* Slightly increased min-height for better touch area */
+    width: 100%; /* Ensure menu item takes full width */
+    box-sizing: border-box; /* Ensure padding is included in width */
+  }
+
+  .menu-item i {
+    margin-right: 15px; /* Increased margin for better spacing between icon and text */
+    font-size: 18px; /* Slightly larger icon size for better visibility */
+    color: #b0b3b8; /* Light gray icon color in mobile view */
+    flex-shrink: 0; /* Prevent icon from shrinking */
+  }
+
+  .menu-item a {
+    color: #fff !important; /* Force white text color */
+    text-decoration: none;
+    font-size: 17px; /* Slightly larger font size for better readability */
+    font-weight: 400; /* Lighter font weight for better readability */
+    text-align: left; /* Align text to the left */
+    line-height: 1.3; /* Slightly increased line height for better readability */
+    overflow: hidden; /* Prevent text overflow */
+    text-overflow: ellipsis; /* Add ellipsis for long text */
+    white-space: nowrap; /* Prevent text wrapping */
+    flex: 1; /* Allow text to take remaining space */
+  }
+
+  .menu-item:hover {
+    background-color: #f0dddd; /* Slightly lighter background on hover */
+  }
+
+  .menu-item.active {
+    background-color: #fafafa; /* WhatsApp's green for active item */
+  }
+
+  /* Adjust navbar for mobile */
+  .navbar {
+    padding: 8px 15px; /* Increased side padding for better spacing */
+  }
+
+  .navbar-brand {
+    font-size: 16px; /* Smaller font size for mobile */
+    flex-shrink: 0; /* Prevent branding from shrinking */
+    overflow: hidden; /* Prevent overflow */
+    white-space: nowrap; /* Prevent text wrapping */
+    text-overflow: ellipsis; /* Add ellipsis for long text */
+  }
+
+  .container-fluid {
+    flex-wrap: wrap; /* Allow wrapping to create two rows */
+    gap: 8px; /* Adjust gap for better spacing between rows */
+    overflow-x: hidden; /* Disable horizontal scrolling */
+    white-space: normal; /* Allow text wrapping */
+    align-items: flex-start; /* Align items to the top */
+    position: relative;
+    width: 100%; /* Ensure container takes full width */
+    padding: 0 5px; /* Add small padding to prevent content from touching edges */
+  }
+
+  .navbar-nav {
+    display: flex !important; /* Ensure navbar content is visible on mobile */
+    flex-wrap: nowrap; /* Prevent wrapping for menu items in mobile */
+    gap: 8px; /* Adjust gap for better spacing */
+    width: auto; /* Allow navbar-nav to take only the necessary width */
+    justify-content: flex-end; /* Align items to the right */
+    margin-right: 50px; /* Ensure space for the hamburger icon */
+  }
+
+  .nav-item {
+    margin-left: 0; /* Remove left margin for better spacing */
+    margin-right: 8px; /* Adjust right margin for spacing between items */
+    flex-shrink: 0; /* Prevent nav items from shrinking */
+  }
+
+  .nav-item.d-flex {
+    flex-wrap: nowrap; /* Ensure "Welcome" and "Logout" stay on the same line */
+    align-items: center; /* Vertically center the items */
+  }
+
+  .nav-link {
+    font-size: 12px; /* Smaller font size to fit in one line */
+    padding: 5px 8px; /* Adjust padding for better fit */
+    border-radius: 5px; /* Rounded corners for a modern look */
+    overflow: hidden; /* Prevent text overflow */
+    white-space: nowrap; /* Prevent text wrapping */
+    text-overflow: ellipsis; /* Add ellipsis for long text */
+  }
+
+  .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+  }
+
+  .badge {
+    font-size: 10px; /* Smaller badge for mobile */
+    padding: 1px 4px;
+    flex-shrink: 0; /* Prevent badge from shrinking */
+  }
+
+  .btn-danger {
+    padding: 4px 10px; /* Smaller button on mobile */
+    font-size: 12px;
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+    width: auto; /* Ensure button width is based on content */
+    flex-shrink: 0; /* Prevent button from shrinking */
+    overflow: hidden; /* Prevent text overflow */
+    white-space: nowrap; /* Prevent text wrapping */
+    text-overflow: ellipsis; /* Add ellipsis for long text */
+  }
+
+  .main-content {
+    margin-left: 0; /* No sidebar offset on mobile */
+    margin-top: 80px; /* Adjust for increased navbar height due to two rows */
+    padding: 10px; /* Reduced padding for mobile */
+    height: auto; /* Allow natural height on mobile */
+    width: 100%; /* Ensure main content takes full width */
+  }
+
+  .hamburger {
+    display: block !important; /* Show hamburger on mobile */
+    position: absolute;
+    top: 12px; /* Adjusted for smaller navbar */
+    right: 15px; /* Adjusted to ensure it’s not too close to the edge */
+    flex-shrink: 0; /* Prevent hamburger from shrinking */
+  }
+
+  /* Card container styling for mobile */
+  .card-container {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns for mobile */
+    gap: 0.5rem; /* Reduce gap for better fit */
+  }
+
+  /* Card styling for mobile */
+  .card {
+    width: 100%; /* Take full width of grid cell */
+    min-width: 0; /* Allow card to shrink if necessary */
+    max-width: 16rem; /* Limit max width for better readability */
+    margin: 0 auto; /* Center cards within the container */
+  }
+
+  /* Table adjustments for mobile */
+  table {
+    display: table; /* Use default table display to ensure proper structure */
+    width: 100%; /* Ensure table takes full width */
+    overflow-x: auto; /* Allow horizontal scrolling */
+    white-space: nowrap; /* Prevent text wrapping in cells */
+    border-collapse: collapse; /* Ensure proper table structure */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+  }
+
+  table::-webkit-scrollbar {
+    display: none;
+  }
+
+  table th,
+  table td {
+    font-size: 11px; /* Smaller font size for mobile */
+    padding: 6px 8px; /* Reduced padding for better fit */
+    min-width: 90px; /* Adjusted min-width for mobile to fit more columns */
+    text-align: left; /* Align text for consistency */
+    border: 1px solid #ddd; /* Add borders to cells for clarity */
+  }
+
+  table th {
+    position: sticky; /* Keep headers fixed while scrolling */
+    top: 80px; /* Adjust for increased navbar height */
+    z-index: 10; /* Ensure headers are above table content */
+    background-color: #f5f5f5; /* Ensure background is applied */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  table td {
+    color: #555;
+  }
+
+  .table td button {
+    padding: 3px 6px; /* Smaller button on mobile */
+    font-size: 10px; /* Smaller font size for button text */
+  }
+}
