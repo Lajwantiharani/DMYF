@@ -16,7 +16,7 @@ const getDonorsListController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error In Donor List API",
+      message: "Error In DOnor List API",
       error,
     });
   }
@@ -113,12 +113,12 @@ const getReceiverListController = async (req, res) => {
 // ADD RECEIVER RECORD
 const addReceiverController = async (req, res) => {
   try {
-    const { name, email, phone, current_address, bloodGroup } = req.body;
+    const { name, email, phone, address, bloodGroup } = req.body;
     const newReceiver = new userModel({
       name,
       email,
       phone,
-      current_address,
+      address,
       bloodGroup,
       role: "receiver",
     });

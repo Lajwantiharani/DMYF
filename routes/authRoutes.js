@@ -2,7 +2,7 @@ const express = require("express");
 const {
   registerController,
   loginController,
-  currentUserController,
+   currentUserController,
 } = require("../controllers/authController");
 const authMiddleware = require("../middlewares/authMiddleware");
 

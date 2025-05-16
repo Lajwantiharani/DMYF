@@ -29,7 +29,7 @@ const Hospital = () => {
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Phone</th>
-            <th scope="col">Current Address</th>
+            <th scope="col">Address</th>
             <th scope="col">Date</th>
           </tr>
         </thead>
@@ -39,7 +39,7 @@ const Hospital = () => {
               <td>{record.hospitalName}</td>
               <td>{record.email}</td>
               <td>{record.phone}</td>
-              <td>{record.current_address}</td>
+              <td>{record.address}</td>
               <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
             </tr>
           ))}

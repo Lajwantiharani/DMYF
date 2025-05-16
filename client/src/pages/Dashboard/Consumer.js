@@ -27,7 +27,7 @@ const [data, setData] = useState([]);
   };
   useEffect(() => {
     getDonors();
-  },);
+  }, []);
   return (
     <Layout>
         <div className='container mt-4'>

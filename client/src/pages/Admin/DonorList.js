@@ -25,7 +25,7 @@ const DonorList = () => {
   const handelDelete = async (id) => {
     try {
       let answer = window.prompt(
-        "Are You sure Want To Delete This Donor",
+        "Are You SUre Want To Delete This Donor",
         "Sure"
       );
       if (!answer) return;
@@ -39,8 +39,6 @@ const DonorList = () => {
 
   return (
     <Layout>
-      <h2 className="text-center">Donor Records</h2>
-
       <table className="table ">
         <thead>
           <tr>
