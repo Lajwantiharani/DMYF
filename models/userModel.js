@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: [true, "role is required"],
-      enum: ["admin", "organization", "donor", "hospital","receiver"],
+      enum: ["admin", "organization", "donor", "hospital", "receiver"],
     },
     name: {
       type: String,
@@ -31,15 +31,15 @@ const userSchema = new mongoose.Schema(
         return false;
       },
     },
-    hospitalName: {
-      type: String,
-      required: function () {
-        if (this.role === "hospital") {
-          return true;
-        }
-        return false;
-      },
-    },
+    // hospitalName: {
+    //   type: String,
+    //   required: function () {
+    //     if (this.role === "hospital") {
+    //       return true;
+    //     }
+    //     return false;
+    //   },
+    // },
     email: {
       type: String,
       require: [true, "email is required"],
@@ -52,10 +52,10 @@ const userSchema = new mongoose.Schema(
     website: {
       type: String,
     },
-    address: {
+    current_address: {
       type: String,
       required: function () {
-        if (this.role === "donor" || this.role === "receiver" || this.role === "hospital" || this.role === "organization") {
+        if (this.role === "donor" || this.role === "receiver" || this.role === "organization") {
           return true;
         }
         return false;
@@ -64,12 +64,39 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: function () {
-        if (this.role === "donor" || this.role === "receiver" || this.role === "hospital" || this.role === "organization") {
+        if (this.role === "donor" || this.role === "receiver" || this.role === "organization") {
           return true;
         }
         return false;
       },
     },
+    native_town: {
+      type: String,
+      required: function () {
+        if (this.role === "donor" || this.role === "receiver") {
+          return true;
+        }
+        return false;
+      },
+    },
+    bloodGroup: {
+      type: String,
+      required: function () {
+        if (this.role === "donor" || this.role === "organization") {
+          return true;
+        }
+        return false;
+      },
+    },
+    nukh:{
+      type: String,
+      required: function () {
+        if (this.role === "donor" || this.role === "receiver") {
+          return true;
+        }
+        return false;
+      },
+    }
   },
   { timestamps: true }
 );

@@ -22,9 +22,12 @@ export const handleRegister = (
   organizationName,
   hospitalName,
   website,
-  address,
+  current_address,
   phone,
-  secretkey
+  native_town,
+  nukh,
+  bloodGroup,
+  secretkey,
 ) => {
   e.preventDefault();
   try {
@@ -37,9 +40,12 @@ export const handleRegister = (
   organizationName,
   hospitalName,
   website,
-  address,
+  current_address,
   phone,
-  secretkey
+  secretkey,
+  bloodGroup,
+  nukh,
+  native_town,
  }
   )
   );

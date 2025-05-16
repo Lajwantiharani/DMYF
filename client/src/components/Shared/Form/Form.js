@@ -11,9 +11,12 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [organizationName, setOrganization] = useState("");
   const [hospitalName, setHospitalName] = useState("");
   const [website, setWebsite] = useState("");
-  const [address, setAddress] = useState("");
+  const [current_address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [secretkey, setSecretKey] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("");
+  const [nukh, setNukh] = useState("");
+  const [native_town, setNativeTown] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,10 +38,14 @@ const Form = ({ formType, submitBtn, formTitle }) => {
         organizationName,
         hospitalName,
         website,
-        address,
+        current_address,
         phone,
+        native_town,
+        nukh,
+        bloodGroup,
         secretkey
       );
+      
     }
   };
 
@@ -160,14 +167,17 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 />
               </>
             )}
-            {(role === "donor" || role === "receiver" || role === "organization" || role === "hospital") && (
+            {(role === "donor" ||
+              role === "receiver" ||
+              role === "organization" ||
+              role === "hospital") && (
               <>
                 <InputType
-                  labelText={"Address"}
+                  labelText={"Current Address"}
                   labelFor={"forAddress"}
                   inputType={"text"}
-                  name={"address"}
-                  value={address}
+                  name={"current_address"}
+                  value={current_address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
                 <InputType
@@ -178,6 +188,53 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
+              </>
+            )}
+
+            {(role === "donor" || role === "receiver") && (
+              <>
+                <InputType
+                  labelText={"Nukh"}
+                  labelFor={"forNukh"}
+                  inputType={"text"}
+                  name={"nukh"}
+                  value={nukh}
+                  onChange={(e) => setNukh(e.target.value)}
+                />
+                <InputType
+                  labelText={"Native Town"}
+                  labelFor={"forNativeTown"}
+                  inputType={"text"}
+                  name={"native_town"}
+                  value={native_town}
+                  onChange={(e) => setNativeTown(e.target.value)}
+                />
+              </>
+            )}
+            {(role === "donor" || role === "receiver") && (
+              <>
+                <div className="mb-3">
+                  <label htmlFor="bloodGroup" className="form-label">
+                    Blood Group
+                  </label>
+                  <select
+                    className="form-select"
+                    id="bloodGroup"
+                    name="bloodGroup"
+                    value={bloodGroup}
+                    onChange={(e) => setBloodGroup(e.target.value)}
+                  >
+                    <option value="">-- Select Blood Group --</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
               </>
             )}
           </>

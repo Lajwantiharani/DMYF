@@ -113,12 +113,12 @@ const getReceiverListController = async (req, res) => {
 // ADD RECEIVER RECORD
 const addReceiverController = async (req, res) => {
   try {
-    const { name, email, phone, address, bloodGroup } = req.body;
+    const { name, email, phone, current_address, bloodGroup } = req.body;
     const newReceiver = new userModel({
       name,
       email,
       phone,
-      address,
+      current_address,
       bloodGroup,
       role: "receiver",
     });

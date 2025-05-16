@@ -18,7 +18,7 @@ const { loading, error } = useSelector((state) => state.auth);
       <img src="./assets/images/lg_reg.jpg" alt="registerImage" />
     </div>
      <div className="col-md-4 form-container">
-      <Form    formTitle={'Register'} submitBtn={'Register'} formType={'register'}
+      <Form    formTitle={'Sign up'} submitBtn={'Register'} formType={'register'}
       />
      </div>
    </div>

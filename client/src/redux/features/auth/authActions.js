@@ -36,7 +36,7 @@
 //       organizationName,
 //       hospitalName,
 //       website,
-//       address,
+//       current_address,
 //       phone,
 //       secretkey
 //     },
@@ -51,7 +51,7 @@
 //         organizationName,
 //         hospitalName,
 //         website,
-//         address,
+//         current_address,
 //         phone,
 //         secretkey
 //       });
@@ -139,8 +139,11 @@ export const userRegister = createAsyncThunk(
       organizationName,
       hospitalName,
       website,
-      address,
+      current_address,
       phone,
+      native_town,
+      nukh,
+      bloodGroup,
       secretkey,
     },
     { rejectWithValue }
@@ -154,9 +157,12 @@ export const userRegister = createAsyncThunk(
         organizationName,
         hospitalName,
         website,
-        address,
+        current_address,
         phone,
         secretkey,
+        nukh,
+        bloodGroup,
+        native_town,
       });
       if (data?.success) {
         alert("User Registered Successfully");
