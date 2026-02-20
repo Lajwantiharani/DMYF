@@ -47,4 +47,5 @@ router.get(
   authMiddleware,
   getOrgnaisationForHospitalController
 );
+
 module.exports = router;

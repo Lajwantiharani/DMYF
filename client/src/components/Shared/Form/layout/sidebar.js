@@ -1,141 +1,143 @@
 import React from "react";
+import { FaTimes } from "react-icons/fa";
 import { useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import "../../../../Styles/layout.css"; // Importing the CSS file
 
-const Sidebar = () => {
-  //GET USER STATE
+const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector((state) => state.auth);
-
   const location = useLocation();
 
-  return (
-    <div>
-      <div className="sidebar">
-        <div className="menu">
-          {user?.role === "organization" && (
-            <>
-              <div
-                className={`menu-item ${location.pathname === "/" && "active"}`}
-              >
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/">Inventory</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/donor" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-hand-holding-medical"></i>
-                <Link to="/donor">Donor</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/hospital" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-hospital"></i>
-                <Link to="/hospital">Hospital</Link>
-              </div>
-            </>
-          )}
-          {user?.role === "admin" && (
-            <>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/donor-list" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/donor-list">Donor List</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/receiver-list" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/receiver-list">Receiver List</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/hospital-list" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-hand-holding-medical"></i>
-                <Link to="/hospital-list">Hospital List</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/org-list" && "active"
-                }`}
-              >
-                <i className="fa-solid fa-hospital"></i>
-                <Link to="/org-list">Organization List</Link>
-              </div>
-            </>
-          )}
-          {(user?.role === "donor" || user?.role === "hospital") && (
-            <div
-              className={`menu-item ${
-                location.pathname === "/organization" && "active"
-              }`}
-            >
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/organization">Organization</Link>
-            </div>
-          )}
-          {user?.role === "hospital" && (
-            <div
-              className={`menu-item ${
-                location.pathname === "/consumer" && "active"
-              }`}
-            >
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/consumer">Consumer</Link>
-            </div>
-          )}
-          {user?.role === "donor" && (
-            <>
-              <div
-                className={`menu-item ${location.pathname === "/" && "active"}`}
-              >
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/">Inventory</Link>
-              </div>
-              <div
-                className={`menu-item ${
-                  location.pathname === "/donation" && "active"
-                }`}
-              >
-                <i className="fa-sharp fa-solid fa-building-ngo"></i>
-                <Link to="/donation">Donation</Link>
-              </div>
-            </>
-          )}
-             {user?.role === "receiver" && (
-            
-              <div
-                className={`menu-item ${location.pathname === "/" && "active"}`}
-              >
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/">Inventory</Link>
-              </div>
-)}
+  const handleMenuItemClick = (path) => {
+    // Prevent closing sidebar when navigating to Analytics
+    if (isSidebarOpen && path !== "/analytics") {
+      toggleSidebar();
+    }
+  };
 
-          {/* {/* /* {userMenu.map((menu) => {
-            const isActive = location.pathname === menu.path;
-            return (
-              <div
-                className={`menu-item ${isActive && "active"}`}
-                key={menu.name}
-              >
-                <i className={menu.icon}></i>
-                <Link to={menu.path}>{menu.name}</Link>
-              </div>
-            );
-          })} */ } 
-        </div>
+  const renderMenuItem = (path, iconClass, label) => (
+    <div className={`menu-item ${location.pathname === path ? "active" : ""}`}>
+      <i className={iconClass}></i>
+      <Link to={path} onClick={() => handleMenuItemClick(path)}>
+        {label}
+      </Link>
+    </div>
+  );
+
+  return (
+    <div className={`sidebar ${isSidebarOpen ? "active" : ""}`}>
+      <div className="navbar-brand">Blood Bank App</div>
+      <button className="close-icon" onClick={toggleSidebar}>
+        <FaTimes />
+      </button>
+      <div className="menu">
+        {user?.role === "organization" && (
+          <>
+            {renderMenuItem("/", "fa-solid fa-warehouse", "Inventory")}
+            {renderMenuItem(
+              "/donor",
+              "fa-solid fa-hand-holding-medical",
+              "Donor"
+            )}
+            {renderMenuItem(
+              "/receiver-list",
+              "fa-solid fa-warehouse",
+              "Receiver List"
+            )}
+            {renderMenuItem(
+              "/analytics",
+              "fa-solid fa-chart-line",
+              "Analytics"
+            )}
+          </>
+        )}
+
+        {user?.role === "admin" && (
+          <>
+            {renderMenuItem(
+              "/donor-list",
+              "fa-solid fa-warehouse",
+              "Donor List"
+            )}
+            {renderMenuItem(
+              "/receiver-list",
+              "fa-solid fa-warehouse",
+              "Receiver List"
+            )}
+            {renderMenuItem(
+              "/org-list",
+              "fa-solid fa-hospital",
+              "Organization List"
+            )}
+            {renderMenuItem(
+              "/analytics",
+              "fa-solid fa-chart-line",
+              "Analytics"
+            )}
+          </>
+        )}
+
+        {(user?.role === "donor" || user?.role === "hospital") &&
+          renderMenuItem(
+            "/organization",
+            "fa-sharp fa-solid fa-building-ngo",
+            "Organization"
+          )}
+
+        {user?.role === "hospital" && (
+          <>
+            {renderMenuItem(
+              "/consumer",
+              "fa-sharp fa-solid fa-building-ngo",
+              "Consumer"
+            )}
+            {renderMenuItem(
+              "/analytics",
+              "fa-solid fa-chart-line",
+              "Analytics"
+            )}
+          </>
+        )}
+
+        {user?.role === "donor" && (
+          <>
+            {renderMenuItem("/", "fa-solid fa-warehouse", "Inventory")}
+            {renderMenuItem(
+              "/receiver-list",
+              "fa-solid fa-warehouse",
+              "Receiver List"
+            )}
+            {renderMenuItem(
+              "/donation",
+              "fa-sharp fa-solid fa-building-ngo",
+              "Donation"
+            )}
+            {renderMenuItem(
+              "/analytics",
+              "fa-solid fa-chart-line",
+              "Analytics"
+            )}
+          </>
+        )}
+
+        {user?.role === "receiver" && (
+          <>
+            {renderMenuItem(
+              "/donor-list",
+              "fa-solid fa-warehouse",
+              "Donor List"
+            )}
+            {renderMenuItem(
+              "/org-list",
+              "fa-solid fa-hospital",
+              "Organization List"
+            )}
+            {renderMenuItem(
+              "/analytics",
+              "fa-solid fa-chart-line",
+              "Analytics"
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getCurrentUser, userLogin, userRegister } from "./authActions";
+import {
+  getCurrentUser,
+  userLogin,
+  userRegister,
+  verifyOTP,
+} from "./authActions";
 
 const token = localStorage.getItem("token")
   ? localStorage.getItem("token")
@@ -10,6 +15,7 @@ const initialState = {
   user: null,
   token,
   error: null,
+  tempUserId: null,
 };
 
 const authSlice = createSlice({
@@ -38,9 +44,23 @@ const authSlice = createSlice({
     });
     builder.addCase(userRegister.fulfilled, (state, { payload }) => {
       state.loading = false;
-      state.user = payload.user;
+      state.tempUserId = payload.tempUserId;
     });
     builder.addCase(userRegister.rejected, (state, { payload }) => {
+      state.loading = false;
+      state.error = payload;
+    });
+    // OTP verification
+    builder.addCase(verifyOTP.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(verifyOTP.fulfilled, (state, { payload }) => {
+      state.loading = false;
+      state.user = payload.user;
+      state.tempUserId = null;
+    });
+    builder.addCase(verifyOTP.rejected, (state, { payload }) => {
       state.loading = false;
       state.error = payload;
     });

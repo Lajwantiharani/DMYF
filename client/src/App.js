@@ -1,8 +1,12 @@
 import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+
 import HomePage from "./pages/HomePage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import VerifyOTP from "./pages/auth/VerifyOTP";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
@@ -11,32 +15,19 @@ import Hospital from "./pages/Dashboard/Hospital";
 import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 import Consumer from "./pages/Dashboard/Consumer";
 import Donation from "./pages/Dashboard/Donation";
-import Analytics from "./pages/Dashboard/Analytics";
+
 import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-
-
 import ReceiverList from "./pages/Admin/ReceiverList";
 import Receiver from "./pages/Admin/Receiver";
 
-
-
 function App() {
-  
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/receiver-list"
           element={
@@ -69,7 +60,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/hospital-list"
           element={
@@ -78,7 +68,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/org-list"
           element={
@@ -137,6 +126,9 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-otp/:token" element={<VerifyOTP />} />
       </Routes>
     </div>
   );
