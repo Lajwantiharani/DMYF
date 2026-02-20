@@ -1,88 +1,73 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import API from "../../../services/API";
-//import { toast } from "react-toastify";
+import API from "../../../services/API"; // Correct path
 
-// User Login
+// Login user
 export const userLogin = createAsyncThunk(
   "auth/login",
-  async ({ role, email, password }, { rejectWithValue }) => {
+  async (formInputs, { rejectWithValue }) => {
     try {
-      const { data } = await API.post("/auth/login", { role, email, password });
+      const { data } = await API.post("/auth/login", formInputs);
       if (data.success) {
-      alert(data.message);
         localStorage.setItem("token", data.token);
-        window.location.replace("/"); // Or use navigate from react-router-dom
+        return data;
       }
-      return data;
+      return rejectWithValue(data.message);
     } catch (error) {
-      if (error.response && error.response.data.message) {
-        return rejectWithValue(error.response.data.message);
-      } else {
-        return rejectWithValue(error.message);
-      }
+      return rejectWithValue(error.response?.data?.message || "Login failed");
     }
   }
 );
 
-// User Registration
+// Register user
 export const userRegister = createAsyncThunk(
   "auth/register",
-  async (
-    {
-      name,
-      role,
-      email,
-      password,
-      organizationName,
-      hospitalName,
-      website,
-      address,
-      phone,
-    },
-    { rejectWithValue }
-  ) => {
+  async (formInputs, { rejectWithValue }) => {
     try {
-      const { data } = await API.post("/auth/register", {
-        name,
-        role,
-        email,
-        password,
-        organizationName,
-        hospitalName,
-        website,
-        address,
-        phone
-      });
-      if (data?.success) {
-        alert("User Registerd Successfully");
-        window.location.replace("/login");
-       // toast.success("User Registerd Successfully");
+      const { data } = await API.post("/auth/register", formInputs);
+      if (data.success) {
+        return { tempUserId: data.user?.id, token: data.token };
       }
+      return rejectWithValue(data.message);
     } catch (error) {
-      console.log(error);
-      if (error.response && error.response.data.message) {
-        return rejectWithValue(error.response.data.message);
-      } else {
-        return rejectWithValue(error.message);
-      }
+      return rejectWithValue(
+        error.response?.data?.message || "Registration failed"
+      );
     }
   }
 );
 
-// Get Current User
+// Verify OTP
+export const verifyOTP = createAsyncThunk(
+  "auth/verifyOTP",
+  async ({ token, otp }, { rejectWithValue }) => {
+    try {
+      const { data } = await API.post(`/auth/verify-otp/${token}`, { otp });
+      if (data.success) {
+        return { user: data.user };
+      }
+      return rejectWithValue(data.message);
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "OTP verification failed"
+      );
+    }
+  }
+);
+
+// Get current user
 export const getCurrentUser = createAsyncThunk(
   "auth/getCurrentUser",
-  async ({ rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get("/auth/current-user");
-      return res?.data;
-    } catch (error) {
-      console.log(error);
-      if (error.response && error.response.data.message) {
-        return rejectWithValue(error.response.data.message);
-      } else {
-        return rejectWithValue(error.message);
+      const { data } = await API.get("/auth/current-user");
+      if (data.success) {
+        return { user: data.user };
       }
+      return rejectWithValue(data.message);
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch user"
+      );
     }
   }
 );

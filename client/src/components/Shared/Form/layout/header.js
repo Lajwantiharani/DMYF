@@ -31,7 +31,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
           <ul className="navbar-nav flex-row">
             <li className="nav-item mx-3 d-flex align-items-center">
               <p className="nav-link mb-0">
-               Welcome{" "}
+                Welcome{" "}
                 {user?.name || user?.hospitalName || user?.organizationName} 
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>

@@ -1,65 +1,84 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    role: {
-      type: String,
-      required: [true, "role is required"],
-      enum: ["admin", "organization", "donor", "hospital","receiver"],
-    },
     name: {
       type: String,
-      required: function () {
-        if (this.role === "user" || this.role === "admin") {
-          return true;
-        }
-        return false;
-      },
-    },
-    organizationName: {
-      type: String,
-      required: function () {
-        if (this.role === "organization") {
-          return true;
-        }
-        return false;
-      },
-    },
-    hospitalName: {
-      type: String,
-      required: function () {
-        if (this.role === "hospital") {
-          return true;
-        }
-        return false;
-      },
+      required: [true, "Please provide name"],
+      trim: true,
     },
     email: {
       type: String,
-      require: [true, "email is required"],
+      required: [true, "Please provide email"],
       unique: true,
+      lowercase: true,
     },
     password: {
       type: String,
-      required: [true, "password is required"],
+      required: [true, "Please provide password"],
+      minlength: 6,
+    },
+    role: {
+      type: String,
+      enum: ["donor", "admin", "hospital", "organization"],
+      required: [true, "Please provide role"],
+    },
+    organizationName: {
+      type: String,
+      default: "",
+    },
+    hospitalName: {
+      type: String,
+      default: "",
     },
     website: {
       type: String,
+      default: "",
     },
     address: {
       type: String,
-      required: [true, "address is required"],
+      default: "",
     },
     phone: {
       type: String,
-      required: [false, "phone number  is required"],
-      //not working for true
+      default: "",
+    },
+    otp: {
+      type: String, // Store the OTP as a string
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }
 );
 
-//login call back
+// Hash password before saving
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
 
-const loginController = () => {};
-module.exports = mongoose.model("users", userSchema);
+// Method to compare password
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+module.exports = mongoose.model("User", userSchema);
