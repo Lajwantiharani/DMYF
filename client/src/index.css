@@ -20,7 +20,16 @@
   justify-content: center;
   min-height: 100vh;
 }
-
+.form-group input {
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 16px;
+}
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
 /* loader */
 
 .loader-container {
