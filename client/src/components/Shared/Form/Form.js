@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import InputType from "./InputType";
 import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   // Destructure props here
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
@@ -32,7 +34,8 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               hospitalName,
               website,
               address,
-              phone
+              phone,
+              navigate,
             );
         }}
       >

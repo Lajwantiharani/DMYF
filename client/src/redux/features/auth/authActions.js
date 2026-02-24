@@ -9,7 +9,7 @@ export const userLogin = createAsyncThunk(
     try {
       const { data } = await API.post("/auth/login", { role, email, password });
       if (data.success) {
-      alert(data.message);
+        alert(data.message);
         localStorage.setItem("token", data.token);
         window.location.replace("/"); // Or use navigate from react-router-dom
       }
@@ -21,7 +21,7 @@ export const userLogin = createAsyncThunk(
         return rejectWithValue(error.message);
       }
     }
-  }
+  },
 );
 
 // User Registration
@@ -39,7 +39,7 @@ export const userRegister = createAsyncThunk(
       address,
       phone,
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const { data } = await API.post("/auth/register", {
@@ -51,12 +51,17 @@ export const userRegister = createAsyncThunk(
         hospitalName,
         website,
         address,
-        phone
+        phone,
       });
       if (data?.success) {
-        alert("User Registerd Successfully");
-        window.location.replace("/login");
-       // toast.success("User Registerd Successfully");
+        alert("User Registered Successfully! Please verify your email.");
+        // Redirect to verify OTP page with email
+        setTimeout(() => {
+          window.location.href = `/verify-otp?email=${encodeURIComponent(email)}`;
+        }, 500);
+        return data;
+      } else {
+        return rejectWithValue(data.message || "Registration failed");
       }
     } catch (error) {
       console.log(error);
@@ -66,7 +71,7 @@ export const userRegister = createAsyncThunk(
         return rejectWithValue(error.message);
       }
     }
-  }
+  },
 );
 
 // Get Current User
@@ -84,5 +89,5 @@ export const getCurrentUser = createAsyncThunk(
         return rejectWithValue(error.message);
       }
     }
-  }
+  },
 );

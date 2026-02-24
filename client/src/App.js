@@ -1,8 +1,9 @@
 import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route,} from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import VerifyOTP from "./pages/auth/VerifyOTP";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
@@ -17,14 +18,10 @@ import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
 
-
-import ReceiverList from "./pages/Admin/ReceiverList";
+import ReceiverList from "./pages/Admin/ReceiverLIst";
 import Receiver from "./pages/Admin/Receiver";
 
-
-
 function App() {
-  
   return (
     <div className="App">
       <ToastContainer />
@@ -127,14 +124,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>

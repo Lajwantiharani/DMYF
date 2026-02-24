@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: [true, "role is required"],
-      enum: ["admin", "organization", "donor", "hospital","receiver"],
+      enum: ["admin", "organization", "donor", "hospital", "receiver"],
     },
     name: {
       type: String,
@@ -55,11 +55,20 @@ const userSchema = new mongoose.Schema(
       required: [false, "phone number  is required"],
       //not working for true
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpires: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-//login call back
-
-const loginController = () => {};
 module.exports = mongoose.model("users", userSchema);
