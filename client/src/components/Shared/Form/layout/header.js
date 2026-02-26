@@ -30,7 +30,7 @@ const location = useLocation();
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>
             </li>
-            {location.pathname === "/" ||
+            {location.pathname === "" ||
             location.pathname === "/donor" ||
             location.pathname === "/hospital" ||
             location.pathname === "/admin" ||

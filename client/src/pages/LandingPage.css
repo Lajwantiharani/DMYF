@@ -1,0 +1,394 @@
+/* Fonts - Adding Poppins for a modern look */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    color: #333;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/***** Navbar ******/
+.navbar-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 30px;
+    background: rgba(236, 110, 110, 0.95);
+    /* Semi-transparent base */
+    backdrop-filter: blur(10px);
+    /* Glassmorphism */
+    border-radius: 50px;
+    width: 90%;
+    max-width: 1200px;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.navbar-container .logo img {
+    width: 45px;
+    height: auto;
+}
+
+.logo-text {
+    font-weight: 700;
+    color: #fff;
+    /* White text for better contrast on red */
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Navbar */
+@media (max-width: 768px) {
+    .navbar-container {
+        width: 95%;
+        padding: 10px 20px;
+        top: 10px;
+    }
+
+    .logo-text {
+        font-size: 1.2rem;
+    }
+
+    .navbar-container .logo img {
+        width: 35px;
+    }
+}
+
+/***** Hero Section *****/
+.donate-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 140px 10% 60px;
+    /* Top padding to account for fixed navbar */
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 50px;
+    min-height: 90vh;
+    /* Full viewport height feel */
+}
+
+.donate-text {
+    flex: 1;
+    max-width: 600px;
+}
+
+.donate-text h3 {
+    color: #D32F2F;
+    /* Professional vibrant red */
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.donate-text h1 {
+    color: #2c3e50;
+    font-size: 3rem;
+    line-height: 1.2;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+.donate-text p {
+    color: #555;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    text-align: justify;
+}
+
+.donate-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.donate-image img {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
+}
+
+.donate-image img:hover {
+    transform: scale(1.02);
+}
+
+/* Register Button */
+.register-link-container {
+    display: inline-block;
+}
+
+.register-link-container #donate-button {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    /* Modern gradient */
+    color: white;
+    text-decoration: none;
+    padding: 12px 35px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+}
+
+.register-link-container #donate-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
+    background: linear-gradient(135deg, #ff4b2b, #ff416c);
+}
+
+/* Mobile Hero */
+@media (max-width: 900px) {
+    .donate-section {
+        flex-direction: column-reverse;
+        /* Image on top on mobile */
+        padding: 100px 5% 40px;
+        text-align: center;
+    }
+
+    .donate-text h1 {
+        font-size: 2.2rem;
+        text-align: center;
+    }
+
+    .donate-text h3 {
+        text-align: center;
+    }
+
+    .donate-text p {
+        text-align: center;
+        /* Better readability on mobile than justify */
+    }
+
+    .donate-image {
+        margin-bottom: 40px;
+    }
+
+    .register-link-container {
+        display: block;
+        /* Make block to center properly if needed */
+        margin-top: 20px;
+    }
+}
+
+/***** Mission Section *****/
+.mission {
+    background-color: #f9f9f9;
+    padding: 80px 10%;
+    text-align: center;
+}
+
+.mission-text {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.mission-text h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.mission-text #black-text {
+    color: #333;
+}
+
+.mission-text #red-text {
+    color: #D32F2F;
+}
+
+.mission-text p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    text-align: center;
+}
+
+/***** Blood Type Section *****/
+.blood-type-heading {
+    padding-top: 60px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.blood-type-heading h1 {
+    color: #2c3e50;
+    font-size: 2.2rem;
+    position: relative;
+    display: inline-block;
+}
+
+.blood-type-heading h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #D32F2F;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+/* TABLE FIXES - ROBUST */
+.blood-type {
+    padding: 0 10% 80px;
+    width: 100%;
+    /* Ensure scrolling on mobile */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Target ID explicitly to override any confusion */
+#table {
+    width: 100%;
+    min-width: 600px;
+    /* Force it to NOT collapse on mobile, triggering scroll */
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+#table thead {
+    display: table-header-group !important;
+}
+
+#table tbody {
+    display: table-row-group !important;
+}
+
+#table tr {
+    display: table-row !important;
+}
+
+#table th {
+    background-color: #D32F2F;
+    color: white;
+    padding: 20px;
+    /* Generous padding */
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+    border-bottom: 2px solid #b71c1c;
+    /* Prevent sticky behavior if it persisted */
+    position: static !important;
+    white-space: nowrap;
+}
+
+#table td {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    color: #555;
+    text-align: center;
+    font-weight: 500;
+    position: static !important;
+    white-space: nowrap;
+}
+
+#table tbody tr:hover {
+    background-color: #fff5f5;
+}
+
+/* Mobile Table Adjustments */
+@media (max-width: 768px) {
+    .blood-type {
+        padding: 0 5% 60px;
+    }
+
+    #table th,
+    #table td {
+        padding: 14px 10px;
+        font-size: 0.95rem;
+    }
+}
+
+/***** Footer ******/
+.footer {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 40px 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    /* Allow wrapping on mobile */
+    gap: 20px;
+}
+
+.footer .logo {
+    display: flex;
+    align-items: center;
+}
+
+.footer .logo img {
+    width: 40px;
+    margin-right: 15px;
+}
+
+.footer #logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.facebook-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.facebook-info a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #3b5998;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.facebook-info a:hover {
+    transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+    .footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 5%;
+    }
+
+    .footer .logo {
+        margin-bottom: 10px;
+    }
+}

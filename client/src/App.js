@@ -1,6 +1,6 @@
 import "./App.css";
 import { Routes, Route,} from "react-router-dom";
-import HomePage from "./pages/HomePage";
+
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyOTP from "./pages/auth/VerifyOTP";
@@ -20,6 +20,8 @@ import AdminHome from "./pages/Admin/AdminHome";
 
 import ReceiverList from "./pages/Admin/ReceiverLIst";
 import Receiver from "./pages/Admin/Receiver";
+import LandingPage from "./pages/LandingPage";
+import HomePage from "./pages/HomePage";
 
 function App() {
   return (
@@ -124,8 +126,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
