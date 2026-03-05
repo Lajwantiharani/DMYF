@@ -1,13 +1,14 @@
 import { userLogin, userRegister } from '../redux/features/auth/authActions';
 import store from '../redux/store';
+import { toast } from "react-toastify";
 
-export const handleLogin = (e, email, password, role) => {
+export const handleLogin = (e, email, password) => {
   e.preventDefault();
   try {
-    if (!role || !email || !password) {
-      return alert("Please Privde All Feilds");
+    if (!email || !password) {
+      return toast.error("Please provide all fields");
     }
-    store.dispatch(userLogin({ email, password, role }));
+    store.dispatch(userLogin({ email, password }));
   } catch (error) {
     console.log(error);
   }

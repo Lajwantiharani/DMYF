@@ -6,12 +6,14 @@ import Layout from "../components/Shared/Form/layout/layout";
 import Modal from "../components/Shared/Form/modal/Modal";
 import API from "../services/API";
 import moment from "moment";
+import { toast } from "react-toastify";
 
 const HomePage = () => {
   const { loading, error,user } = useSelector((state) => state.auth); // Redux state for loading and error
   const [data, setData] = useState([]); // State for inventory data
   const [fetchError, setFetchError] = useState(null); // State for fetch errors
 const navigate = useNavigate()
+
   const getBloodRecords = async () => {
     try {
       const response = await API.get("/inventory/get-inventory");
@@ -31,12 +33,23 @@ const navigate = useNavigate()
     getBloodRecords();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      navigate("/analytics");
+    }
+    if (user?.role === "receiver") {
+      navigate("/receiver");
+    }
+  }, [navigate, user?.role]);
+
   return (
     <Layout>
-      {(user?.role === "admin" && navigate("/admin")) &&
-        (user?.role === "receiver" && navigate("/receiver"))}
-      {/* Error Message */}
-      {error && <span>{alert(error)}</span>}
       {fetchError && <div className="alert alert-danger">{fetchError}</div>}
 
       {/* Loading State */}
@@ -54,31 +67,33 @@ const navigate = useNavigate()
               <i className="fa-solid fa-plus text-success py-4"></i> Add
               Inventory
             </h4>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th scope="col">Blood Group</th>
-                  <th scope="col">Inventory Type</th>
-                  <th scope="col">Quantity</th>
-                  <th scope="col">Donor Email</th>
-                  <th scope="col">Time & Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.map((record) => (
-                  <tr key={record._id}>
-                    <td>{record.bloodGroup}</td>
-                    <td>{record.inventoryType}</td>
-                    <td>{record.quantity} (ML)</td>
-                    <td>{record.email}</td>
-                    <td>
-                      {moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}
-                    </td>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Blood Group</th>
+                    <th scope="col">Inventory Type</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Donor Email</th>
+                    <th scope="col">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <Modal />
+                </thead>
+                <tbody>
+                  {data?.map((record) => (
+                    <tr key={record._id}>
+                      <td>{record.bloodGroup}</td>
+                      <td>{record.inventoryType}</td>
+                      <td>{record.quantity} (ML)</td>
+                      <td>{record.email}</td>
+                      <td>
+                        {moment(record.createdAt).format("DD/MM/YYYY")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Modal onRecordCreated={getBloodRecords} />
           </div>
         </>
       )}
@@ -87,3 +102,4 @@ const navigate = useNavigate()
 };
 
 export default HomePage;
+

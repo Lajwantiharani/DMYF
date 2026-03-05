@@ -1,17 +1,17 @@
 import React from 'react';
 import { BiDonateBlood, BiUserCircle } from "react-icons/bi";
-import { useNavigate,useLocation ,Link} from 'react-router-dom';
- import {useSelector} from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { toast } from "react-toastify";
 
-const Header = () => {
-  const {user} = useSelector(state => state.auth);
-  const navigate = useNavigate(); 
-const location = useLocation();
-  // Logout handler
+const Header = ({ onToggleSidebar }) => {
+  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     localStorage.clear();
-    alert("Logout successfully");
-    navigate('/login'); 
+    toast.success("Logout successful");
+    navigate('/login');
   };
 
   return (
@@ -21,8 +21,16 @@ const location = useLocation();
           <div className="navbar-brand h1">
             <BiDonateBlood color="red" /> Blood Bank App
           </div>
-          <ul className="navbar-nav flex-row">
-            <li className="nav-item mx-3">
+          <button
+            type="button"
+            className="btn btn-outline-light sidebar-toggle-btn ms-auto"
+            onClick={onToggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <i className="fa-solid fa-bars"></i>
+          </button>
+          <ul className="navbar-nav flex-row dashboard-header-nav">
+            <li className="nav-item mx-3 welcome-item">
               <p className="nav-link">
                 <BiUserCircle /> Welcome{" "}
                 {user?.name || user?.hospitalName || user?.organizationName}
@@ -30,24 +38,8 @@ const location = useLocation();
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>
             </li>
-            {location.pathname === "" ||
-            location.pathname === "/donor" ||
-            location.pathname === "/hospital" ||
-            location.pathname === "/admin" ||
-            location.pathname === "/receiver" ? (
-              <li className="nav-item mx-3">
-                <Link to="/analytics" className="nav-link">
-                  Analytics
-                </Link>
-              </li>
-            ) : (
-              <li className="nav-item mx-3">
-                <Link to="/" className="nav-link">
-                  Home
-                </Link>
-              </li>
-            )}
-            <li className="nav-item mx-3">
+
+            <li className="nav-item mx-3 logout-item desktop-only-logout">
               <button className="btn btn-danger" onClick={handleLogout}>
                 Logout
               </button>

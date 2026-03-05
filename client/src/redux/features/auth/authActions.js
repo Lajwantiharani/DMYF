@@ -1,17 +1,37 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../services/API";
-//import { toast } from "react-toastify";
+import { toast } from "react-toastify";
+import {
+  isProfileComplete,
+  isProfileVerificationApproved,
+} from "../../../utils/profileCompletion";
 
 // User Login
 export const userLogin = createAsyncThunk(
   "auth/login",
-  async ({ role, email, password }, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const { data } = await API.post("/auth/login", { role, email, password });
+      const { data } = await API.post("/auth/login", { email, password });
       if (data.success) {
-        alert(data.message);
+        toast.success(data.message || "Login successful");
         localStorage.setItem("token", data.token);
-        window.location.replace("/"); // Or use navigate from react-router-dom
+
+        const userRole = data?.user?.role;
+        const redirectByRole = {
+          admin: "/analytics",
+          organization: "/inventory",
+          donor: "/inventory",
+          hospital: "/organization",
+          receiver: "/donor-list",
+        };
+        const profileComplete = isProfileComplete(data?.user);
+        const profileVerified = isProfileVerificationApproved(data?.user);
+        const nextPath =
+          profileComplete && profileVerified
+            ? redirectByRole[userRole] || "/inventory"
+            : "/profile";
+
+        window.location.replace(nextPath);
       }
       return data;
     } catch (error) {
@@ -54,7 +74,7 @@ export const userRegister = createAsyncThunk(
         phone,
       });
       if (data?.success) {
-        alert("User Registered Successfully! Please verify your email.");
+        toast.success("User registered successfully! Please verify your email.");
         // Redirect to verify OTP page with email
         setTimeout(() => {
           window.location.href = `/verify-otp?email=${encodeURIComponent(email)}`;

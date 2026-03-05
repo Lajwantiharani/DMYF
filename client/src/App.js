@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route,} from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -13,20 +13,34 @@ import OrganizationPage from "./pages/Dashboard/OrganizationPage";
 import Consumer from "./pages/Dashboard/Consumer";
 import Donation from "./pages/Dashboard/Donation";
 import Analytics from "./pages/Dashboard/Analytics";
+import Profile from "./pages/Dashboard/Profile";
+import Settings from "./pages/Dashboard/Settings";
 import DonorList from "./pages/Admin/DonorList";
 import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-
 import ReceiverList from "./pages/Admin/ReceiverLIst";
-import Receiver from "./pages/Admin/Receiver";
+import VerificationRequests from "./pages/Admin/VerificationRequests";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
+import ReceiverDashboard from "./pages/Dashboard/Receiver";
+import BloodRequests from "./pages/Dashboard/BloodRequests";
 
 function App() {
   return (
     <div className="App">
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        className="app-toast-container"
+        toastClassName="app-toast"
+        bodyClassName="app-toast-body"
+      />
       <Routes>
         <Route
           path="/analytics"
@@ -45,6 +59,14 @@ function App() {
           }
         />
         <Route
+          path="/verification-requests"
+          element={
+            <ProtectedRoute>
+              <VerificationRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute>
@@ -56,7 +78,7 @@ function App() {
           path="/receiver"
           element={
             <ProtectedRoute>
-              <Receiver />
+              <ReceiverDashboard />
             </ProtectedRoute>
           }
         />
@@ -68,7 +90,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/hospital-list"
           element={
@@ -77,7 +98,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/org-list"
           element={
@@ -131,6 +151,30 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/blood-requests"
+          element={
+            <ProtectedRoute>
+              <BloodRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

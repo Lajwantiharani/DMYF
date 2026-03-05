@@ -4,6 +4,73 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../client/src/utils/sendEmail");
 const generateOTP = require("../client/src/utils/generateOTP");
 
+const hasValue = (value) => typeof value === "string" && value.trim().length > 0;
+
+const getDisplayNameForRole = (user) => {
+  if (!user) return "";
+  if (user.role === "organization") return user.organizationName || "";
+  if (user.role === "hospital") return user.hospitalName || "";
+  return user.name || "";
+};
+
+const isProfileComplete = (user) => {
+  if (!user) return false;
+
+  const requiredFields = [
+    getDisplayNameForRole(user),
+    user.email,
+    user.phone,
+    user.city,
+    user.address,
+    user.bloodGroup,
+    user.nukh,
+    user.akaah,
+  ];
+
+  return requiredFields.every(hasValue);
+};
+
+const notifyAdminsForVerificationRequest = async (requestUser) => {
+  try {
+    const admins = await userModel.find({ role: "admin" }).select("email");
+    const adminEmails = admins
+      .map((admin) => admin?.email)
+      .filter((email) => hasValue(email));
+
+    if (!adminEmails.length) {
+      console.log("No admin email found for verification request notification");
+      return false;
+    }
+
+    const displayName = getDisplayNameForRole(requestUser) || "Unknown User";
+    const requestedAt = requestUser?.profileVerificationRequestedAt
+      ? new Date(requestUser.profileVerificationRequestedAt).toLocaleString()
+      : new Date().toLocaleString();
+
+    return await sendEmail({
+      to: adminEmails.join(","),
+      subject: "New Profile Verification Request - DMYVF",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #2c3e50;">New Verification Request Received</h2>
+          <p>A user has requested profile verification.</p>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Name</strong></td><td style="padding: 8px; border: 1px solid #eee;">${displayName}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?.email || ""}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Role</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?.role || ""}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?._id?.toString() || ""}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Requested At</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestedAt}</td></tr>
+          </table>
+          <p style="margin-top: 16px;">Please review this request in the admin panel.</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.log("Admin verification request notification failed:", error.message);
+    return false;
+  }
+};
+
 const registerController = async (req, res) => {
   try {
     const {
@@ -16,6 +83,7 @@ const registerController = async (req, res) => {
       address,
       phone,
       website,
+      bloodGroup,
     } = req.body;
 
     const existingUser = await userModel.findOne({ email });
@@ -47,6 +115,7 @@ const registerController = async (req, res) => {
       address,
       phone,
       website,
+      bloodGroup,
       isVerified: false,
       otp,
       otpExpires,
@@ -95,6 +164,15 @@ const registerController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    if (error?.name === "ValidationError") {
+      const firstErrorMessage =
+        Object.values(error.errors || {})[0]?.message || "Validation error";
+      return res.status(400).send({
+        success: false,
+        message: firstErrorMessage,
+        error: error.message,
+      });
+    }
     res.status(500).send({
       success: false,
       message: "Error in Register API",
@@ -111,13 +189,6 @@ const loginController = async (req, res) => {
       return res.status(404).send({
         success: false,
         message: "User not Registered!",
-      });
-    }
-    //check role
-    if (user.role !== req.body.role) {
-      return res.status(500).send({
-        success: false,
-        message: "role dosent match",
       });
     }
     //compare password
@@ -242,9 +313,209 @@ const verifyOTPController = async (req, res) => {
     });
   }
 };
+
+const updateProfileController = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone,
+      city,
+      address,
+      bloodGroup,
+      nukh,
+      akaah,
+      newPassword,
+      confirmPassword,
+    } = req.body;
+    let isPasswordUpdated = false;
+
+    const user = await userModel.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await userModel.findOne({
+        email,
+        _id: { $ne: user._id },
+      });
+      if (existingUser) {
+        return res.status(400).send({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+      user.email = email;
+    }
+
+    if (typeof name === "string") {
+      if (user.role === "organization") {
+        user.organizationName = name;
+      } else if (user.role === "hospital") {
+        user.hospitalName = name;
+      } else {
+        user.name = name;
+      }
+    }
+
+    if (typeof phone === "string") {
+      user.phone = phone;
+    }
+
+    if (typeof city === "string") {
+      user.city = city;
+    }
+
+    if (typeof address === "string") {
+      user.address = address;
+    }
+
+    if (typeof bloodGroup === "string") {
+      user.bloodGroup = bloodGroup;
+    }
+
+    if (typeof nukh === "string") {
+      user.nukh = nukh;
+    }
+
+    if (typeof akaah === "string") {
+      user.akaah = akaah;
+    }
+
+    if (newPassword || confirmPassword) {
+      if (!newPassword || !confirmPassword) {
+        return res.status(400).send({
+          success: false,
+          message: "Please enter both new password and confirm password",
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).send({
+          success: false,
+          message: "New password and confirm password do not match",
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).send({
+          success: false,
+          message: "New password must be at least 6 characters",
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      isPasswordUpdated = true;
+    }
+
+    await user.save();
+
+    if (isPasswordUpdated) {
+      const displayName =
+        user.name || user.organizationName || user.hospitalName || "User";
+
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Password Reset Successful - DMYVF",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+              <h2 style="color: #2c3e50;">Password Updated Successfully</h2>
+              <p>Hello ${displayName},</p>
+              <p>Your account password was changed successfully.</p>
+              <p>If you did not perform this action, please reset your password immediately and contact support.</p>
+              <hr style="border: none; border-top: 1px solid #eee;">
+              <p style="font-size: 12px; color: #777;">
+                &copy; ${new Date().getFullYear()} ${process.env.APP_NAME || "DMYVF"}.
+              </p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.log("Password reset email failed:", emailError.message);
+      }
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in profile update API",
+      error: error.message,
+    });
+  }
+};
+
+const requestProfileVerificationController = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).send({
+        success: false,
+        message: "Admin does not require profile verification",
+      });
+    }
+
+    if (!isProfileComplete(user)) {
+      return res.status(400).send({
+        success: false,
+        message: "Please complete all profile fields before requesting verification",
+      });
+    }
+
+    if (user.profileVerificationStatus === "approved") {
+      return res.status(200).send({
+        success: true,
+        message: "Your profile is already verified",
+        user,
+      });
+    }
+
+    user.profileVerificationStatus = "pending";
+    user.profileVerificationRequestedAt = new Date();
+    await user.save();
+
+    await notifyAdminsForVerificationRequest(user);
+
+    return res.status(200).send({
+      success: true,
+      message: "Verification request submitted successfully",
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error requesting profile verification",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   registerController,
   loginController,
   currentUserController,
   verifyOTPController,
+  updateProfileController,
+  requestProfileVerificationController,
 };
+
+
+

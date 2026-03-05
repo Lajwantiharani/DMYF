@@ -48,12 +48,36 @@ const userSchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: [true, "address is required"],
+      default: "",
     },
     phone: {
       type: String,
       required: [false, "phone number  is required"],
-      //not working for true
+    },
+    city: {
+      type: String,
+      default: "",
+    },
+    bloodGroup: {
+      type: String,
+      default: "",
+    },
+    nukh: {
+      type: String,
+      default: "",
+    },
+    akaah: {
+      type: String,
+      default: "",
+    },
+    profileVerificationStatus: {
+      type: String,
+      enum: ["not_requested", "pending", "approved", "rejected"],
+      default: "not_requested",
+    },
+    profileVerificationRequestedAt: {
+      type: Date,
+      default: null,
     },
     isVerified: {
       type: Boolean,

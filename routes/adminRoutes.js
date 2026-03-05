@@ -7,6 +7,13 @@ const {
   deleteDonorController,
   addReceiverController,
   getReceiverListController,
+  deleteReceiverController,
+  exportDonorsExcelController,
+  exportOrganizationsExcelController,
+  exportReceiversExcelController,
+  exportDonatedExcelController,
+  getPendingVerificationUsersController,
+  updateProfileVerificationStatusController,
 } = require("../controllers/adminController");
 const adminMiddleware = require("../middlewares/adminMiddleware");
 const { getHospitalController } = require("../controllers/inventoryController");
@@ -18,7 +25,6 @@ const router = express.Router();
 router.get(
   "/donor-list",
   authMiddleware,
-  adminMiddleware,
   getDonorsListController
 );
 
@@ -31,6 +37,49 @@ router.get(
 );
 
 router.get("/org-list", authMiddleware, adminMiddleware, getOrgListController);
+
+router.get(
+  "/donor-export",
+  authMiddleware,
+  adminMiddleware,
+  exportDonorsExcelController
+);
+
+router.get(
+  "/org-export",
+  authMiddleware,
+  adminMiddleware,
+  exportOrganizationsExcelController
+);
+
+router.get(
+  "/receiver-export",
+  authMiddleware,
+  adminMiddleware,
+  exportReceiversExcelController
+);
+
+router.get(
+  "/donated-export",
+  authMiddleware,
+  adminMiddleware,
+  exportDonatedExcelController
+);
+
+router.get(
+  "/pending-verification-users",
+  authMiddleware,
+  adminMiddleware,
+  getPendingVerificationUsersController
+);
+
+router.put(
+  "/profile-verification/:id",
+  authMiddleware,
+  adminMiddleware,
+  updateProfileVerificationStatusController
+);
+
 router.delete(
   "/delete-donor/:id",
   authMiddleware,
@@ -41,8 +90,14 @@ router.delete(
 router.get(
   "/receiver-list",
   authMiddleware,
-  adminMiddleware,
   getReceiverListController
+);
+
+router.delete(
+  "/delete-receiver/:id",
+  authMiddleware,
+  adminMiddleware,
+  deleteReceiverController
 );
 
 // ADD RECEIVER RECORD

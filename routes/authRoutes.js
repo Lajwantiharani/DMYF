@@ -4,6 +4,8 @@ const {
   loginController,
   currentUserController,
   verifyOTPController,
+  updateProfileController,
+  requestProfileVerificationController,
 } = require("../controllers/authController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -13,4 +15,10 @@ router.post("/register", registerController);
 router.post("/login", loginController);
 router.post("/verify-otp", verifyOTPController);
 router.get("/current-user", authMiddleware, currentUserController);
+router.put("/update-profile", authMiddleware, updateProfileController);
+router.post(
+  "/request-profile-verification",
+  authMiddleware,
+  requestProfileVerificationController
+);
 module.exports = router;

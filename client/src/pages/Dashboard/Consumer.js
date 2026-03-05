@@ -32,29 +32,31 @@ const [data, setData] = useState([]);
     <Layout>
         <div className='container mt-4'>
     
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Blood Group</th>
-            <th scope="col">Inventory Type</th>
-            <th scope="col">Quantity</th>
-            <th scope="col">Email</th>
-            <th scope="col">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.map((record) => (
-            <tr key={record._id}>
-              <td>{record.bloodGroup}</td>
-              <td>{record.inventoryType}</td>
-              <td>{record.quantity}</td>
-              <td>{record.email}</td>
-              
-              <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
+      <div className="table-responsive">
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Blood Group</th>
+              <th scope="col">Inventory Type</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Email</th>
+              <th scope="col">Date</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data?.map((record) => (
+              <tr key={record._id}>
+                <td>{record.bloodGroup}</td>
+                <td>{record.inventoryType}</td>
+                <td>{record.quantity}</td>
+                <td>{record.email}</td>
+                
+                <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
      </div>
     </Layout>
   );

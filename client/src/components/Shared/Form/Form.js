@@ -2,19 +2,14 @@ import React, { useState } from "react";
 import InputType from "./InputType";
 import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
-import { useNavigate } from "react-router-dom";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   // Destructure props here
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
   const [name, setName] = useState("");
   const [organizationName, setOrganization] = useState("");
-  const [hospitalName, setHospitalName] = useState("");
-  const [website, setWebsite] = useState("");
-  const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
 
   return (
@@ -22,93 +17,86 @@ const Form = ({ formType, submitBtn, formTitle }) => {
       <form
         onSubmit={(e) => {
           if (formType === "login")
-            return handleLogin(e, email, password, role);
+            return handleLogin(e, email, password);
           else if (formType === "register")
             return handleRegister(
               e,
-              name,
+              role === "organization" ? "" : name,
               role,
               email,
               password,
-              organizationName,
-              hospitalName,
-              website,
-              address,
+              role === "organization" ? organizationName : "",
+              "",
+              "",
+              "",
               phone,
-              navigate,
             );
         }}
       >
         <h1 className="text-center">{formTitle}</h1>
         <hr />
-        <div className="d-flex mb-3">
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="donorRadio"
-              value={"donor"}
-              onChange={(e) => setRole(e.target.value)}
-              defaultChecked
-            />
-            <label htmlFor="donorRadio" className="form-check-label">
-              Donor
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="adminRadio"
-              value={"admin"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="adminRadio" className="form-check-label">
-              Admin
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="hospitalRadio"
-              value={"hospital"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="hospitalRadio" className="form-check-label">
-              Hospital
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="organizationRadio"
-              value={"organization"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="organizationRadio" className="form-check-label">
-              Organization
-            </label>
-          </div>
-          <div className="form-check ms-2">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="role"
-              id="receiverRadio"
-              value={"receiver"}
-              onChange={(e) => setRole(e.target.value)}
-            />
-            <label htmlFor="receiverRadio" className="form-check-label">
-              Receiver
-            </label>
-          </div>
-        </div>
+        {formType === "register" && (
+          <>
+            <div className="auth-role-desktop d-flex mb-3">
+              <div className="form-check">
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  name="role"
+                  id="donorRadio"
+                  value={"donor"}
+                  onChange={(e) => setRole(e.target.value)}
+                  checked={role === "donor"}
+                />
+                <label htmlFor="donorRadio" className="form-check-label">
+                  Donor
+                </label>
+              </div>
+              <div className="form-check ms-2">
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  name="role"
+                  id="organizationRadio"
+                  value={"organization"}
+                  onChange={(e) => setRole(e.target.value)}
+                  checked={role === "organization"}
+                />
+                <label htmlFor="organizationRadio" className="form-check-label">
+                  Organization
+                </label>
+              </div>
+              <div className="form-check ms-2">
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  name="role"
+                  id="receiverRadio"
+                  value={"receiver"}
+                  onChange={(e) => setRole(e.target.value)}
+                  checked={role === "receiver"}
+                />
+                <label htmlFor="receiverRadio" className="form-check-label">
+                  Receiver
+                </label>
+              </div>
+            </div>
+
+            <div className="auth-role-mobile mb-3">
+              <label htmlFor="mobileRoleSelect" className="form-label">Select Role</label>
+              <select
+                id="mobileRoleSelect"
+                className="form-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="donor">Donor</option>
+                <option value="organization">Organization</option>
+                <option value="receiver">Receiver</option>
+              </select>
+            </div>
+          </>
+        )}
         {/* Conditional rendering based on formType */}
         {formType === "login" && (
           <>
@@ -149,7 +137,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {(role === "admin" || role === "donor" || role === "receiver") && (
+            {(role === "donor" || role === "receiver") && (
               <InputType
                 labelText={"Name"}
                 labelFor={"forName"}
@@ -170,33 +158,6 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setOrganization(e.target.value)}
               />
             )}
-            {role === "hospital" && (
-              <InputType
-                labelText={"Hospital Name"}
-                labelFor={"forHospitalName"}
-                inputType={"text"}
-                name={"hospitalName"}
-                value={hospitalName}
-                onChange={(e) => setHospitalName(e.target.value)}
-              />
-            )}
-
-            <InputType
-              labelText={"Website"}
-              labelFor={"forWebsite"}
-              inputType={"text"}
-              name={"website"}
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-            <InputType
-              labelText={"Address"}
-              labelFor={"forAddress"}
-              inputType={"text"}
-              name={"address"}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
             <InputType
               labelText={"Phone"}
               labelFor={"forPhone"}

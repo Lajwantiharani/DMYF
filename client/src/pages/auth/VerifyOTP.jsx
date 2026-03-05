@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../../services/API";
 import { toast } from "react-toastify";
+import "./Auth.css";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState("");
@@ -53,35 +54,46 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="row g-0">
-      <div className="col-md-8 form-banner">
-        <img src="./assets/images/banner2.jpg" alt="verify" />
-      </div>
-      <div className="col-md-4 form-container">
-        <form onSubmit={handleSubmit}>
-          <h1 className="text-center">Verify Email</h1>
-          <p className="text-center">Enter 6-digit code sent to {email}</p>
-
-          <div className="mb-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Enter OTP"
-              maxLength={6}
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-              required
-            />
+    <div className="auth-page auth-page--verify">
+      <div className="auth-shell">
+        <section className="auth-banner auth-banner--register" aria-hidden="true">
+          <div className="auth-banner__overlay" />
+          <div className="auth-banner__content">
+            <h1>Verify Your Email</h1>
+            <p>Enter the 6-digit code sent to your inbox to continue.</p>
           </div>
+        </section>
+        <section className="auth-panel">
+          <div className="auth-card">
+            <form onSubmit={handleSubmit}>
+              <h1 className="text-center">Verify OTP</h1>
+              <hr />
+              <p className="text-center mb-3">
+                Enter 6-digit code sent to {email}
+              </p>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-100"
-            disabled={loading}
-          >
-            {loading ? "Verifying..." : "Verify OTP"}
-          </button>
-        </form>
+              <div className="mb-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter OTP"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+                disabled={loading}
+              >
+                {loading ? "Verifying..." : "Verify OTP"}
+              </button>
+            </form>
+          </div>
+        </section>
       </div>
     </div>
   );

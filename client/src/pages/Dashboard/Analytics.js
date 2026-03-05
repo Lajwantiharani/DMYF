@@ -1,10 +1,11 @@
 import moment from "moment";
 import React, { useState, useEffect } from "react";
 import API from "../../services/API";
-import Header from "../../components/Shared/Form/layout/header";
+import Layout from "../../components/Shared/Form/layout/layout";
 const Analytics = () => {
   const [data, setData] = useState([]);
   const [inventoryData, setInventoryData] = useState([]);
+  const [totals, setTotals] = useState({ totalIn: 0, totalOut: 0, available: 0 });
   const colors = [
     "#884A39",
     "#C38154",
@@ -15,31 +16,14 @@ const Analytics = () => {
     "#FF0060",
     "#22A699",
   ];
-  //GET BLOOD GROUP DATA
-  const getBloodGroupData = async () => {
+
+  const getAnalyticsData = async () => {
     try {
-      const { data } = await API.get("/analytics/bloodGroups-data");
+      const { data } = await API.get("/analytics/dashboard-data");
       if (data?.success) {
         setData(data?.bloodGroupData);
-        // console.log(data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //lifrecycle method
-  useEffect(() => {
-    getBloodGroupData();
-  }, []);
-
-  //get function
-  const getBloodRecords = async () => {
-    try {
-      const { data } = await API.get("/inventory/get-recent-inventory");
-      if (data?.success) {
-        setInventoryData(data?.inventory);
-        console.log(data);
+        setInventoryData(data?.recentTransactions || []);
+        setTotals(data?.totals || { totalIn: 0, totalOut: 0, available: 0 });
       }
     } catch (error) {
       console.log(error);
@@ -47,11 +31,35 @@ const Analytics = () => {
   };
 
   useEffect(() => {
-    getBloodRecords();
+    getAnalyticsData();
   }, []);
+
   return (
-    <>
-      <Header />
+    <Layout>
+      <div className="container my-3">
+        <h3 className="mb-3">Analytics Summary</h3>
+        <div className="row g-3">
+          <div className="col-12 col-md-4">
+            <div className="card p-3">
+              <h6>Total IN</h6>
+              <h4>{totals.totalIn} ML</h4>
+            </div>
+          </div>
+          <div className="col-12 col-md-4">
+            <div className="card p-3">
+              <h6>Total OUT</h6>
+              <h4>{totals.totalOut} ML</h4>
+            </div>
+          </div>
+          <div className="col-12 col-md-4">
+            <div className="card p-3">
+              <h6>Total Available</h6>
+              <h4>{totals.available} ML</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="d-flex flex-row flex-wrap">
         {data?.map((record, i) => (
           <div
@@ -78,30 +86,32 @@ const Analytics = () => {
       </div>
       <div className="container my-3">
         <h1 className="my-3">Recent Blood Transactions</h1>
-        <table className="table ">
-          <thead>
-            <tr>
-              <th scope="col">Blood Group</th>
-              <th scope="col">Inventory Type</th>
-              <th scope="col">Quantity</th>
-              <th scope="col">Donor Email</th>
-              <th scope="col">TIme & Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventoryData?.map((record) => (
-              <tr key={record._id}>
-                <td>{record.bloodGroup}</td>
-                <td>{record.inventoryType}</td>
-                <td>{record.quantity} (ML)</td>
-                <td>{record.email}</td>
-                <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
+        <div className="table-responsive">
+          <table className="table ">
+            <thead>
+              <tr>
+                <th scope="col">Blood Group</th>
+                <th scope="col">Inventory Type</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Email</th>
+                <th scope="col">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {inventoryData?.map((record) => (
+                <tr key={record._id}>
+                  <td>{record.bloodGroup}</td>
+                  <td>{record.inventoryType}</td>
+                  <td>{record.quantity} (ML)</td>
+                  <td>{record.email}</td>
+                  <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </>
+    </Layout>
   );
 };
 
