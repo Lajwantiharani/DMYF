@@ -224,7 +224,7 @@ const Receiver = () => {
               className={`nav-link receiver-tab-btn ${activeTab === "request" ? "active" : ""}`}
               onClick={() => setActiveTab("request")}
             >
-              Request Availability
+              Make  a Request 
             </button>
           </li>
         </ul>

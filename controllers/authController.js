@@ -314,6 +314,149 @@ const verifyOTPController = async (req, res) => {
   }
 };
 
+const forgotPasswordRequestOtpController = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(200).send({
+        success: true,
+        message: "If this email exists, an OTP has been sent.",
+      });
+    }
+
+    const oneHourMs = 60 * 60 * 1000;
+    const now = Date.now();
+    const lastRequestedAt = user?.forgotPasswordRequestedAt
+      ? new Date(user.forgotPasswordRequestedAt).getTime()
+      : 0;
+
+    if (lastRequestedAt && now - lastRequestedAt < oneHourMs) {
+      const remainingMs = oneHourMs - (now - lastRequestedAt);
+      const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
+      return res.status(429).send({
+        success: false,
+        message: `You can request password reset only once per hour. Try again in ${remainingMinutes} minute(s).`,
+      });
+    }
+
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.forgotPasswordRequestedAt = new Date();
+    await user.save();
+
+    const clientBaseUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    const resetUrl = `${clientBaseUrl}/reset-password?email=${encodeURIComponent(email)}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Password Reset OTP - DMYVF",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #2c3e50;">Reset Your Password</h2>
+          <p>Use the OTP below to reset your password:</p>
+          <p style="font-size: 24px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0;">
+            ${otp}
+          </p>
+          <p>Or click this reset link:</p>
+          <p><a href="${resetUrl}" target="_blank" rel="noreferrer">${resetUrl}</a></p>
+          <p>This OTP expires in <strong>10 minutes</strong>.</p>
+          <p>For security, password reset can be requested only once per hour.</p>
+          <p>If you did not request this, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).send({
+      success: true,
+      message: "OTP sent to your email",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error sending password reset OTP",
+      error: error.message,
+    });
+  }
+};
+
+const resetForgotPasswordController = async (req, res) => {
+  try {
+    const { email, otp, newPassword, confirmPassword } = req.body;
+
+    if (!email || !otp || !newPassword || !confirmPassword) {
+      return res.status(400).send({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send({
+        success: false,
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).send({
+        success: false,
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.otp || String(user.otp).trim() !== String(otp).trim()) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    if (!user.otpExpires || user.otpExpires < new Date()) {
+      return res.status(400).send({
+        success: false,
+        message: "OTP has expired",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Password reset successful. You can now log in.",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error resetting password",
+      error: error.message,
+    });
+  }
+};
+
 const updateProfileController = async (req, res) => {
   try {
     const {
@@ -513,6 +656,8 @@ module.exports = {
   loginController,
   currentUserController,
   verifyOTPController,
+  forgotPasswordRequestOtpController,
+  resetForgotPasswordController,
   updateProfileController,
   requestProfileVerificationController,
 };

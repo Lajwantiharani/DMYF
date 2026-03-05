@@ -6,6 +6,29 @@ const sendEmail = require("../client/src/utils/sendEmail");
 const toDisplayName = (user) =>
   user?.name || user?.organizationName || user?.hospitalName || "User";
 
+const escapeRegex = (value = "") =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const normalizeCity = (value = "") =>
+  value.toLowerCase().replace(/[^a-z]/g, "");
+
+const cityAliasGroups = [
+  ["karachi", "khi"],
+  ["hyderabad", "hyd"],
+];
+
+const buildCityRegex = (inputCity = "") => {
+  const raw = String(inputCity || "").trim();
+  const normalized = normalizeCity(raw);
+
+  if (!normalized) return /.*/i;
+
+  const aliasGroup = cityAliasGroups.find((group) => group.includes(normalized));
+  const patterns = aliasGroup?.length ? aliasGroup : [raw];
+
+  return new RegExp(`(${patterns.map((item) => escapeRegex(item)).join("|")})`, "i");
+};
+
 const sendBloodRequestEmails = async ({
   receiver,
   targetUser,
@@ -126,7 +149,7 @@ const searchAvailabilityController = async (req, res) => {
       });
     }
 
-    const cityRegex = new RegExp(`^${city.trim()}$`, "i");
+    const cityRegex = buildCityRegex(city);
 
     const donors = await InventoryModel.aggregate([
       {
