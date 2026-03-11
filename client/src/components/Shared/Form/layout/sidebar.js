@@ -23,112 +23,123 @@ const Sidebar = ({ onNavigate }) => {
     navigate("/login");
   };
 
+  const renderMenuItem = (path, label, icon, condition = true) => {
+    if (!condition) return null;
+    const isActive = location.pathname === path;
+    const disabled = !canAccessOtherTabs && path !== "/profile";
+
+    const onClick = (e) => {
+      if (disabled) {
+        e.preventDefault();
+        toast.info("Please complete your profile first.");
+        return;
+      }
+      handleNavigate();
+    };
+
+    return (
+      <div
+        className={`menu-item ${isActive ? "active" : ""} ${
+          disabled ? "disabled" : ""
+        }`}
+      >
+        <i className={icon}></i>
+        <Link to={path} onClick={onClick} aria-disabled={disabled}>
+          {label}
+        </Link>
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="sidebar">
         <div className="menu">
-          {user && (
-            <div className={`menu-item ${location.pathname === "/profile" && "active"}`}>
-              <i className="fa-solid fa-user"></i>
-              <Link to="/profile" onClick={handleNavigate}>Profile</Link>
-            </div>
+          {user &&
+            renderMenuItem("/profile", "Profile", "fa-solid fa-user")}
+
+          {renderMenuItem(
+            "/inventory",
+            "Inventory",
+            "fa-solid fa-warehouse",
+            user?.role === "organization" || user?.role === "donor"
           )}
 
-          {canAccessOtherTabs && (
-            <>
-          {user?.role === "organization" && (
-            <>
-              <div className={`menu-item ${location.pathname === "/inventory" && "active"}`}>
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/inventory" onClick={handleNavigate}>Inventory</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/blood-requests" && "active"}`}>
-                <i className="fa-solid fa-droplet"></i>
-                <Link to="/blood-requests" onClick={handleNavigate}>Blood Requests</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/receiver-list" && "active"}`}>
-                <i className="fa-solid fa-list"></i>
-                <Link to="/receiver-list" onClick={handleNavigate}>Receiver List</Link>
-              </div>
-            </>
+          {renderMenuItem(
+            "/blood-requests",
+            "Blood Requests",
+            "fa-solid fa-droplet",
+            user?.role === "organization" || user?.role === "donor"
           )}
 
-          {user?.role === "admin" && (
-            <>
-              <div className={`menu-item ${location.pathname === "/donor-list" && "active"}`}>
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/donor-list" onClick={handleNavigate}>Donor List</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/receiver-list" && "active"}`}>
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/receiver-list" onClick={handleNavigate}>Receiver List</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/org-list" && "active"}`}>
-                <i className="fa-solid fa-hospital"></i>
-                <Link to="/org-list" onClick={handleNavigate}>Organization List</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/verification-requests" && "active"}`}>
-                <i className="fa-solid fa-circle-check"></i>
-                <Link to="/verification-requests" onClick={handleNavigate}>Verification Requests</Link>
-              </div>
-            </>
+          {renderMenuItem(
+            "/receiver-list",
+            "Receiver List",
+            "fa-solid fa-list",
+            user?.role === "organization" || user?.role === "admin"
           )}
 
-          {user?.role === "hospital" && (
-            <div className={`menu-item ${location.pathname === "/organization" && "active"}`}>
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/organization" onClick={handleNavigate}>Organization</Link>
-            </div>
+          {renderMenuItem(
+            "/donor-list",
+            "Donor List",
+            "fa-solid fa-warehouse",
+            user?.role === "admin"
           )}
 
-          {user?.role === "hospital" && (
-            <div className={`menu-item ${location.pathname === "/consumer" && "active"}`}>
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/consumer" onClick={handleNavigate}>Consumer</Link>
-            </div>
+          {renderMenuItem(
+            "/org-list",
+            "Organization List",
+            "fa-solid fa-hospital",
+            user?.role === "admin"
           )}
 
-          {user?.role === "donor" && (
-            <>
-              <div className={`menu-item ${location.pathname === "/inventory" && "active"}`}>
-                <i className="fa-solid fa-warehouse"></i>
-                <Link to="/inventory" onClick={handleNavigate}>Inventory</Link>
-              </div>
-              <div className={`menu-item ${location.pathname === "/blood-requests" && "active"}`}>
-                <i className="fa-solid fa-droplet"></i>
-                <Link to="/blood-requests" onClick={handleNavigate}>Blood Requests</Link>
-              </div>
-            </>
+          {renderMenuItem(
+            "/verification-requests",
+            "Verification Requests",
+            "fa-solid fa-circle-check",
+            user?.role === "admin"
           )}
 
-          {user?.role === "receiver" && (
-            <>
-              <div className={`menu-item ${location.pathname === "/receiver" && "active"}`}>
-                <i className="fa-solid fa-droplet"></i>
-                <Link to="/receiver" onClick={handleNavigate}>Blood Request</Link>
-              </div>
-            </>
+          {renderMenuItem(
+            "/organization",
+            "Organization",
+            "fa-sharp fa-solid fa-building-ngo",
+            user?.role === "hospital"
           )}
 
-          {user && user?.role !== "receiver" && (
-            <div className={`menu-item ${location.pathname === "/donation" && "active"}`}>
-              <i className="fa-sharp fa-solid fa-building-ngo"></i>
-              <Link to="/donation" onClick={handleNavigate}>Donated</Link>
-            </div>
+          {renderMenuItem(
+            "/consumer",
+            "Consumer",
+            "fa-sharp fa-solid fa-building-ngo",
+            user?.role === "hospital"
           )}
 
-          {user?.role === "admin" && (
-            <div className={`menu-item ${location.pathname === "/analytics" && "active"}`}>
-              <i className="fa-solid fa-chart-column"></i>
-              <Link to="/analytics" onClick={handleNavigate}>Analytics</Link>
-            </div>
+          {renderMenuItem(
+            "/receiver",
+            "Blood Request",
+            "fa-solid fa-droplet",
+            user?.role === "receiver"
           )}
 
-          {user && (
-            <div className={`menu-item ${location.pathname === "/settings" && "active"}`}>
-              <i className="fa-solid fa-gear"></i>
-              <Link to="/settings" onClick={handleNavigate}>Settings</Link>
-            </div>
+          {renderMenuItem(
+            "/donation",
+            "Donated",
+            "fa-sharp fa-solid fa-building-ngo",
+            user && user?.role !== "receiver"
+          )}
+
+          {renderMenuItem(
+            "/analytics",
+            "Analytics",
+            "fa-solid fa-chart-column",
+            user?.role === "admin"
+          )}
+
+          {renderMenuItem(
+            "/settings",
+            "Settings",
+            "fa-solid fa-gear",
+            !!user
           )}
 
           {user && (
@@ -142,8 +153,6 @@ const Sidebar = ({ onNavigate }) => {
                 Logout
               </button>
             </div>
-          )}
-            </>
           )}
         </div>
       </div>

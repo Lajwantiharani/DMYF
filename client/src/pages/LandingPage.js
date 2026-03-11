@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "./LandingPage.css";
 import Donate1 from "./Donate_1.png";
@@ -7,6 +7,25 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebookF } from "@fortawesome/free-brands-svg-icons";
 
 const LandingPage = () => {
+  const donateRef = useRef(null);
+  const footerRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
+  const closeMenu = () => setMenuOpen(false);
+
+  const scrollToSection = (ref) => {
+    if (ref?.current) {
+      const navbarOffset = 90; // accounts for the fixed navbar height
+      const yPos =
+        ref.current.getBoundingClientRect().top +
+        window.pageYOffset -
+        navbarOffset;
+      window.scrollTo({ top: yPos, behavior: "smooth" });
+    }
+    closeMenu();
+  };
+
   return (
     <>
       <div className="navbar-container">
@@ -14,25 +33,61 @@ const LandingPage = () => {
           <img src={logo} alt="Logo" />
           <span className="logo-text">DHAT Blood Bank</span>
         </div>
+
+        <button
+          className={`menu-toggle ${menuOpen ? "open" : ""}`}
+          aria-label="Toggle navigation menu"
+          onClick={toggleMenu}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        <div className={`nav-links ${menuOpen ? "show" : ""}`}>
+          <div className="nav-card">
+            <div className="nav-links-header">
+              <span>Menu</span>
+              <button className="close-btn" onClick={closeMenu} aria-label="Close menu">
+                {"\u00D7"}
+              </button>
+            </div>
+            <button type="button" onClick={() => scrollToSection(donateRef)}>
+              Home
+            </button>
+            <button type="button" onClick={() => scrollToSection(footerRef)}>
+              Contact Us
+            </button>
+            <Link to="/login" className="login-link" onClick={closeMenu}>
+              Login
+            </Link>
+          </div>
+        </div>
+        <div
+          className={`nav-backdrop ${menuOpen ? "show" : ""}`}
+          onClick={closeMenu}
+          aria-hidden="true"
+        />
       </div>
 
       {/* Donate Section */}
       <div>
         <div
           className="donate-section"
+          ref={donateRef}
           style={{ textAlign: "center", margin: "auto" }}
         >
           <div className="donate-text">
             <h3>Welcome to DHAT Blood Bank</h3>
-            <h1>Be a hero in someone’s story - donate blood today.</h1>
+            <h1>Be a hero in someone's story - donate blood today.</h1>
             <p style={{ textAlign: "justify" }}>
               Did you know that every two seconds, someone needs blood?
               Surprisingly, only 3% of eligible people donate. Your donation
               helps in emergencies, surgeries, and treatments for illnesses like
               cancer. Imagine, a single car crash victim might need 100 units of
-              blood! Join the movement – over 117 million people donate each
+              blood! Join the movement - over 117 million people donate each
               year, making a huge impact. Your simple act can be a lifeline for
-              someone in need. Give the gift of life – be a blood donor and make
+              someone in need. Give the gift of life - be a blood donor and make
               a difference!
             </p>
             {/* Register Now Link Inside Donate Section */}
@@ -122,13 +177,17 @@ const LandingPage = () => {
       </div>
 
       {/* Footer */}
-      <div className="footer">
+      <div className="footer" ref={footerRef}>
         <div className="logo">
           <img src={logo} alt="Logo" />
           <span id="logo-text">DMYF</span>
         </div>
         <div className="facebook-info">
-          <a href="https://www.facebook.com/Pak.DMYF" target="_blank" rel="noopener noreferrer">
+          <a
+            href="https://www.facebook.com/Pak.DMYF"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <FontAwesomeIcon icon={faFacebookF} className="facebook-icon" />
           </a>
           Follow us on Facebook for updates!

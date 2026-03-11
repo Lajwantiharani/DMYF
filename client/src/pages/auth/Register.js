@@ -1,11 +1,18 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import Form from "../../components/Shared/Form/Form";
-import Spinner from "../../components/Shared/Form/Spinner";
 import "./Auth.css";
 
 const Register = () => {
   const { loading, error } = useSelector((state) => state.auth);
+
+  if (loading) {
+    return (
+      <div className="auth-loading-overlay">
+        <div className="auth-loading-spinner" aria-label="Loading" />
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page auth-page--register">
@@ -22,13 +29,7 @@ const Register = () => {
           <div className="auth-card">
             {error && <div className="auth-alert">{error}</div>}
 
-            {loading ? (
-              <div className="auth-spinner-wrap">
-                <Spinner />
-              </div>
-            ) : (
-              <Form formTitle="Register" submitBtn="Register" formType="register" />
-            )}
+            <Form formTitle="Register" submitBtn="Register" formType="register" />
           </div>
         </section>
       </div>

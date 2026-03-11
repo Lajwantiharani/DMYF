@@ -67,6 +67,21 @@
   color: #8f0f18;
 }
 
+.menu-item.disabled {
+  background: transparent;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.menu-item.disabled a,
+.menu-item.disabled i {
+  color: #e5e7eb;
+}
+
+.menu-item.disabled:hover {
+  background: transparent;
+}
+
 .header {
   position: sticky;
   top: 0;
