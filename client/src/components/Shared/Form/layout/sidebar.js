@@ -148,7 +148,7 @@ const Sidebar = ({ onNavigate }) => {
 
           {renderMenuItem(
             "/inquiry",
-            "Inquiry",
+            user?.role === "admin" ? "Inquiry" : "Technical Support",
             "fa-solid fa-envelope",
             user && user?.role !== "admin"
           )}

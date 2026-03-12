@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
@@ -24,6 +24,7 @@ const Profile = () => {
     bloodGroup: "",
     nukh: "",
     akaah: "",
+    dob: "",
   });
   const [loading, setLoading] = useState(false);
   const [requestingVerification, setRequestingVerification] = useState(false);
@@ -32,6 +33,39 @@ const Profile = () => {
   const isVerifiedAndLocked = !isAdmin && user?.profileVerificationStatus === "approved";
   const canEditProfile = !isVerifiedAndLocked;
   const isVerificationPending = user?.profileVerificationStatus === "pending";
+  const dateInputRef = useRef(null);
+  const formatDateDisplay = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    return `${d.getDate()} / ${d.getMonth() + 1} / ${d.getFullYear()}`;
+  };
+  const parseDateFromInput = (value) => {
+    if (!value) return null;
+    const cleaned = String(value).replace(/\s+/g, "");
+    const slashForm = cleaned.replace(/-/g, "/");
+    const parts = slashForm.split("/").filter(Boolean).map(Number);
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const d = new Date(year, month - 1, day);
+      if (
+        d.getFullYear() === year &&
+        d.getMonth() === month - 1 &&
+        d.getDate() === day
+      ) {
+        return d;
+      }
+    }
+    return null;
+  };
+  const getAgeYears = (date) => {
+    if (!date) return null;
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) age -= 1;
+    return age;
+  };
   const profileComplete = isProfileComplete({
     ...user,
     name: formData.name,
@@ -62,6 +96,7 @@ const Profile = () => {
         bloodGroup: user?.bloodGroup || "",
         nukh: user?.nukh || "",
         akaah: user?.akaah || "",
+        dob: user?.dob ? formatDateDisplay(user.dob) : "",
       }));
     }
   }, [user]);
@@ -78,17 +113,34 @@ const Profile = () => {
       return;
     }
     if (!isProfileApproved) return;
+    const dobDate = parseDateFromInput(formData.dob);
+    if (!dobDate) {
+      toast.error("Please enter Date of Birth in Day / Month / Year format.");
+      return;
+    }
+    const age = getAgeYears(dobDate);
+    const isMinor = age !== null && age < 18;
     setLoading(true);
     try {
 
       const payload = isAdmin
         ? { name: formData.name, email: formData.email }
-        : formData;
+        : { ...formData, dob: dobDate.toISOString() };
 
       const { data } = await API.put("/auth/update-profile", payload);
       if (data?.success) {
         dispatch(setCurrentUser(data.user));
         toast.success(data?.message || "Profile updated successfully");
+        if (!isAdmin && isMinor) {
+          try {
+            const verificationRes = await API.post("/auth/request-profile-verification");
+            if (verificationRes?.data?.user) {
+              dispatch(setCurrentUser(verificationRes.data.user));
+            }
+          } catch (err) {
+            console.log("Auto verification request failed", err);
+          }
+        }
       } else {
         toast.error(data?.message || "Unable to save profile");
       }
@@ -104,10 +156,18 @@ const Profile = () => {
       toast.error("Please complete all profile fields first");
       return;
     }
+    const dobDate = parseDateFromInput(formData.dob);
+    if (!dobDate) {
+      toast.error("Please enter Date of Birth in Day / Month / Year format.");
+      return;
+    }
 
     setRequestingVerification(true);
     try {
-      const profileUpdateResponse = await API.put("/auth/update-profile", formData);
+      const profileUpdateResponse = await API.put("/auth/update-profile", {
+        ...formData,
+        dob: dobDate.toISOString(),
+      });
       if (profileUpdateResponse?.data?.success) {
         dispatch(setCurrentUser(profileUpdateResponse.data.user));
       } else {
@@ -168,6 +228,59 @@ const Profile = () => {
                 <div className="col-12 col-md-6">
                   <label className="form-label">Phone Number <span className="required-star">*</span></label>
                   <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} disabled={!canEditProfile} required />
+                </div>
+
+                <div className="col-12 col-md-6">
+                  <label className="form-label">
+                    Date of Birth (Day / Month / Year) <span className="required-star">*</span>
+                  </label>
+                  <div className="position-relative">
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="dob"
+                      value={formData.dob}
+                      onChange={(e) => {
+                        if (!canEditProfile) return;
+                        setFormData((prev) => ({ ...prev, dob: e.target.value }));
+                      }}
+                      onFocus={() => {
+                        if (!canEditProfile) return;
+                        dateInputRef.current?.showPicker?.();
+                      }}
+                      placeholder="DD / MM / YYYY"
+                      disabled={!canEditProfile}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary position-absolute top-0 end-0 h-100"
+                      style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                      onClick={() => {
+                        if (!canEditProfile) return;
+                        dateInputRef.current?.showPicker?.();
+                      }}
+                      tabIndex={-1}
+                      aria-label="Open date picker"
+                      disabled={!canEditProfile}
+                    >
+                      📅
+                    </button>
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      className="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                      style={{ pointerEvents: "none" }}
+                      onChange={(e) => {
+                        const iso = e.target.value;
+                        const display = formatDateDisplay(iso);
+                        setFormData((prev) => ({ ...prev, dob: display }));
+                      }}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      disabled={!canEditProfile}
+                    />
+                  </div>
                 </div>
 
                 <div className="col-12 col-md-6">

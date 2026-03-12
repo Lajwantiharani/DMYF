@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
+import { useSelector } from "react-redux";
 
 const formatWhen = (value) => {
   if (!value) return "";
@@ -11,6 +12,8 @@ const formatWhen = (value) => {
 };
 
 const Inquiry = () => {
+  const { user } = useSelector((state) => state.auth);
+  const pageTitle = user?.role === "admin" ? "Inquiry" : "Technical Support";
   const [thread, setThread] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -75,7 +78,7 @@ const Inquiry = () => {
     <Layout>
       <div className="container mt-4" style={{ maxWidth: "980px" }}>
         <div className="d-flex align-items-center justify-content-between mb-3">
-          <h3 className="page-heading mb-0">Inquiry</h3>
+          <h3 className="page-heading mb-0">{pageTitle}</h3>
           {unreadForUser && (
             <span className="badge text-bg-danger">New reply</span>
           )}
