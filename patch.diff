@@ -1,0 +1,24 @@
+﻿*** Begin Patch
+*** Update File: src/components/Routes/ProtectedRoute.js
+@@
+-import React, { useEffect, useState } from "react";
++import React, { useCallback, useEffect, useState } from "react";
+@@
+-  const getUser = async () => {
++  const getUser = useCallback(async () => {
+     try {
+       const { data } = await API.get("/auth/current-user");
+       if (data?.success) {
+         dispatch(setCurrentUser(data.user));
+@@
+     } finally {
+       setLoading(false);
+     }
+-  };
++  }, [dispatch]);
+@@
+-    getUser();
+-  }, [dispatch, user]);
++    getUser();
++  }, [getUser, user]);
+*** End Patch

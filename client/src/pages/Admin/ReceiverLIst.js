@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
@@ -15,7 +15,7 @@ const ReceiverList = () => {
   const [endDate, setEndDate] = useState("");
 
   // Fetch receiver data
-  const getReceivers = async () => {
+  const getReceivers = useCallback(async () => {
     try {
       if (isOrganization) {
         const { data } = await API.get("/inventory/get-organization-receiver-summary");
@@ -32,11 +32,11 @@ const ReceiverList = () => {
       toast.error(error?.response?.data?.message || "Unable to load receiver data");
       console.error(error);
     }
-  };
+  }, [isOrganization]);
 
   useEffect(() => {
     getReceivers();
-  }, [isOrganization]);
+  }, [getReceivers]);
 
   // Delete receiver record
   const handleDelete = async (id) => {

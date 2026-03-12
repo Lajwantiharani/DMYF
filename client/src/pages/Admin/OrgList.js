@@ -1,5 +1,5 @@
 import moment from "moment";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
@@ -13,7 +13,7 @@ const OrgList = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   //find donar records
-  const getDonors = async () => {
+  const getDonors = useCallback(async () => {
     try {
       if (isReceiver) {
         const { data } = await API.get("/inventory/get-organization-available-stock");
@@ -30,11 +30,11 @@ const OrgList = () => {
       toast.error(error?.response?.data?.message || "Unable to load organization data");
       console.log(error);
     }
-  };
+  }, [isReceiver]);
 
   useEffect(() => {
     getDonors();
-  }, [isReceiver]);
+  }, [getDonors]);
 
   //DELETE FUNCTION
   const handelDelete = async (id) => {

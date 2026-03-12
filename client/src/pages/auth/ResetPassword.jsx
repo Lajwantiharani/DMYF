@@ -2,10 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import API from "../../services/API";
-<<<<<<< HEAD
-=======
 import PasswordInput from "../../components/Shared/PasswordInput";
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 import "./Auth.css";
 
 const ResetPassword = () => {
@@ -93,37 +90,6 @@ const ResetPassword = () => {
                 />
               </div>
 
-<<<<<<< HEAD
-              <div className="mb-1">
-                <label className="form-label" htmlFor="newPasswordInput">
-                  New Password
-                </label>
-                <input
-                  id="newPasswordInput"
-                  type="password"
-                  className="form-control"
-                  name="newPassword"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="mb-1">
-                <label className="form-label" htmlFor="confirmPasswordInput">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPasswordInput"
-                  type="password"
-                  className="form-control"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-=======
               <PasswordInput
                 label="New Password"
                 id="newPasswordInput"
@@ -141,7 +107,6 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 required
               />
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 
               <div className="d-flex flex-row justify-content-between mt-3">
                 <p className="mb-0">

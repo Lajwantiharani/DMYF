@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -16,7 +16,7 @@ const BloodRequests = () => {
   const canManageRequests =
     user?.role === "donor" || user?.role === "organization";
 
-  const getIncomingRequests = async () => {
+  const getIncomingRequests = useCallback(async () => {
     if (!canManageRequests) return;
     setLoading(true);
     try {
@@ -31,7 +31,7 @@ const BloodRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [canManageRequests]);
 
   const handleRequestDecision = async (requestId, action) => {
     setActionLoadingId(requestId);
@@ -65,7 +65,7 @@ const BloodRequests = () => {
       return;
     }
     getIncomingRequests();
-  }, [canManageRequests, navigate]);
+  }, [canManageRequests, navigate, getIncomingRequests]);
 
   return (
     <Layout>

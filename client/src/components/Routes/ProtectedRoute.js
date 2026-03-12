@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import API from "../../services/API";
 import { Navigate, useLocation } from "react-router-dom";
@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   //get user current
-  const getUser = async () => {
+  const getUser = useCallback(async () => {
     try {
       const { data } = await API.get("/auth/current-user");
       if (data?.success) {
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
 
@@ -41,7 +41,7 @@ const ProtectedRoute = ({ children }) => {
     }
 
     getUser();
-  }, [dispatch, user]);
+  }, [getUser, user]);
 
 
   if (loading) {

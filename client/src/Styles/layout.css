@@ -1,9 +1,5 @@
 .sidebar {
-<<<<<<< HEAD
-  min-height: calc(100vh - 64px);
-=======
   min-height: calc(100vh - var(--header-height, 64px));
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
   height: 100%;
   position: relative;
   top: 0;
@@ -101,25 +97,15 @@
 }
 
 .row.g-0 {
-<<<<<<< HEAD
-  min-height: calc(100vh - 64px);
-=======
   min-height: calc(100vh - var(--header-height, 64px));
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 }
 
 @media (min-width: 992px) {
   .row.g-0 > .col-md-3 {
     position: sticky;
-<<<<<<< HEAD
-    top: 64px;
-    align-self: flex-start;
-    height: calc(100vh - 64px);
-=======
     top: var(--header-height, 64px);
     align-self: flex-start;
     height: calc(100vh - var(--header-height, 64px));
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
   }
 }
 
@@ -141,8 +127,6 @@
   font-weight: 700;
 }
 
-<<<<<<< HEAD
-=======
 .page-heading {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 700;
@@ -152,7 +136,6 @@
   line-height: 1.25;
 }
 
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 .profile-form .form-label {
   font-weight: 600;
 }
@@ -231,8 +214,6 @@
   border-color: #111827 !important;
 }
 
-<<<<<<< HEAD
-=======
 .inquiry-thread-list {
   display: flex;
   flex-direction: column;
@@ -313,7 +294,6 @@
   color: #1f2937;
 }
 
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 @media (max-width: 991px) {
   .desktop-only-logout {
     display: none !important;
@@ -401,11 +381,7 @@
 
   .sidebar-backdrop {
     position: fixed;
-<<<<<<< HEAD
-    top: 64px;
-=======
     top: var(--header-height, 64px);
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
     left: 0;
     right: 0;
     bottom: 0;
@@ -415,19 +391,11 @@
 
   .row.g-0 > .col-md-3 {
     position: fixed;
-<<<<<<< HEAD
-    top: 64px;
-    right: 0;
-    left: auto;
-    width: 280px;
-    height: calc(100vh - 64px);
-=======
     top: var(--header-height, 64px);
     right: 0;
     left: auto;
     width: 280px;
     height: calc(100vh - var(--header-height, 64px));
->>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
     z-index: 1050;
     transform: translate3d(100%, 0, 0);
     transform-origin: right center;
