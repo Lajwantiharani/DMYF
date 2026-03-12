@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import API from "../../services/API";
+<<<<<<< HEAD
+=======
+import PasswordInput from "../../components/Shared/PasswordInput";
+>>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 import "./Auth.css";
 
 const ResetPassword = () => {
@@ -89,6 +93,7 @@ const ResetPassword = () => {
                 />
               </div>
 
+<<<<<<< HEAD
               <div className="mb-1">
                 <label className="form-label" htmlFor="newPasswordInput">
                   New Password
@@ -118,6 +123,25 @@ const ResetPassword = () => {
                   required
                 />
               </div>
+=======
+              <PasswordInput
+                label="New Password"
+                id="newPasswordInput"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                required
+              />
+
+              <PasswordInput
+                label="Confirm Password"
+                id="confirmPasswordInput"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+>>>>>>> e0b002a699de0efc8a1d9947067f1b492cc229fd
 
               <div className="d-flex flex-row justify-content-between mt-3">
                 <p className="mb-0">

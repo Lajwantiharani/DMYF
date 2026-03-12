@@ -6,11 +6,12 @@ const AdminHome = () => {
   return (
     <Layout>
       <div className="container">
-        <div className="d-felx flex-column mt-4">
-          <h1>
+
+        <div className="d-flex flex-column mt-4">
+          <h1 className="page-heading">
             Welcome Admin <i className="text-success">{user?.name}</i>
           </h1>
-          <h3>Manage Blood Bank App </h3>
+          <h3 className="page-heading">Manage Blood Bank App</h3>
           <hr />
           <p>
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad
@@ -44,5 +45,6 @@ const AdminHome = () => {
     </Layout>
   );
 };
+
 
 export default AdminHome;

@@ -7,6 +7,8 @@ const {
   getSentTargetsController,
   getIncomingRequestsController,
   updateIncomingRequestStatusController,
+
+  getReceiverRequestsController,
 } = require("../controllers/receiverController");
 
 const router = express.Router();
@@ -20,6 +22,8 @@ router.post(
 );
 router.get("/sent-targets", authMiddleware, getSentTargetsController);
 router.get("/incoming-requests", authMiddleware, getIncomingRequestsController);
+
+router.get("/my-requests", authMiddleware, getReceiverRequestsController);
 router.put(
   "/incoming-requests/:requestId/status",
   authMiddleware,

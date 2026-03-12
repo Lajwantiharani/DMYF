@@ -1,10 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../services/API";
 import { toast } from "react-toastify";
-import {
-  isProfileComplete,
-  isProfileVerificationApproved,
-} from "../../../utils/profileCompletion";
+
 
 // User Login
 export const userLogin = createAsyncThunk(
@@ -16,22 +13,8 @@ export const userLogin = createAsyncThunk(
         toast.success(data.message || "Login successful");
         localStorage.setItem("token", data.token);
 
-        const userRole = data?.user?.role;
-        const redirectByRole = {
-          admin: "/analytics",
-          organization: "/inventory",
-          donor: "/inventory",
-          hospital: "/organization",
-          receiver: "/donor-list",
-        };
-        const profileComplete = isProfileComplete(data?.user);
-        const profileVerified = isProfileVerificationApproved(data?.user);
-        const nextPath =
-          profileComplete && profileVerified
-            ? redirectByRole[userRole] || "/inventory"
-            : "/profile";
-
-        window.location.replace(nextPath);
+        // Always land users on Profile after login (all roles).
+        window.location.replace("/profile");
       }
       return data;
     } catch (error) {
@@ -97,7 +80,7 @@ export const userRegister = createAsyncThunk(
 // Get Current User
 export const getCurrentUser = createAsyncThunk(
   "auth/getCurrentUser",
-  async ({ rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const res = await API.get("/auth/current-user");
       return res?.data;

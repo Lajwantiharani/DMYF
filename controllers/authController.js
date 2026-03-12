@@ -1,10 +1,59 @@
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const crypto = require("crypto");
 const sendEmail = require("../client/src/utils/sendEmail");
 const generateOTP = require("../client/src/utils/generateOTP");
 
 const hasValue = (value) => typeof value === "string" && value.trim().length > 0;
+
+const isValidEmail = (email) =>
+  typeof email === "string" &&
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+const sanitizeUser = (user) => {
+  if (!user) return null;
+  const obj = typeof user.toObject === "function" ? user.toObject() : { ...user };
+  delete obj.password;
+  delete obj.otp;
+  delete obj.otpExpires;
+  delete obj.forgotPasswordRequestedAt;
+  return obj;
+};
+
+const otpSecret = () =>
+  process.env.OTP_SECRET || process.env.JWT_SECRET || "otp_secret";
+
+const hashOtp = (otp) =>
+  crypto
+    .createHash("sha256")
+    .update(`${String(otp).trim()}:${otpSecret()}`)
+    .digest("hex");
+
+const safeEqual = (a, b) => {
+  try {
+    const ba = Buffer.from(String(a));
+    const bb = Buffer.from(String(b));
+    if (ba.length !== bb.length) return false;
+    return crypto.timingSafeEqual(ba, bb);
+  } catch {
+    return false;
+  }
+};
+
+const otpMatches = (storedOtp, providedOtp) => {
+  if (!storedOtp || !providedOtp) return false;
+  const stored = String(storedOtp).trim();
+  const provided = String(providedOtp).trim();
+
+  // Backward compatibility: accept old plaintext OTP values (typically 6 digits).
+  if (/^\\d{4,8}$/.test(stored)) {
+    return safeEqual(stored, provided);
+  }
+
+  return safeEqual(stored, hashOtp(provided));
+};
 
 const getDisplayNameForRole = (user) => {
   if (!user) return "";
@@ -22,10 +71,13 @@ const isProfileComplete = (user) => {
     user.phone,
     user.city,
     user.address,
-    user.bloodGroup,
-    user.nukh,
-    user.akaah,
+
   ];
+
+  if (user.role !== "organization") {
+    requiredFields.push(user.bloodGroup);
+    requiredFields.push(user.nukh, user.akaah);
+  }
 
   return requiredFields.every(hasValue);
 };
@@ -86,6 +138,35 @@ const registerController = async (req, res) => {
       bloodGroup,
     } = req.body;
 
+
+    if (!isValidEmail(email)) {
+      return res.status(400).send({ success: false, message: "Invalid email" });
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).send({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const allowedRoles = new Set(["admin", "organization", "donor", "hospital", "receiver"]);
+    if (!allowedRoles.has(role)) {
+      return res.status(400).send({ success: false, message: "Invalid role" });
+    }
+
+    if (role === "organization" && !hasValue(organizationName)) {
+      return res.status(400).send({ success: false, message: "Organization name is required" });
+    }
+
+    if (role === "hospital" && !hasValue(hospitalName)) {
+      return res.status(400).send({ success: false, message: "Hospital name is required" });
+    }
+
+    if (role !== "organization" && role !== "hospital" && !hasValue(name)) {
+      return res.status(400).send({ success: false, message: "Name is required" });
+    }
+
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res.status(200).send({
@@ -102,7 +183,8 @@ const registerController = async (req, res) => {
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    console.log("🔐 OTP Generated:", otp, "Type:", typeof otp);
+
+    // OTP is emailed to the user. Avoid logging secrets in production.
 
     // Create user (not verified yet)
     const user = new userModel({
@@ -117,7 +199,8 @@ const registerController = async (req, res) => {
       website,
       bloodGroup,
       isVerified: false,
-      otp,
+
+      otp: hashOtp(otp),
       otpExpires,
     });
 
@@ -184,16 +267,21 @@ const registerController = async (req, res) => {
 //login call back
 const loginController = async (req, res) => {
   try {
-    const user = await userModel.findOne({ email: req.body.email });
+
+    const email = typeof req.body.email === "string" ? req.body.email.trim() : "";
+    const password = typeof req.body.password === "string" ? req.body.password : "";
+
+    const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).send({
+      return res.status(401).send({
         success: false,
-        message: "User not Registered!",
+        message: "Invalid Credentials",
       });
     }
     //compare password
     const comparePassword = await bcrypt.compare(
-      req.body.password,
+
+      password,
       user.password,
     );
     if (!comparePassword) {
@@ -212,18 +300,29 @@ const loginController = async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
+
+
+    const isProd = process.env.NODE_ENV === "production";
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProd,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
     return res.status(200).send({
       success: true,
       message: "Login Successfully",
       token,
-      user,
+
+      user: sanitizeUser(user),
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
       message: "Error In Login API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -235,14 +334,16 @@ const currentUserController = async (req, res) => {
     return res.status(200).send({
       success: true,
       message: "User Fetched Successfully",
-      user,
+
+      user: sanitizeUser(user),
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "unable to get current user",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -250,11 +351,16 @@ const verifyOTPController = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
+
+    if (!isValidEmail(email)) {
+      return res.status(400).send({ success: false, message: "Invalid email" });
+    }
+
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
-        message: "User not found",
+        message: "Invalid OTP",
       });
     }
 
@@ -268,16 +374,16 @@ const verifyOTPController = async (req, res) => {
     // Debug logs
     console.log("📝 OTP Verification Debug:");
     console.log("   Email:", email);
-    console.log("   OTP from request:", otp, "Type:", typeof otp);
-    console.log("   OTP from DB:", user.otp, "Type:", typeof user.otp);
-    console.log("   OTP Expires:", user.otpExpires);
+
+    // Avoid logging OTP values.
     console.log("   Current Time:", new Date());
 
     // Convert both to string for comparison (handle number/string mismatch)
     const otpFromReq = String(otp).trim();
     const otpFromDB = String(user.otp).trim();
 
-    if (!user.otp || otpFromReq !== otpFromDB) {
+
+    if (!user.otp || !otpMatches(user.otp, otpFromReq)) {
       console.log("❌ OTP Mismatch!");
       return res.status(400).send({
         success: false,
@@ -325,6 +431,14 @@ const forgotPasswordRequestOtpController = async (req, res) => {
       });
     }
 
+
+    if (!isValidEmail(email)) {
+      return res.status(200).send({
+        success: true,
+        message: "If this email exists, an OTP has been sent.",
+      });
+    }
+
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(200).send({
@@ -349,7 +463,8 @@ const forgotPasswordRequestOtpController = async (req, res) => {
     }
 
     const otp = generateOTP();
-    user.otp = otp;
+
+    user.otp = hashOtp(otp);
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     user.forgotPasswordRequestedAt = new Date();
     await user.save();
@@ -401,6 +516,11 @@ const resetForgotPasswordController = async (req, res) => {
       });
     }
 
+
+    if (!isValidEmail(email)) {
+      return res.status(400).send({ success: false, message: "Invalid email" });
+    }
+
     if (newPassword !== confirmPassword) {
       return res.status(400).send({
         success: false,
@@ -417,13 +537,14 @@ const resetForgotPasswordController = async (req, res) => {
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).send({
+
+      return res.status(400).send({
         success: false,
-        message: "User not found",
+        message: "Invalid OTP",
       });
     }
 
-    if (!user.otp || String(user.otp).trim() !== String(otp).trim()) {
+    if (!user.otp || !otpMatches(user.otp, otp)) {
       return res.status(400).send({
         success: false,
         message: "Invalid OTP",
@@ -468,6 +589,8 @@ const updateProfileController = async (req, res) => {
       bloodGroup,
       nukh,
       akaah,
+
+      website,
       newPassword,
       confirmPassword,
     } = req.body;
@@ -529,6 +652,11 @@ const updateProfileController = async (req, res) => {
       user.akaah = akaah;
     }
 
+
+    if (typeof website === "string") {
+      user.website = website;
+    }
+
     if (newPassword || confirmPassword) {
       if (!newPassword || !confirmPassword) {
         return res.status(400).send({
@@ -587,7 +715,8 @@ const updateProfileController = async (req, res) => {
     return res.status(200).send({
       success: true,
       message: "Profile updated successfully",
-      user,
+
+      user: sanitizeUser(user),
     });
   } catch (error) {
     console.log(error);
@@ -627,7 +756,8 @@ const requestProfileVerificationController = async (req, res) => {
       return res.status(200).send({
         success: true,
         message: "Your profile is already verified",
-        user,
+
+        user: sanitizeUser(user),
       });
     }
 
@@ -640,7 +770,8 @@ const requestProfileVerificationController = async (req, res) => {
     return res.status(200).send({
       success: true,
       message: "Verification request submitted successfully",
-      user,
+
+      user: sanitizeUser(user),
     });
   } catch (error) {
     console.log(error);

@@ -66,56 +66,59 @@ const VerificationRequests = () => {
 
   return (
     <Layout>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="m-0">Verification Requests</h2>
-      </div>
 
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Requested At</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.length ? (
-              data.map((record) => (
-                <tr key={record._id}>
-                  <td>{getUserDisplayName(record)}</td>
-                  <td>{record.role}</td>
-                  <td>{record.email || "-"}</td>
-                  <td>{record.phone || "-"}</td>
-                  <td>
-                    {record.profileVerificationRequestedAt
-                      ? moment(record.profileVerificationRequestedAt).format(
-                          "DD/MM/YYYY hh:mm A",
-                        )
-                      : "-"}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setSelectedUser(record)}
-                    >
-                      View Profile
-                    </button>
+      <div className="container mt-4">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h2 className="m-0 page-heading">Verification Requests</h2>
+        </div>
+
+        <div className="table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Requested At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.length ? (
+                data.map((record) => (
+                  <tr key={record._id}>
+                    <td>{getUserDisplayName(record)}</td>
+                    <td>{record.role}</td>
+                    <td>{record.email || "-"}</td>
+                    <td>{record.phone || "-"}</td>
+                    <td>
+                      {record.profileVerificationRequestedAt
+                        ? moment(record.profileVerificationRequestedAt).format(
+                            "DD/MM/YYYY hh:mm A",
+                          )
+                        : "-"}
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setSelectedUser(record)}
+                      >
+                        View Profile
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    No pending verification requests
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  No pending verification requests
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selectedUser && (
@@ -137,9 +140,14 @@ const VerificationRequests = () => {
               <div className="col-6"><strong>Phone:</strong> {selectedUser.phone || "-"}</div>
               <div className="col-6"><strong>City:</strong> {selectedUser.city || "-"}</div>
               <div className="col-6"><strong>Address:</strong> {selectedUser.address || "-"}</div>
-              <div className="col-6"><strong>Blood Group:</strong> {selectedUser.bloodGroup || "-"}</div>
-              <div className="col-6"><strong>Nukh:</strong> {selectedUser.nukh || "-"}</div>
-              <div className="col-6"><strong>Akaah:</strong> {selectedUser.akaah || "-"}</div>
+
+              {selectedUser.role !== "organization" && (
+                <>
+                  <div className="col-6"><strong>Blood Group:</strong> {selectedUser.bloodGroup || "-"}</div>
+                  <div className="col-6"><strong>Nukh:</strong> {selectedUser.nukh || "-"}</div>
+                  <div className="col-6"><strong>Akaah:</strong> {selectedUser.akaah || "-"}</div>
+                </>
+              )}
               <div className="col-6"><strong>Website:</strong> {selectedUser.website || "-"}</div>
               <div className="col-6"><strong>Email Verified:</strong> {selectedUser.isVerified ? "Yes" : "No"}</div>
               <div className="col-6">

@@ -111,50 +111,52 @@ const ReceiverList = () => {
 
   return (
     <Layout>
-      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h2 className="m-0">Receiver Records</h2>
-        {isAdmin && (
-          <div className="d-flex justify-content-end align-items-end gap-2 flex-wrap">
-            <div>
-              <label className="form-label mb-1">Start Date</label>
-              <input
-                type="date"
-                className="form-control"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="form-label mb-1">End Date</label>
-              <input
-                type="date"
-                className="form-control"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-success" onClick={handleDownloadExcel}>
-              Download Excel Data
-            </button>
-          </div>
-        )}
-      </div>
 
-      <div className="table-responsive">
-        <table className="table ">
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Phone</th>
-                    {isOrganization && <th scope="col">Donated (ML)</th>}
-                    <th scope="col">Date</th>
-                    {isAdmin && <th scope="col">Action</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.map((record) => (
-                    <tr key={record._id || record.receiverId}>
+      <div className="container mt-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 className="m-0 page-heading">Receiver Records</h2>
+          {isAdmin && (
+            <div className="d-flex justify-content-end align-items-end gap-2 flex-wrap">
+              <div>
+                <label className="form-label mb-1">Start Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="form-label mb-1">End Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-success" onClick={handleDownloadExcel}>
+                Download Excel Data
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="table-responsive">
+          <table className="table ">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                {isOrganization && <th scope="col">Donated (ML)</th>}
+                <th scope="col">Date</th>
+                {isAdmin && <th scope="col">Action</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {data?.map((record) => (
+                <tr key={record._id || record.receiverId}>
 
                       <td>{record.name}</td>
                       <td>{record.email}</td>
@@ -192,9 +194,11 @@ const ReceiverList = () => {
                         </td>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {selectedRecord && (
         <div
@@ -217,7 +221,8 @@ const ReceiverList = () => {
                   {Object.entries(selectedRecord)
                     .filter(
                       ([key, value]) =>
-                        !["__v", "password"].includes(key) &&
+
+                        !["_id", "__v", "password", "otp", "otpExpires"].includes(key) &&
                         value !== undefined &&
                         value !== null &&
                         value !== ""

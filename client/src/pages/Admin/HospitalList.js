@@ -9,7 +9,7 @@ const HospitalList = () => {
   const getDonors = async () => {
     try {
       const { data } = await API.get("/admin/hospital-list");
-      console.log(data);
+
       if (data?.success) {
         setData(data?.hospitalData);
       }
@@ -41,36 +41,39 @@ const HospitalList = () => {
 
   return (
     <Layout>
-      <div className="table-responsive">
-        <table className="table ">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col">Phone</th>
-              <th scope="col">Date</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.map((record) => (
-              <tr key={record._id}>
-                <td>{record.hospitalName}</td>
-                <td>{record.email}</td>
-                <td>{record.phone}</td>
-                <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
-                <td>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handelDelete(record._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
+
+      <div className="container mt-4">
+        <div className="table-responsive">
+          <table className="table ">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Date</th>
+                <th scope="col">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data?.map((record) => (
+                <tr key={record._id}>
+                  <td>{record.hospitalName}</td>
+                  <td>{record.email}</td>
+                  <td>{record.phone}</td>
+                  <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
+                  <td>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handelDelete(record._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Layout>
   );

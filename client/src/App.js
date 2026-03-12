@@ -28,6 +28,9 @@ import HomePage from "./pages/HomePage";
 import ReceiverDashboard from "./pages/Dashboard/Receiver";
 import BloodRequests from "./pages/Dashboard/BloodRequests";
 
+import Inquiry from "./pages/Dashboard/Inquiry";
+import UserInquiries from "./pages/Admin/UserInquiries";
+
 function App() {
   return (
     <div className="App">
@@ -177,6 +180,23 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/inquiry"
+          element={
+            <ProtectedRoute>
+              <Inquiry />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user-inquiries"
+          element={
+            <ProtectedRoute>
+              <UserInquiries />
             </ProtectedRoute>
           }
         />

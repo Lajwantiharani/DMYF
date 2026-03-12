@@ -1,0 +1,8 @@
+node_modules
+client/node_modules
+client/build
+.npm-cache
+_server.out
+_server.err
+.env
+readme.md

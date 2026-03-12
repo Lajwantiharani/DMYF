@@ -1,3 +1,5 @@
+
+const mongoose = require("mongoose");
 const InventoryModel = require("../models/InventoryModel");
 const ReceiverRequestModel = require("../models/ReceiverRequestModel");
 const userModel = require("../models/userModel");
@@ -14,7 +16,9 @@ const normalizeCity = (value = "") =>
 
 const cityAliasGroups = [
   ["karachi", "khi"],
-  ["hyderabad", "hyd"],
+
+  ["hyderabad", "hyd", "hyderabaad"],
+  ["lahore", "lahor"],
 ];
 
 const buildCityRegex = (inputCity = "") => {
@@ -27,6 +31,84 @@ const buildCityRegex = (inputCity = "") => {
   const patterns = aliasGroup?.length ? aliasGroup : [raw];
 
   return new RegExp(`(${patterns.map((item) => escapeRegex(item)).join("|")})`, "i");
+};
+
+
+const getOrganizationAvailableQuantity = async ({ organizationId, bloodGroup }) => {
+  const organization = new mongoose.Types.ObjectId(organizationId);
+
+  const result = await InventoryModel.aggregate([
+    {
+      $match: {
+        organization,
+        bloodGroup,
+      },
+    },
+    {
+      $group: {
+        _id: "$bloodGroup",
+        totalIn: {
+          $sum: {
+            $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
+          },
+        },
+        totalOut: {
+          $sum: {
+            $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  const totalIn = result[0]?.totalIn || 0;
+  const totalOut = result[0]?.totalOut || 0;
+  return Math.max(totalIn - totalOut, 0);
+};
+
+const getDonorAvailableQuantity = async ({ donorId, bloodGroup }) => {
+  const donor = new mongoose.Types.ObjectId(donorId);
+
+  const result = await InventoryModel.aggregate([
+    {
+      $match: {
+        donor,
+        bloodGroup,
+        inventoryType: { $in: ["in", "out"] },
+      },
+    },
+    {
+      $group: {
+        _id: "$bloodGroup",
+        totalIn: {
+          $sum: {
+            $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
+          },
+        },
+        totalOut: {
+          $sum: {
+            $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  const totalIn = result[0]?.totalIn || 0;
+  const totalOut = result[0]?.totalOut || 0;
+  return Math.max(totalIn - totalOut, 0);
+};
+
+const findDonorOrganizationForOut = async ({ donorId, bloodGroup }) => {
+  const donation = await InventoryModel.findOne({
+    donor: donorId,
+    inventoryType: "in",
+    bloodGroup,
+  })
+    .sort({ createdAt: -1 })
+    .select("organization");
+
+  return donation?.organization || null;
 };
 
 const sendBloodRequestEmails = async ({
@@ -132,6 +214,8 @@ const sendRequestStatusEmailToReceiver = async ({
 const searchAvailabilityController = async (req, res) => {
   try {
     const { bloodGroup, city } = req.body;
+
+    const minQuantity = Number(req.body.quantity || 0);
     const receiverId = req.body.userId;
     const receiver = await userModel.findById(receiverId).select("role");
 
@@ -154,7 +238,7 @@ const searchAvailabilityController = async (req, res) => {
     const donors = await InventoryModel.aggregate([
       {
         $match: {
-          inventoryType: "in",
+
           bloodGroup,
           donor: { $ne: null },
         },
@@ -162,13 +246,32 @@ const searchAvailabilityController = async (req, res) => {
       {
         $group: {
           _id: "$donor",
-          availableQuantity: { $sum: "$quantity" },
+
+          totalIn: {
+            $sum: {
+              $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
+            },
+          },
+          totalOut: {
+            $sum: {
+              $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
+            },
+          },
         },
       },
       {
+        $project: {
+          donorId: "$_id",
+          availableQuantity: { $subtract: ["$totalIn", "$totalOut"] },
+        },
+      },
+      ...(minQuantity > 0
+        ? [{ $match: { availableQuantity: { $gte: minQuantity } } }]
+        : [{ $match: { availableQuantity: { $gt: 0 } } }]),
+      {
         $lookup: {
           from: "users",
-          localField: "_id",
+          localField: "donorId",
           foreignField: "_id",
           as: "user",
         },
@@ -224,7 +327,10 @@ const searchAvailabilityController = async (req, res) => {
           availableQuantity: { $subtract: ["$totalIn", "$totalOut"] },
         },
       },
-      { $match: { availableQuantity: { $gt: 0 } } },
+
+      ...(minQuantity > 0
+        ? [{ $match: { availableQuantity: { $gte: minQuantity } } }]
+        : [{ $match: { availableQuantity: { $gt: 0 } } }]),
       {
         $lookup: {
           from: "users",
@@ -260,29 +366,52 @@ const searchAvailabilityController = async (req, res) => {
       ...organizations.map((item) => item.userId),
     ];
 
-    const sentRequests = targetIds.length
+
+    const requestDocs = targetIds.length
       ? await ReceiverRequestModel.find({
           receiver: receiverId,
           requestType: "blood_request",
           targetUser: { $in: targetIds },
-        }).select("targetUser")
+
+          bloodGroup,
+        }).select("targetUser status _id")
       : [];
 
-    const sentMap = new Set(
-      sentRequests.map((request) => String(request.targetUser)),
+    const requestMap = new Map(
+      requestDocs.map((request) => [
+        String(request.targetUser),
+        { status: request.status, requestId: request._id },
+      ]),
     );
 
     return res.status(200).send({
       success: true,
       message: "Availability results fetched successfully",
-      donors: donors.map((item) => ({
-        ...item,
-        requestSent: sentMap.has(String(item.userId)),
-      })),
-      organizations: organizations.map((item) => ({
-        ...item,
-        requestSent: sentMap.has(String(item.userId)),
-      })),
+
+      donors: donors
+        .filter(
+          (item) =>
+            !["accepted", "approved"].includes(
+              requestMap.get(String(item.userId))?.status,
+            ),
+        )
+        .map((item) => ({
+          ...item,
+          requestStatus: requestMap.get(String(item.userId))?.status || null,
+          requestId: requestMap.get(String(item.userId))?.requestId || null,
+        })),
+      organizations: organizations
+        .filter(
+          (item) =>
+            !["accepted", "approved"].includes(
+              requestMap.get(String(item.userId))?.status,
+            ),
+        )
+        .map((item) => ({
+          ...item,
+          requestStatus: requestMap.get(String(item.userId))?.status || null,
+          requestId: requestMap.get(String(item.userId))?.requestId || null,
+        })),
     });
   } catch (error) {
     console.log(error);
@@ -328,6 +457,13 @@ const sendBloodRequestController = async (req, res) => {
       });
     }
 
+
+    const pendingCount = await ReceiverRequestModel.countDocuments({
+      receiver: receiverId,
+      requestType: "blood_request",
+      status: "pending",
+    });
+
     const targetUser = await userModel.findById(targetUserId);
     if (!targetUser || targetUser.role !== targetType) {
       return res.status(404).send({
@@ -343,9 +479,51 @@ const sendBloodRequestController = async (req, res) => {
     });
 
     if (duplicate) {
+
+      if (duplicate.status === "rejected") {
+        if (pendingCount >= 2) {
+          return res.status(409).send({
+            success: false,
+            message:
+              "You already have 2 pending requests. Please wait for a decision before sending a new request.",
+          });
+        }
+
+        duplicate.status = "pending";
+        duplicate.bloodGroup = bloodGroup;
+        duplicate.city = city || "";
+        duplicate.quantity = quantity;
+        await duplicate.save();
+
+        await sendBloodRequestEmails({
+          receiver,
+          targetUser,
+          bloodGroup,
+          city,
+          quantity,
+        });
+
+        return res.status(200).send({
+          success: true,
+          message: "Request resent. Please wait for email confirmation.",
+          request: duplicate,
+        });
+      }
+
       return res.status(409).send({
         success: false,
-        message: "Request already sent to this user",
+        message:
+          duplicate.status === "pending"
+            ? "Request already pending for this user"
+            : "This request has already been processed",
+      });
+    }
+
+    if (pendingCount >= 2) {
+      return res.status(409).send({
+        success: false,
+        message:
+          "You already have 2 pending requests. Please wait for a decision before sending a new request.",
       });
     }
 
@@ -542,8 +720,79 @@ const updateIncomingRequestStatusController = async (req, res) => {
       });
     }
 
-    request.status = action === "accept" ? "accepted" : "rejected";
-    await request.save();
+
+    if (action === "accept") {
+      const requestedQuantity = Number(request.quantity);
+      if (!requestedQuantity || requestedQuantity <= 0) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid request quantity",
+        });
+      }
+
+      if (request.targetType === "organization") {
+        const available = await getOrganizationAvailableQuantity({
+          organizationId: currentUser._id,
+          bloodGroup: request.bloodGroup,
+        });
+
+        if (available < requestedQuantity) {
+          return res.status(400).send({
+            success: false,
+            message: `Only ${available}ML of ${request.bloodGroup} is available.`,
+          });
+        }
+
+        await InventoryModel.create({
+          inventoryType: "out",
+          bloodGroup: request.bloodGroup,
+          quantity: requestedQuantity,
+          email: request?.receiver?.email || "",
+          organization: currentUser._id,
+          hospital: request.receiver._id,
+        });
+      } else if (request.targetType === "donor") {
+        const available = await getDonorAvailableQuantity({
+          donorId: currentUser._id,
+          bloodGroup: request.bloodGroup,
+        });
+
+        if (available < requestedQuantity) {
+          return res.status(400).send({
+            success: false,
+            message: `Only ${available}ML of ${request.bloodGroup} is available.`,
+          });
+        }
+
+        const organizationId = await findDonorOrganizationForOut({
+          donorId: currentUser._id,
+          bloodGroup: request.bloodGroup,
+        });
+
+        if (!organizationId) {
+          return res.status(400).send({
+            success: false,
+            message: "Unable to locate donor stock for this blood group",
+          });
+        }
+
+        await InventoryModel.create({
+          inventoryType: "out",
+          bloodGroup: request.bloodGroup,
+          quantity: requestedQuantity,
+          email: request?.receiver?.email || "",
+          organization: organizationId,
+          hospital: request.receiver._id,
+          donor: currentUser._id,
+        });
+      }
+
+      request.status = "accepted";
+      await request.save();
+    } else {
+      request.status = "rejected";
+      await request.save();
+    }
 
     await sendRequestStatusEmailToReceiver({
       receiver: request.receiver,
@@ -572,6 +821,52 @@ const updateIncomingRequestStatusController = async (req, res) => {
   }
 };
 
+
+const getReceiverRequestsController = async (req, res) => {
+  try {
+    const currentUser = await userModel.findById(req.body.userId).select("role");
+    if (!currentUser || currentUser.role !== "receiver") {
+      return res.status(403).send({
+        success: false,
+        message: "Only receivers can view their requests",
+      });
+    }
+
+    const status = String(req.query.status || "all").toLowerCase();
+    const allowed = new Set(["all", "pending", "accepted", "rejected", "approved"]);
+    if (!allowed.has(status)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid status filter",
+      });
+    }
+
+    const query = {
+      receiver: req.body.userId,
+      requestType: "blood_request",
+    };
+    if (status !== "all") {
+      query.status = status;
+    }
+
+    const requests = await ReceiverRequestModel.find(query)
+      .populate("targetUser", "name organizationName hospitalName email phone role city")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).send({
+      success: true,
+      requests,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error fetching receiver requests",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   searchAvailabilityController,
   sendBloodRequestController,
@@ -579,4 +874,6 @@ module.exports = {
   getSentTargetsController,
   getIncomingRequestsController,
   updateIncomingRequestStatusController,
+
+  getReceiverRequestsController,
 };

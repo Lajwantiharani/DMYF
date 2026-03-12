@@ -17,7 +17,7 @@ const [data, setData] = useState([]);
             hospital:user?._id,
         }
       });
-      console.log(data);
+
       if (data?.success) {
         setData(data?.inventory);
       }

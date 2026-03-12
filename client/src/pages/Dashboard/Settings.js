@@ -3,6 +3,8 @@ import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
 import { toast } from "react-toastify";
 
+import PasswordInput from "../../components/Shared/PasswordInput";
+
 const Settings = () => {
   const [formData, setFormData] = useState({
     newPassword: "",
@@ -35,14 +37,13 @@ const Settings = () => {
   return (
     <Layout>
       <div className="container mt-4" style={{ maxWidth: "700px" }}>
-        <h3 className="mb-3">Settings</h3>
+
+        <h3 className="mb-3 page-heading">Settings</h3>
         <form onSubmit={handleSave}>
           <div className="row g-3">
             <div className="col-12">
-              <label className="form-label">New Password</label>
-              <input
-                type="password"
-                className="form-control"
+              <PasswordInput
+                label="New Password"
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={handleChange}
@@ -52,10 +53,9 @@ const Settings = () => {
             </div>
 
             <div className="col-12">
-              <label className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                className="form-control"
+
+              <PasswordInput
+                label="Confirm Password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -65,7 +65,8 @@ const Settings = () => {
             </div>
           </div>
 
-          <div className="text-center mt-4">
+
+          <div className="d-flex justify-content-end pe-2 mt-4">
             <button type="submit" className="btn btn-danger px-4" disabled={loading}>
               {loading ? "Saving..." : "Save"}
             </button>

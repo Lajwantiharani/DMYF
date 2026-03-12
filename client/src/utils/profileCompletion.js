@@ -16,10 +16,13 @@ export const isProfileComplete = (user) => {
     user.phone,
     user.city,
     user.address,
-    user.bloodGroup,
-    user.nukh,
-    user.akaah,
+
   ];
+
+  if (user.role !== "organization") {
+    requiredFields.push(user.bloodGroup);
+    requiredFields.push(user.nukh, user.akaah);
+  }
 
   return requiredFields.every(hasValue);
 };

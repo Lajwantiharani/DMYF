@@ -3,20 +3,27 @@ const JWT = require("jsonwebtoken");
 module.exports = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
-    
-    if (!authHeader) {
-      return res.status(401).send({
-        success: false,
-        message: "Authorization header missing",
-      });
+
+
+    let token = null;
+    if (authHeader && typeof authHeader === "string") {
+      token = authHeader.split(" ")[1]; // Bearer <token>
     }
 
-    const token = authHeader.split(" ")[1];  // Assuming 'Bearer <token>'
-    
+    if (!token && typeof req.headers.cookie === "string") {
+      const match = req.headers.cookie
+        .split(";")
+        .map((c) => c.trim())
+        .find((c) => c.startsWith("token="));
+      if (match) {
+        token = decodeURIComponent(match.slice("token=".length));
+      }
+    }
+
     if (!token) {
       return res.status(401).send({
         success: false,
-        message: "Token missing from authorization header",
+        message: "Auth token missing",
       });
     }
 
@@ -27,6 +34,8 @@ module.exports = async (req, res, next) => {
           message: "Auth failed",
         });
       } else {
+
+        req.userId = decoded.userId;
         req.body.userId = decoded.userId;
         next();
       }

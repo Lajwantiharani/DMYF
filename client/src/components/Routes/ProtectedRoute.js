@@ -20,20 +20,20 @@ const ProtectedRoute = ({ children }) => {
       const { data } = await API.get("/auth/current-user");
       if (data?.success) {
         dispatch(setCurrentUser(data.user));
+
+        return true;
       }
+      return false;
     } catch (error) {
       localStorage.clear();
       console.log(error);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      setLoading(false);
-      return;
-    }
 
     if (user) {
       setLoading(false);
@@ -43,17 +43,19 @@ const ProtectedRoute = ({ children }) => {
     getUser();
   }, [dispatch, user]);
 
-  if (!localStorage.getItem("token")) {
-    return <Navigate to="/login" replace />;
-  }
 
   if (loading) {
     return null;
   }
 
-  const allowedWhileLocked = ["/profile"];
 
-  if (!isProfileComplete(user) && location.pathname !== "/profile") {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const allowedWhileLocked = ["/profile", "/inquiry"];
+
+  if (!isProfileComplete(user) && !allowedWhileLocked.includes(location.pathname)) {
     return <Navigate to="/profile" replace />;
   }
 
@@ -66,6 +68,47 @@ const ProtectedRoute = ({ children }) => {
 
   if (location.pathname === "/analytics" && user?.role !== "admin") {
     return <Navigate to="/inventory" replace />;
+  }
+
+
+  const path = location.pathname;
+  const role = user?.role;
+
+  const isAllowed = () => {
+    if (!role) return false;
+    if (path === "/profile" || path === "/settings") return true;
+
+    if (path === "/user-inquiries") return role === "admin";
+    if (path === "/inquiry") return role !== "admin";
+
+    const adminOnlyPaths = new Set([
+      "/admin",
+      "/analytics",
+      "/donor-list",
+      "/org-list",
+      "/hospital-list",
+      "/verification-requests",
+    ]);
+
+    if (adminOnlyPaths.has(path)) return role === "admin";
+
+    if (path === "/receiver-list") return role === "admin" || role === "organization";
+
+    if (path === "/inventory" || path === "/blood-requests") {
+      return role === "organization" || role === "donor";
+    }
+
+    if (path === "/receiver") return role === "receiver";
+
+    if (path === "/organization" || path === "/consumer") return role === "hospital";
+
+    if (path === "/donation") return role !== "receiver";
+
+    return true;
+  };
+
+  if (!isAllowed()) {
+    return <Navigate to="/profile" replace />;
   }
 
   return children;

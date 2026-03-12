@@ -77,7 +77,8 @@ const bloodGroupDetailsContoller = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Bloodgroup Data Analytics API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -161,9 +162,82 @@ const analyticsDashboardController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in analytics dashboard API",
-      error,
+
+      error: error.message,
     });
   }
 };
 
-module.exports = { bloodGroupDetailsContoller, analyticsDashboardController };
+
+const analyticsTransactionsController = async (req, res) => {
+  try {
+    const scope = await getRoleScope(req.body.userId);
+
+    if (scope === null) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const sortDir = (req.query.sort || "desc").toLowerCase() === "asc" ? 1 : -1;
+
+    const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+
+    if (startDate && Number.isNaN(startDate.getTime())) {
+      return res.status(400).send({ success: false, message: "Invalid startDate" });
+    }
+
+    if (endDate && Number.isNaN(endDate.getTime())) {
+      return res.status(400).send({ success: false, message: "Invalid endDate" });
+    }
+
+    const match = { ...scope };
+    if (startDate || endDate) {
+      match.createdAt = {};
+      if (startDate) match.createdAt.$gte = startDate;
+      if (endDate) {
+        const inclusiveEnd = new Date(endDate);
+        inclusiveEnd.setHours(23, 59, 59, 999);
+        match.createdAt.$lte = inclusiveEnd;
+      }
+    }
+
+    const total = await InventoryModel.countDocuments(match);
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    const safePage = Math.min(page, totalPages);
+    const skip = (safePage - 1) * limit;
+
+    const items = await InventoryModel.find(match)
+      .sort({ createdAt: sortDir })
+      .skip(skip)
+      .limit(limit)
+      .select("bloodGroup inventoryType quantity email createdAt");
+
+    return res.status(200).send({
+      success: true,
+      message: "Transactions fetched successfully",
+      page: safePage,
+      limit,
+      total,
+      totalPages,
+      items,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in transactions API",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  bloodGroupDetailsContoller,
+  analyticsDashboardController,
+  analyticsTransactionsController,
+};

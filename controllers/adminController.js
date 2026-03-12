@@ -103,6 +103,8 @@ const getDonorsListController = async (req, res) => {
   try {
     const donorData = await userModel
       .find({ role: "donor" })
+
+      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -116,7 +118,8 @@ const getDonorsListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In DOnor List API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -125,6 +128,8 @@ const getHospitalListController = async (req, res) => {
   try {
     const hospitalData = await userModel
       .find({ role: "hospital" })
+
+      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -138,7 +143,8 @@ const getHospitalListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Hospital List API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -147,6 +153,8 @@ const getOrgListController = async (req, res) => {
   try {
     const orgData = await userModel
       .find({ role: "organization" })
+
+      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -160,7 +168,8 @@ const getOrgListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In ORG List API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -179,7 +188,8 @@ const deleteDonorController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error while deleting ",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -191,6 +201,8 @@ const getReceiverListController = async (req, res) => {
   try {
     const receiverData = await userModel
       .find({ role: "receiver" })
+
+      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -204,7 +216,8 @@ const getReceiverListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Receiver List API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -232,7 +245,8 @@ const addReceiverController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error Adding Receiver Record",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -259,7 +273,8 @@ const exportDonorsExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting donor data",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -286,7 +301,8 @@ const exportOrganizationsExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting organization data",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -313,7 +329,8 @@ const exportReceiversExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting receiver data",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -349,7 +366,8 @@ const exportDonatedExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting donated data",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -366,7 +384,8 @@ const deleteReceiverController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error while deleting receiver",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -391,7 +410,8 @@ const getPendingVerificationUsersController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error fetching pending verification users",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -458,14 +478,22 @@ const updateProfileVerificationStatusController = async (req, res) => {
         action === "verify"
           ? "User verified successfully"
           : "User marked as not verified",
-      user,
+
+      user: {
+        ...user.toObject(),
+        password: undefined,
+        otp: undefined,
+        otpExpires: undefined,
+        forgotPasswordRequestedAt: undefined,
+      },
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "Error updating profile verification status",
-      error,
+
+      error: error.message,
     });
   }
 };

@@ -3,6 +3,9 @@ import InputType from "./InputType";
 import { Link } from "react-router-dom";
 import { handleLogin, handleRegister } from "../../../services/authService";
 
+import { toast } from "react-toastify";
+import PhoneInputPk from "../PhoneInputPk";
+
 const Form = ({ formType, submitBtn, formTitle }) => {
   // Destructure props here
   const [email, setEmail] = useState("");
@@ -18,7 +21,12 @@ const Form = ({ formType, submitBtn, formTitle }) => {
         onSubmit={(e) => {
           if (formType === "login")
             return handleLogin(e, email, password);
-          else if (formType === "register")
+
+          else if (formType === "register") {
+            if (!phone || String(phone).length !== 10) {
+              e.preventDefault();
+              return toast.error("Phone number must be exactly 10 digits (without +92).");
+            }
             return handleRegister(
               e,
               role === "organization" ? "" : name,
@@ -29,8 +37,10 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               "",
               "",
               "",
-              phone,
+
+              `+92${phone}`,
             );
+          }
         }}
       >
         <h1 className="text-center">{formTitle}</h1>
@@ -158,13 +168,13 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 onChange={(e) => setOrganization(e.target.value)}
               />
             )}
-            <InputType
-              labelText={"Phone"}
-              labelFor={"forPhone"}
-              inputType={"text"}
-              name={"phone"}
+
+            <PhoneInputPk
+              label="Phone"
+              name="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              required
             />
           </>
         )}

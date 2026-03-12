@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import { setCurrentUser } from "../../redux/features/auth/authSlice";
 import { isProfileComplete } from "../../utils/profileCompletion";
 
+import CityAutocompleteInput from "../../components/Shared/CityAutocompleteInput";
+
 const bloodGroups = ["", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 const Profile = () => {
@@ -15,6 +17,8 @@ const Profile = () => {
     name: "",
     email: "",
     phone: "",
+
+    website: "",
     city: "",
     address: "",
     bloodGroup: "",
@@ -35,6 +39,8 @@ const Profile = () => {
     hospitalName: user?.role === "hospital" ? formData.name : user?.hospitalName,
     email: formData.email,
     phone: formData.phone,
+
+    website: formData.website,
     city: formData.city,
     address: formData.address,
     bloodGroup: formData.bloodGroup,
@@ -49,6 +55,8 @@ const Profile = () => {
         name: user?.name || user?.organizationName || user?.hospitalName || "",
         email: user?.email || "",
         phone: user?.phone || "",
+
+        website: user?.website || "",
         city: user?.city || "",
         address: user?.address || "",
         bloodGroup: user?.bloodGroup || "",
@@ -72,7 +80,12 @@ const Profile = () => {
     if (!isProfileApproved) return;
     setLoading(true);
     try {
-      const { data } = await API.put("/auth/update-profile", formData);
+
+      const payload = isAdmin
+        ? { name: formData.name, email: formData.email }
+        : formData;
+
+      const { data } = await API.put("/auth/update-profile", payload);
       if (data?.success) {
         dispatch(setCurrentUser(data.user));
         toast.success(data?.message || "Profile updated successfully");
@@ -119,7 +132,8 @@ const Profile = () => {
   return (
     <Layout>
       <div className="container profile-page-container" style={{ maxWidth: "900px" }}>
-        <h3 className="mb-3 profile-page-title">Profile</h3>
+
+        <h3 className="mb-3 profile-page-title page-heading">Profile</h3>
         <p className="profile-required-note mb-3">
         
         </p>
@@ -135,51 +149,85 @@ const Profile = () => {
               <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} disabled={!canEditProfile} required />
             </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">Phone Number <span className="required-star">*</span></label>
-              <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} disabled={!canEditProfile} required />
-            </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">City <span className="required-star">*</span></label>
-              <input type="text" className="form-control" name="city" value={formData.city} onChange={handleChange} disabled={!canEditProfile} required />
-            </div>
+            {!isAdmin && (
+              <>
+                <div className="col-12 col-md-6">
+                  <label className="form-label">Website</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    disabled={!canEditProfile}
+                    placeholder="e.g. https://example.com"
+                  />
+                </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">Address <span className="required-star">*</span></label>
-              <input type="text" className="form-control" name="address" value={formData.address} onChange={handleChange} disabled={!canEditProfile} required />
-            </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label">Phone Number <span className="required-star">*</span></label>
+                  <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} disabled={!canEditProfile} required />
+                </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">
-                Blood Group <span className="required-star">*</span>
-              </label>
-              <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} disabled={!canEditProfile} required>
-                {bloodGroups.map((group) => (
-                  <option key={group || "none"} value={group}>
-                    {group || "Select blood group"}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label">City <span className="required-star">*</span></label>
+                  <CityAutocompleteInput
+                    name="city"
+                    value={formData.city}
+                    onChange={(next) => {
+                      if (!canEditProfile) return;
+                      setFormData((prev) => ({ ...prev, city: next }));
+                    }}
+                    disabled={!canEditProfile}
+                    required
+                    placeholder="Start typing (e.g. La, hyd)"
+                  />
+                </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">
-                Nukh <span className="required-star">*</span>
-              </label>
-              <input type="text" className="form-control" name="nukh" value={formData.nukh} onChange={handleChange} disabled={!canEditProfile} required />
-            </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label">Address <span className="required-star">*</span></label>
+                  <input type="text" className="form-control" name="address" value={formData.address} onChange={handleChange} disabled={!canEditProfile} required />
+                </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">
-                Akaah <span className="required-star">*</span>
-              </label>
-              <input type="text" className="form-control" name="akaah" value={formData.akaah} onChange={handleChange} disabled={!canEditProfile} required />
-            </div>
+                {user?.role !== "organization" && (
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">
+                      Blood Group <span className="required-star">*</span>
+                    </label>
+                    <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} disabled={!canEditProfile} required>
+                      {bloodGroups.map((group) => (
+                        <option key={group || "none"} value={group}>
+                          {group || "Select blood group"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {user?.role !== "organization" && (
+                  <>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">
+                        Nukh <span className="required-star">*</span>
+                      </label>
+                      <input type="text" className="form-control" name="nukh" value={formData.nukh} onChange={handleChange} disabled={!canEditProfile} required />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">
+                        Akaah <span className="required-star">*</span>
+                      </label>
+                      <input type="text" className="form-control" name="akaah" value={formData.akaah} onChange={handleChange} disabled={!canEditProfile} required />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
 
           </div>
 
-          <div className="text-center mt-4 profile-save-wrap">
+          <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
             {isVerifiedAndLocked ? (
               <button type="button" className="btn btn-secondary px-4" disabled>
                 Profile Locked

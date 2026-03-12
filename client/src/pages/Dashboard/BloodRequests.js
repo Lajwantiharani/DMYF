@@ -70,7 +70,8 @@ const BloodRequests = () => {
   return (
     <Layout>
       <div className="container mt-4">
-        <h4 className="mb-3">Blood Requests</h4>
+
+        <h4 className="mb-3 page-heading">Blood Requests</h4>
         <div className="table-responsive">
           <table className="table">
             <thead>

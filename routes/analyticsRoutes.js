@@ -3,6 +3,8 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const {
   bloodGroupDetailsContoller,
   analyticsDashboardController,
+
+  analyticsTransactionsController,
 } = require("../controllers/analyticsController");
 
 const router = express.Router();
@@ -12,5 +14,7 @@ const router = express.Router();
 //GET BLOOD DATA
 router.get("/bloodGroups-data", authMiddleware, bloodGroupDetailsContoller);
 router.get("/dashboard-data", authMiddleware, analyticsDashboardController);
+
+router.get("/transactions", authMiddleware, analyticsTransactionsController);
 
 module.exports = router;

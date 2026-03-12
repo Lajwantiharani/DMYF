@@ -60,7 +60,8 @@ const Donation = () => {
     <Layout>
       <div className="container mt-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <h4 className="m-0">
+
+          <h4 className="m-0 page-heading">
             {user?.role === "organization" ? "Donated " : "Donated"}
           </h4>
           {isAdmin && (

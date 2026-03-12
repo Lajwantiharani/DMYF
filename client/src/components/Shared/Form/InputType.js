@@ -1,5 +1,7 @@
 import React from "react";
 
+import PasswordInput from "../PasswordInput";
+
 const InputType = ({
   labelText,
   labelFor,
@@ -8,6 +10,20 @@ const InputType = ({
   onChange,
   name,
 }) => {
+
+  if (inputType === "password") {
+    return (
+      <PasswordInput
+        label={labelText}
+        id={labelFor}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required
+      />
+    );
+  }
+
   return (
     <>
       <div className="mb-1">

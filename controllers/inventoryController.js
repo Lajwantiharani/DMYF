@@ -135,7 +135,8 @@ const createInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in create inventory API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -160,7 +161,8 @@ const getInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get all inventory",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -183,7 +185,8 @@ const getInventoryHospitalController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get consumer  inventory",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -206,7 +209,8 @@ const getDonorsController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get donors irecords ",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -232,7 +236,8 @@ const getHospitalController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In get Hospital API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -254,7 +259,8 @@ const getRecentInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Recent Inventory API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -276,7 +282,8 @@ const getOrgnaizationController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In ORG API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -299,7 +306,8 @@ const getOrgnaisationForHospitalController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Hospital ORG API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -357,7 +365,8 @@ const getDonatedRecordsController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in donated records API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -438,7 +447,8 @@ const getOrganizationAvailableStockController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in organization stock API",
-      error,
+
+      error: error.message,
     });
   }
 };
@@ -495,7 +505,8 @@ const getOrganizationReceiverSummaryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in organization receiver summary API",
-      error,
+
+      error: error.message,
     });
   }
 };

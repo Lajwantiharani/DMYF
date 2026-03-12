@@ -10,6 +10,8 @@ const Sidebar = ({ onNavigate }) => {
   const location = useLocation();
   const canAccessOtherTabs =
     user?.role === "admin" || user?.profileVerificationStatus === "approved";
+
+  const allowedWhileLocked = new Set(["/profile", "/inquiry"]);
   const handleNavigate = () => {
     if (typeof onNavigate === "function") {
       onNavigate();
@@ -26,7 +28,8 @@ const Sidebar = ({ onNavigate }) => {
   const renderMenuItem = (path, label, icon, condition = true) => {
     if (!condition) return null;
     const isActive = location.pathname === path;
-    const disabled = !canAccessOtherTabs && path !== "/profile";
+
+    const disabled = !canAccessOtherTabs && !allowedWhileLocked.has(path);
 
     const onClick = (e) => {
       if (disabled) {
@@ -133,6 +136,21 @@ const Sidebar = ({ onNavigate }) => {
             "Analytics",
             "fa-solid fa-chart-column",
             user?.role === "admin"
+          )}
+
+          {renderMenuItem(
+
+            "/user-inquiries",
+            "User Inquiries",
+            "fa-solid fa-envelope",
+            user?.role === "admin"
+          )}
+
+          {renderMenuItem(
+            "/inquiry",
+            "Inquiry",
+            "fa-solid fa-envelope",
+            user && user?.role !== "admin"
           )}
 
           {renderMenuItem(

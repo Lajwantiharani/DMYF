@@ -1,5 +1,5 @@
 const express = require("express");
-const authMiddleware = require("../middlewares/authMiddleware");
+
 const {
   getDonorsListController,
   getHospitalListController,
@@ -15,96 +15,82 @@ const {
   getPendingVerificationUsersController,
   updateProfileVerificationStatusController,
 } = require("../controllers/adminController");
+
+const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
-const { getHospitalController } = require("../controllers/inventoryController");
 //router object
 const router = express.Router();
 //routes
 
+
+// All admin endpoints must be authenticated and admin-only.
+router.use(authMiddleware, adminMiddleware);
+
 //get || donor list
-router.get(
-  "/donor-list",
-  authMiddleware,
-  getDonorsListController
-);
+router.get("/donor-list", getDonorsListController);
 
 //GET || HOSPITAL LIST
-router.get(
-  "/hospital-list",
-  authMiddleware,
-  adminMiddleware,
-  getHospitalListController
-);
+router.get("/hospital-list", getHospitalListController);
 
-router.get("/org-list", authMiddleware, adminMiddleware, getOrgListController);
+router.get("/org-list", getOrgListController);
 
 router.get(
   "/donor-export",
-  authMiddleware,
-  adminMiddleware,
   exportDonorsExcelController
 );
 
 router.get(
   "/org-export",
-  authMiddleware,
-  adminMiddleware,
+
   exportOrganizationsExcelController
 );
 
 router.get(
   "/receiver-export",
-  authMiddleware,
-  adminMiddleware,
+
   exportReceiversExcelController
 );
 
 router.get(
   "/donated-export",
-  authMiddleware,
-  adminMiddleware,
+
   exportDonatedExcelController
 );
 
 router.get(
   "/pending-verification-users",
-  authMiddleware,
-  adminMiddleware,
+
   getPendingVerificationUsersController
 );
 
 router.put(
   "/profile-verification/:id",
-  authMiddleware,
-  adminMiddleware,
+
   updateProfileVerificationStatusController
 );
 
 router.delete(
   "/delete-donor/:id",
-  authMiddleware,
-  adminMiddleware,
+
   deleteDonorController
 );
 
 router.get(
   "/receiver-list",
-  authMiddleware,
+
   getReceiverListController
 );
 
 router.delete(
   "/delete-receiver/:id",
-  authMiddleware,
-  adminMiddleware,
+
   deleteReceiverController
 );
 
 // ADD RECEIVER RECORD
 router.post(
   "/add-receiver",
-  authMiddleware,
-  adminMiddleware,
+
   addReceiverController
 );
 //export

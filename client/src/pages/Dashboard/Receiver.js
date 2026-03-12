@@ -1,8 +1,12 @@
+
+import moment from "moment";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
+
+import CityAutocompleteInput from "../../components/Shared/CityAutocompleteInput";
 
 const bloodGroups = ["", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -31,11 +35,37 @@ const Receiver = () => {
     quantity: "",
   });
 
+
+  const [myRequestsLoading, setMyRequestsLoading] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [approvedRequests, setApprovedRequests] = useState([]);
+
   const hasResults = useMemo(
     () =>
       (searchResults?.donors?.length || 0) > 0 ||
       (searchResults?.organizations?.length || 0) > 0,
     [searchResults],
+  );
+
+
+  const renderAvailabilityColGroup = () => (
+    <colgroup>
+      <col style={{ width: "35%" }} />
+      <col style={{ width: "30%" }} />
+      <col style={{ width: "20%" }} />
+      <col style={{ width: "15%" }} />
+    </colgroup>
+  );
+
+  const renderRequestsColGroup = () => (
+    <colgroup>
+      <col style={{ width: "16%" }} />
+      <col style={{ width: "22%" }} />
+      <col style={{ width: "16%" }} />
+      <col style={{ width: "14%" }} />
+      <col style={{ width: "14%" }} />
+      <col style={{ width: "18%" }} />
+    </colgroup>
   );
 
   const handleSearchChange = (e) => {
@@ -99,7 +129,8 @@ const Receiver = () => {
         ...prev,
         donors: prev.donors.map((donor) =>
           String(donor.userId) === String(userId)
-            ? { ...donor, requestSent: true }
+
+            ? { ...donor, requestStatus: "pending" }
             : donor,
         ),
       }));
@@ -109,9 +140,34 @@ const Receiver = () => {
     setSearchResults((prev) => ({
       ...prev,
       organizations: prev.organizations.map((org) =>
-        String(org.userId) === String(userId) ? { ...org, requestSent: true } : org,
+
+        String(org.userId) === String(userId) ? { ...org, requestStatus: "pending" } : org,
       ),
     }));
+  };
+
+
+  const loadMyRequests = async () => {
+    setMyRequestsLoading(true);
+    try {
+      const { data } = await API.get("/receiver/my-requests", {
+        params: { status: "all" },
+      });
+      if (!data?.success) {
+        toast.error(data?.message || "Unable to fetch requests");
+        return;
+      }
+
+      const requests = data?.requests || [];
+      setPendingRequests(requests.filter((r) => r.status === "pending"));
+      setApprovedRequests(
+        requests.filter((r) => r.status === "accepted" || r.status === "approved"),
+      );
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Unable to fetch requests");
+    } finally {
+      setMyRequestsLoading(false);
+    }
   };
 
   const onSendRequest = async () => {
@@ -206,7 +262,8 @@ const Receiver = () => {
   return (
     <Layout>
       <div className="container mt-4">
-        <h4 className="mb-3">Receiver Blood Request</h4>
+
+        <h4 className="mb-3 page-heading">Receiver Blood Request</h4>
 
         <ul className="nav nav-tabs mb-3 receiver-tabs">
           <li className="nav-item">
@@ -225,6 +282,19 @@ const Receiver = () => {
               onClick={() => setActiveTab("request")}
             >
               Make  a Request 
+            </button>
+          </li>
+
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link receiver-tab-btn ${activeTab === "my-requests" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab("my-requests");
+                loadMyRequests();
+              }}
+            >
+              My Requests
             </button>
           </li>
         </ul>
@@ -250,14 +320,13 @@ const Receiver = () => {
               </div>
               <div className="col-12 col-md-4">
                 <label className="form-label">City</label>
-                <input
-                  type="text"
-                  className="form-control"
+
+                <CityAutocompleteInput
                   name="city"
                   value={searchForm.city}
-                  onChange={handleSearchChange}
-                  placeholder="Enter city"
+                  onChange={(next) => setSearchForm((prev) => ({ ...prev, city: next }))}
                   required
+                  placeholder="Start typing (e.g. La, hyd)"
                 />
               </div>
               <div className="col-12 col-md-2">
@@ -283,7 +352,9 @@ const Receiver = () => {
             <div className="mt-4">
               <h5>Donor List</h5>
               <div className="table-responsive">
-                <table className="table">
+
+                <table className="table" style={{ tableLayout: "fixed" }}>
+                  {renderAvailabilityColGroup()}
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -299,8 +370,9 @@ const Receiver = () => {
                         <td>{donor.contact || donor.email || "-"}</td>
                         <td>{donor.availableQuantity}</td>
                         <td>
-                          {donor.requestSent ? (
-                            <span className="badge bg-secondary">Request Sent</span>
+
+                          {donor.requestStatus === "pending" ? (
+                            <span className="badge bg-secondary">Pending</span>
                           ) : (
                             <input
                               type="checkbox"
@@ -313,7 +385,8 @@ const Receiver = () => {
                     ))}
                     {searchResults.donors.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="text-muted">
+
+                        <td colSpan="4" className="text-muted text-center">
                           No donors found.
                         </td>
                       </tr>
@@ -324,7 +397,9 @@ const Receiver = () => {
 
               <h5 className="mt-4">Organization List</h5>
               <div className="table-responsive">
-                <table className="table">
+
+                <table className="table" style={{ tableLayout: "fixed" }}>
+                  {renderAvailabilityColGroup()}
                   <thead>
                     <tr>
                       <th>Organization Name</th>
@@ -340,8 +415,9 @@ const Receiver = () => {
                         <td>{org.contact || org.email || "-"}</td>
                         <td>{org.availableQuantity}</td>
                         <td>
-                          {org.requestSent ? (
-                            <span className="badge bg-secondary">Request Sent</span>
+
+                          {org.requestStatus === "pending" ? (
+                            <span className="badge bg-secondary">Pending</span>
                           ) : (
                             <input
                               type="checkbox"
@@ -354,7 +430,8 @@ const Receiver = () => {
                     ))}
                     {searchResults.organizations.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="text-muted">
+
+                        <td colSpan="4" className="text-muted text-center">
                           No organizations found.
                         </td>
                       </tr>
@@ -444,6 +521,103 @@ const Receiver = () => {
               </button>
             </div>
           </form>
+        )}
+
+
+        {activeTab === "my-requests" && (
+          <div className="mt-3">
+            {myRequestsLoading ? (
+              <p className="text-muted mb-0">Loading requests...</p>
+            ) : (
+              <>
+                <h5 className="mb-2">Pending Requests</h5>
+                <div className="table-responsive">
+                  <table className="table" style={{ tableLayout: "fixed" }}>
+                    {renderRequestsColGroup()}
+                    <thead>
+                      <tr>
+                        <th>To</th>
+                        <th>Contact</th>
+                        <th>Blood Group</th>
+                        <th>Quantity (ML)</th>
+                        <th>City</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingRequests.map((req) => {
+                        const target = req?.targetUser;
+                        const targetName =
+                          target?.role === "organization"
+                            ? target?.organizationName
+                            : target?.name;
+                        return (
+                          <tr key={req._id}>
+                            <td>{targetName || "-"}</td>
+                            <td>{target?.phone || target?.email || "-"}</td>
+                            <td>{req.bloodGroup}</td>
+                            <td>{req.quantity}</td>
+                            <td>{req.city || "-"}</td>
+                            <td>{moment(req.createdAt).format("DD/MM/YYYY")}</td>
+                          </tr>
+                        );
+                      })}
+                      {pendingRequests.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="text-muted text-center">
+                            No pending requests.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <h5 className="mt-4 mb-2">Approved Requests</h5>
+                <div className="table-responsive">
+                  <table className="table" style={{ tableLayout: "fixed" }}>
+                    {renderRequestsColGroup()}
+                    <thead>
+                      <tr>
+                        <th>To</th>
+                        <th>Contact</th>
+                        <th>Blood Group</th>
+                        <th>Quantity (ML)</th>
+                        <th>City</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {approvedRequests.map((req) => {
+                        const target = req?.targetUser;
+                        const targetName =
+                          target?.role === "organization"
+                            ? target?.organizationName
+                            : target?.name;
+                        return (
+                          <tr key={req._id}>
+                            <td>{targetName || "-"}</td>
+                            <td>{target?.phone || target?.email || "-"}</td>
+                            <td>{req.bloodGroup}</td>
+                            <td>{req.quantity}</td>
+                            <td>{req.city || "-"}</td>
+                            <td>{moment(req.createdAt).format("DD/MM/YYYY")}</td>
+                          </tr>
+                        );
+                      })}
+                      {approvedRequests.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="text-muted text-center">
+                            No approved requests.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </Layout>

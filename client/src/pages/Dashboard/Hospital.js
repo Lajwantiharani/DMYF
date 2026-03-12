@@ -22,30 +22,33 @@ const Hospital = () => {
   }, []);
   return (
     <Layout>
-      <h1>Donor Page </h1>
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col">Phone</th>
-              <th scope="col">Address</th>
-              <th scope="col">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.map((record) => (
-              <tr key={record._id}>
-                <td>{record.hospitalName}</td>
-                <td>{record.email}</td>
-                <td>{record.phone}</td>
-                <td>{record.address}</td>
-                <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
+
+      <div className="container mt-4">
+        <h1 className="page-heading">Hospital Page</h1>
+        <div className="table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Address</th>
+                <th scope="col">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data?.map((record) => (
+                <tr key={record._id}>
+                  <td>{record.hospitalName}</td>
+                  <td>{record.email}</td>
+                  <td>{record.phone}</td>
+                  <td>{record.address}</td>
+                  <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Layout>
   );
