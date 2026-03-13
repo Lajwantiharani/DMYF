@@ -79,26 +79,26 @@ img {
 
 /* Professional navbar (used by dashboard + analytics) */
 .navbar {
-  background: #000000 !important;
-  border-bottom: 1px solid #111111;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  background:  rgba(252, 188, 188, 0.95) !important; /* very pale warm pink */
+  border-bottom: 1px solid #f1dede;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .navbar-brand {
-  color: #ffffff !important;
+  color: #0f172a !important;
   background: transparent !important;
   font-weight: 700;
   letter-spacing: 0.2px;
 }
 
 .nav-link {
-  color: #f1f5f9 !important;
+  color: #0b3c6d !important;
   background: transparent !important;
   font-weight: 600;
 }
 
 .nav-link:hover {
-  color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 .badge.bg-secondary {

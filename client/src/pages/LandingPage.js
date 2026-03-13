@@ -31,7 +31,7 @@ const LandingPage = () => {
       <div className="navbar-container">
         <div className="logo">
           <img src={logo} alt="Logo" />
-          <span className="logo-text">DHAT Blood Bank</span>
+         
         </div>
 
         <button
