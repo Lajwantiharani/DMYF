@@ -1,5 +1,7 @@
 import React from 'react';
-import { BiDonateBlood, BiUserCircle } from "react-icons/bi";
+import { BiUserCircle } from "react-icons/bi";
+import logo from "../../../../pages/logo.png";
+import "./header.css";
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from "react-toastify";
@@ -19,7 +21,7 @@ const Header = ({ onToggleSidebar }) => {
       <nav className="navbar">
         <div className="container-fluid">
           <div className="navbar-brand h1">
-            <BiDonateBlood color="red" /> Blood Bank App
+            <img src={logo} alt="Logo" style={{ width: "45px", height: "auto", transform: "scale(3.5)", transformOrigin: "left center" }} />
           </div>
           <button
             type="button"

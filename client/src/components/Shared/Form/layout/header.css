@@ -1,0 +1,31 @@
+/* Header bar color update for improved look */
+
+.navbar {
+    background: #fff;
+    color: #c1121f;
+    min-height: 64px;
+    box-shadow: 0 4px 16px rgba(193, 18, 31, 0.08);
+    position: relative;
+}
+
+.navbar::after {
+    display: none;
+}
+
+.navbar .container-fluid {
+    position: relative;
+    z-index: 2;
+}
+
+.navbar .navbar-brand img {
+    width: 45px;
+    height: auto;
+    transform: scale(3.5);
+    transform-origin: left center;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.12));
+}
+
+.navbar .navbar-brand {
+    display: flex;
+    align-items: center;
+}
