@@ -5,6 +5,7 @@ import { handleLogin, handleRegister } from "../../../services/authService";
 
 import { toast } from "react-toastify";
 import PhoneInputPk from "../PhoneInputPk";
+import Captcha from "./Captcha";
 
 const Form = ({ formType, submitBtn, formTitle }) => {
   // Destructure props here
@@ -14,13 +15,19 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [name, setName] = useState("");
   const [organizationName, setOrganization] = useState("");
   const [phone, setPhone] = useState("");
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   return (
     <div>
       <form
         onSubmit={(e) => {
-          if (formType === "login")
+          if (formType === "login") {
+            if (!isCaptchaVerified) {
+              e.preventDefault();
+              return toast.error("Please verify that you are not a robot.");
+            }
             return handleLogin(e, email, password);
+          }
 
           else if (formType === "register") {
             if (!phone || String(phone).length !== 10) {
@@ -43,7 +50,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
           }
         }}
       >
-        <h1 className="text-center">{formTitle}</h1>
+        <h1 className="text-start mb-3" style={{ fontSize: "1.8rem", fontWeight: "700" }}>{formTitle}</h1>
         <hr />
         {formType === "login" ? (
           <p className="mb-2" style={{ marginTop: "-10px" }}>
@@ -138,6 +145,7 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <Captcha onVerify={setIsCaptchaVerified} />
           </>
         )}
 

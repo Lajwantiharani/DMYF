@@ -30,7 +30,7 @@ const Login = () => {
           <div className="auth-card">
             {error && <div className="auth-alert">{error}</div>}
 
-            <Form formTitle="Login" submitBtn="Login" formType="login" />
+            <Form formTitle="Login to your Dashboard" submitBtn="Login" formType="login" />
           </div>
         </section>
       </div>

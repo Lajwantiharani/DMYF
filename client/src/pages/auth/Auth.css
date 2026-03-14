@@ -134,7 +134,7 @@
   font-size: 0.92rem;
 }
 
-.auth-card form h1.text-center {
+.auth-card form h1 {
   color: var(--auth-text);
   font-size: 2rem;
   margin: 0 0 6px;
@@ -321,7 +321,7 @@
   }
 
   .auth-panel {
-    padding: 20px 14px;
+    padding: 20px 10px;
   }
 
   .auth-card {

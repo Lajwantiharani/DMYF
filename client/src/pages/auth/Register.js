@@ -30,7 +30,7 @@ const Register = () => {
           <div className="auth-card">
             {error && <div className="auth-alert">{error}</div>}
 
-            <Form formTitle="Register" submitBtn="Register" formType="register" />
+            <Form formTitle="Sign up for Blood Bank" submitBtn="Register" formType="register" />
           </div>
         </section>
       </div>
