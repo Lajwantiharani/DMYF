@@ -668,3 +668,16 @@
     flex: 1 1 0;
   }
 }
+.btn-add-record {
+  background-color: #b4232b !important;
+  border-color: #b4232b !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-add-record:hover {
+  background-color: #921c23 !important;
+  border-color: #921c23 !important;
+  box-shadow: 0 4px 12px rgba(180, 35, 43, 0.25) !important;
+}

@@ -86,21 +86,12 @@ const HomePage = () => {
       <div className="container mt-4">
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
           <div>
-            <p className="mb-1 text-uppercase text-muted small">Dashboard</p>
             <h2 className="page-heading mb-0">{roleLabel}</h2>
           </div>
           <div className="d-flex gap-2">
             <button
               type="button"
-              className="btn btn-outline-secondary"
-              onClick={fetchInventory}
-              disabled={loading}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
+              className="btn btn-add-record"
               data-bs-toggle="modal"
               data-bs-target="#staticBackdrop"
             >

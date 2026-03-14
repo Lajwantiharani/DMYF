@@ -133,17 +133,6 @@ const Analytics = () => {
 
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h3 className="m-0 page-heading">Analytics Summary</h3>
-          <button
-            type="button"
-            className="btn btn-outline-secondary btn-sm"
-            onClick={() => {
-              getSummaryData();
-              getTransactions();
-            }}
-            disabled={loading || txLoading}
-          >
-            {loading || txLoading ? "Refreshing..." : "Refresh"}
-          </button>
         </div>
         <div className="row g-3">
           <div className="col-12 col-md-4">
