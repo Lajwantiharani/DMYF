@@ -28,11 +28,13 @@ const Header = ({ onToggleSidebar }) => {
             <i className="fa-solid fa-bars"></i>
           </button>
           <ul className="navbar-nav flex-row dashboard-header-nav">
-            <li className="nav-item mx-3 welcome-item">
-              <p className="nav-link mb-0" style={{ lineHeight: "1.2" }}>
+            <li className="nav-item mx-3 welcome-item" style={{ textAlign: "center" }}>
+              <p className="nav-link mb-0" style={{ lineHeight: "1.3" }}>
                 <span>Welcome {user?.name || user?.hospitalName || user?.organizationName}</span>
                 <br />
-                <span className="badge bg-secondary">{user?.role}</span>
+                <span className="badge" style={{ backgroundColor: "#dc3545", color: "#fff" }}>
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
+                </span>
               </p>
             </li>
           </ul>

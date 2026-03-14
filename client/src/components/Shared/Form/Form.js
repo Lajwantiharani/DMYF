@@ -45,6 +45,18 @@ const Form = ({ formType, submitBtn, formTitle }) => {
       >
         <h1 className="text-center">{formTitle}</h1>
         <hr />
+        {formType === "login" ? (
+          <p className="mb-2" style={{ marginTop: "-10px" }}>
+            Not registered yet ? Register
+            <Link to="/register" style={{ color: "var(--auth-primary)", textDecoration: "none", fontWeight: "700" }}> Here !</Link>
+          </p>
+        ) : (
+          <p className="mb-2" style={{ marginTop: "-10px" }}>
+            Already User Please
+            <Link to="/login" style={{ color: "var(--auth-primary)", textDecoration: "none", fontWeight: "700" }}> Login !</Link>
+          </p>
+        )}
+
         {formType === "register" && (
           <>
             <div className="auth-role-desktop d-flex mb-3">
@@ -180,25 +192,12 @@ const Form = ({ formType, submitBtn, formTitle }) => {
         )}
 
         <div className="d-flex flex-row justify-content-between">
-          {formType === "login" ? (
-            <div>
-              <p className="mb-1">
-                {" "}
-                Not registered yet ? Register
-                <Link to="/register"> Here !</Link>
-              </p>
-              <p className="mb-0">
-                <Link to="/forgot-password">Forgot Password?</Link>
-              </p>
-            </div>
-          ) : (
-            <p>
-              {" "}
-              Already User Please
-              <Link to="/login"> Login !</Link>
+          {formType === "login" && (
+            <p className="mb-0">
+              <Link to="/forgot-password">Forgot Password?</Link>
             </p>
           )}
-          <button className="btn btn-primary" type="submit">
+          <button className="btn btn-primary ms-auto" type="submit">
             {submitBtn}
           </button>
         </div>

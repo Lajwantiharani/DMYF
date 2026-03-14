@@ -21,7 +21,7 @@ const Register = () => {
           <div className="auth-banner__overlay" />
           <div className="auth-banner__content">
             <h1>Become a Lifesaver</h1>
-            <p>Join our community and support safe, fast blood access.</p>
+            <p>Join the community and support safe, fast blood access.</p>
           </div>
         </section>
 

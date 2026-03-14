@@ -254,20 +254,22 @@ const Profile = () => {
                       disabled={!canEditProfile}
                       required
                     />
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary position-absolute top-0 end-0 h-100"
-                      style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-                      onClick={() => {
-                        if (!canEditProfile) return;
-                        dateInputRef.current?.showPicker?.();
-                      }}
-                      tabIndex={-1}
-                      aria-label="Open date picker"
-                      disabled={!canEditProfile}
-                    >
-                      📅
-                    </button>
+                    {canEditProfile && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary position-absolute top-0 end-0 h-100"
+                        style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                        onClick={() => {
+                          if (!canEditProfile) return;
+                          dateInputRef.current?.showPicker?.();
+                        }}
+                        tabIndex={-1}
+                        aria-label="Open date picker"
+                        disabled={!canEditProfile}
+                      >
+                        📅
+                      </button>
+                    )}
                     <input
                       ref={dateInputRef}
                       type="date"
@@ -310,7 +312,14 @@ const Profile = () => {
                     <label className="form-label">
                       Blood Group {canEditProfile && <span className="required-star">*</span>}
                     </label>
-                    <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} disabled={!canEditProfile} required>
+                    <select
+                      className={canEditProfile ? "form-select" : "form-control"}
+                      name="bloodGroup"
+                      value={formData.bloodGroup}
+                      onChange={handleChange}
+                      disabled={!canEditProfile}
+                      required
+                    >
                       {bloodGroups.map((group) => (
                         <option key={group || "none"} value={group}>
                           {group || "Select blood group"}
