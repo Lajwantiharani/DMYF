@@ -70,21 +70,6 @@ const HomePage = () => {
       if (filters.bloodGroup !== "all" && record.bloodGroup !== filters.bloodGroup)
         return false;
 
-      if (filters.search.trim()) {
-        const haystack = [
-          record?.donor?.name,
-          record?.donor?.email,
-          record?.hospital?.name,
-          record?.hospital?.email,
-          record?.organization?.organizationName,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        if (!haystack.includes(filters.search.trim().toLowerCase())) return false;
-      }
-
       return true;
     });
   }, [filters, inventory]);
@@ -145,7 +130,7 @@ const HomePage = () => {
             <div className="card h-100 shadow-sm border-0">
               <div className="card-body">
                 <p className="text-muted mb-1">Available</p>
-                <h4 className="fw-bold text-success">{summary.available} ml</h4>
+                <h4 className="fw-bold text-danger">{summary.available} ml</h4>
               </div>
             </div>
           </div>
@@ -183,18 +168,7 @@ const HomePage = () => {
               ))}
             </select>
           </div>
-          <div className="col-md-4">
-            <label className="form-label fw-semibold">Search</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Donor / receiver / organization"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, search: e.target.value }))
-              }
-            />
-          </div>
+
         </div>
 
         <div className="table-responsive">
@@ -204,7 +178,6 @@ const HomePage = () => {
                 <th>Blood Group</th>
                 <th>Type</th>
                 <th>Quantity (ml)</th>
-                <th>Counter Party</th>
                 <th>Email</th>
                 <th>Date</th>
               </tr>
@@ -212,7 +185,6 @@ const HomePage = () => {
             <tbody>
               {filteredInventory.map((record) => {
                 const isIn = record.inventoryType === "in";
-                const counterParty = isIn ? record?.donor : record?.hospital;
                 return (
                   <tr key={record._id}>
                     <td className="fw-semibold">{record.bloodGroup}</td>
@@ -220,8 +192,7 @@ const HomePage = () => {
                       {record.inventoryType?.toUpperCase()}
                     </td>
                     <td>{record.quantity}</td>
-                    <td>{counterParty?.name || counterParty?.organizationName || "-"}</td>
-                    <td>{counterParty?.email || "-"}</td>
+                    <td>{record.email || "-"}</td>
                     <td>{moment(record.createdAt).format("DD/MM/YYYY")}</td>
                   </tr>
                 );

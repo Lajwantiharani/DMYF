@@ -200,12 +200,12 @@ const Profile = () => {
         <form onSubmit={handleSave} className="profile-form">
           <div className="row g-3">
             <div className="col-12 col-md-6">
-              <label className="form-label">Name <span className="required-star">*</span></label>
+              <label className="form-label">Name {canEditProfile && <span className="required-star">*</span>}</label>
               <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} disabled={!canEditProfile} required />
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label">Email <span className="required-star">*</span></label>
+              <label className="form-label">Email {canEditProfile && <span className="required-star">*</span>}</label>
               <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} disabled={!canEditProfile} required />
             </div>
 
@@ -228,13 +228,13 @@ const Profile = () => {
                 )}
 
                 <div className="col-12 col-md-6">
-                  <label className="form-label">Phone Number <span className="required-star">*</span></label>
+                  <label className="form-label">Phone Number {canEditProfile && <span className="required-star">*</span>}</label>
                   <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} disabled={!canEditProfile} required />
                 </div>
 
                 <div className="col-12 col-md-6">
                   <label className="form-label">
-                    Date of Birth (Day / Month / Year) <span className="required-star">*</span>
+                    Date of Birth {canEditProfile && <span className="required-star">*</span>}
                   </label>
                   <div className="position-relative">
                     <input
@@ -286,7 +286,7 @@ const Profile = () => {
                 </div>
 
                 <div className="col-12 col-md-6">
-                  <label className="form-label">City <span className="required-star">*</span></label>
+                  <label className="form-label">City {canEditProfile && <span className="required-star">*</span>}</label>
                   <CityAutocompleteInput
                     name="city"
                     value={formData.city}
@@ -301,14 +301,14 @@ const Profile = () => {
                 </div>
 
                 <div className="col-12 col-md-6">
-                  <label className="form-label">Address <span className="required-star">*</span></label>
+                  <label className="form-label">Address {canEditProfile && <span className="required-star">*</span>}</label>
                   <input type="text" className="form-control" name="address" value={formData.address} onChange={handleChange} disabled={!canEditProfile} required />
                 </div>
 
                 {user?.role !== "organization" && (
                   <div className="col-12 col-md-6">
                     <label className="form-label">
-                      Blood Group <span className="required-star">*</span>
+                      Blood Group {canEditProfile && <span className="required-star">*</span>}
                     </label>
                     <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} disabled={!canEditProfile} required>
                       {bloodGroups.map((group) => (
@@ -324,14 +324,14 @@ const Profile = () => {
                   <>
                     <div className="col-12 col-md-6">
                       <label className="form-label">
-                        Nukh <span className="required-star">*</span>
+                        Nukh {canEditProfile && <span className="required-star">*</span>}
                       </label>
                       <input type="text" className="form-control" name="nukh" value={formData.nukh} onChange={handleChange} disabled={!canEditProfile} required />
                     </div>
 
                     <div className="col-12 col-md-6">
                       <label className="form-label">
-                        Akaah <span className="required-star">*</span>
+                        Akaah {canEditProfile && <span className="required-star">*</span>}
                       </label>
                       <input type="text" className="form-control" name="akaah" value={formData.akaah} onChange={handleChange} disabled={!canEditProfile} required />
                     </div>

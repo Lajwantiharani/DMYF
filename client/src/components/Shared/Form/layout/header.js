@@ -29,9 +29,9 @@ const Header = ({ onToggleSidebar }) => {
           </button>
           <ul className="navbar-nav flex-row dashboard-header-nav">
             <li className="nav-item mx-3 welcome-item">
-              <p className="nav-link">
-                Welcome {user?.name || user?.hospitalName || user?.organizationName}
-                &nbsp;
+              <p className="nav-link mb-0" style={{ lineHeight: "1.2" }}>
+                <span>Welcome {user?.name || user?.hospitalName || user?.organizationName}</span>
+                <br />
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>
             </li>
