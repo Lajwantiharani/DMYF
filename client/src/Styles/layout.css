@@ -89,7 +89,7 @@
 }
 
 .header .navbar {
-  background: #fff; /* pure white */
+  background: #fff !important; /* pure white */
   padding: 0.75rem 1rem;
 }
 

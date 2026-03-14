@@ -1,5 +1,4 @@
 import React from 'react';
-import { BiUserCircle } from "react-icons/bi";
 import logo from "../../../../pages/logo.png";
 import "./header.css";
 import { useNavigate } from 'react-router-dom';
@@ -8,13 +7,9 @@ import { toast } from "react-toastify";
 
 const Header = ({ onToggleSidebar }) => {
   const { user } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logout successful");
-    navigate('/login');
-  };
+  // menuOpen should be a prop or local state. We'll use a prop for consistency with sidebar toggle.
+  // If not passed, default to false.
+  const menuOpen = typeof window !== "undefined" && window.menuOpen !== undefined ? window.menuOpen : false;
 
   return (
     <>
@@ -25,26 +20,20 @@ const Header = ({ onToggleSidebar }) => {
           </div>
           <button
             type="button"
-            className="btn btn-outline-light sidebar-toggle-btn ms-auto"
+            className={`sidebar-toggle-btn ms-auto${menuOpen ? " open" : ""}`}
             onClick={onToggleSidebar}
             aria-label="Toggle sidebar"
+            style={{ color: menuOpen ? "#c1121f" : "#8f0f18", background: "transparent", border: "none", fontSize: "2rem" }}
           >
             <i className="fa-solid fa-bars"></i>
           </button>
           <ul className="navbar-nav flex-row dashboard-header-nav">
             <li className="nav-item mx-3 welcome-item">
               <p className="nav-link">
-                <BiUserCircle /> Welcome{" "}
-                {user?.name || user?.hospitalName || user?.organizationName}
+                Welcome {user?.name || user?.hospitalName || user?.organizationName}
                 &nbsp;
                 <span className="badge bg-secondary">{user?.role}</span>
               </p>
-            </li>
-
-            <li className="nav-item mx-3 logout-item desktop-only-logout">
-              <button className="btn btn-danger" onClick={handleLogout}>
-                Logout
-              </button>
             </li>
           </ul>
         </div>

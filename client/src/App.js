@@ -47,6 +47,14 @@ function App() {
         bodyClassName="app-toast-body"
       />
       <Routes>
+                <Route
+                  path="/organization-list"
+                  element={
+                    <ProtectedRoute>
+                      <OrgList />
+                    </ProtectedRoute>
+                  }
+                />
         <Route
           path="/analytics"
           element={

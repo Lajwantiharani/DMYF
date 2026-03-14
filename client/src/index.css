@@ -79,8 +79,8 @@ img {
 
 /* Professional navbar (used by dashboard + analytics) */
 .navbar {
-  background:  rgba(252, 188, 188, 0.95) !important; /* very pale warm pink */
-  border-bottom: 1px solid #f1dede;
+  background: #fff !important;
+  border-bottom: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
