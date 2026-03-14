@@ -212,18 +212,20 @@ const Profile = () => {
 
             {!isAdmin && (
               <>
-                <div className="col-12 col-md-6">
-                  <label className="form-label">Website</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    disabled={!canEditProfile}
-                    placeholder="e.g. https://example.com"
-                  />
-                </div>
+                {user?.role === "organization" && (
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">Website</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      disabled={!canEditProfile}
+                      placeholder="e.g. https://example.com"
+                    />
+                  </div>
+                )}
 
                 <div className="col-12 col-md-6">
                   <label className="form-label">Phone Number <span className="required-star">*</span></label>
@@ -342,9 +344,9 @@ const Profile = () => {
 
           <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
             {isVerifiedAndLocked ? (
-              <button type="button" className="btn btn-secondary px-4" disabled>
-                Profile Locked
-              </button>
+              <p className="text-dark mb-0 fw-semibold text-center w-100">
+                Note: Profile is saved and can't be edited. To edit it contact admin.
+              </p>
             ) : isProfileApproved ? (
               <button type="submit" className="btn btn-danger px-4" disabled={loading}>
                 {loading ? "Saving..." : "Save"}
@@ -366,17 +368,12 @@ const Profile = () => {
           </div>
           {!isAdmin && user?.profileVerificationStatus === "pending" && (
             <p className="text-warning mt-3 mb-0 fw-semibold">
-              Verification request submitted. Please wait for admin approval.
+              Verification request submitted. Please wait for the admin approval.
             </p>
           )}
           {!isAdmin && user?.profileVerificationStatus === "rejected" && (
             <p className="text-danger mt-3 mb-0 fw-semibold">
               Your verification request was not approved. Update your profile and request again.
-            </p>
-          )}
-          {!isAdmin && user?.profileVerificationStatus === "approved" && (
-            <p className="text-success mt-3 mb-0 fw-semibold">
-              Note: Profile is saved and can't be edited. To edit it contact admin.
             </p>
           )}
         </form>
