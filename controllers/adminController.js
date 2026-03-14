@@ -425,17 +425,22 @@ const updateProfileVerificationStatusController = async (req, res) => {
       try {
         await sendEmail({
           to: user.email,
-          subject: "Profile Verification Approved - DMYVF",
+          subject: "Profile Verification Approved - DMYF",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-              <h2 style="color: #2c3e50;">Profile Verified Successfully</h2>
-              <p>Hello ${displayName},</p>
-              <p>Your profile has been verified by the admin.</p>
-              <p>You can now access all tabs and features in your account.</p>
-              <hr style="border: none; border-top: 1px solid #eee;">
-              <p style="font-size: 12px; color: #777;">
-                &copy; ${new Date().getFullYear()} ${process.env.APP_NAME || "DMYVF"}.
-              </p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+              <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+              </div>
+              <div style="padding: 30px; color: #333; line-height: 1.6;">
+                <h2 style="color: #2c3e50; margin-top: 0;">Profile Verified Successfully</h2>
+                <p>Hello <strong>${displayName}</strong>,</p>
+                <p>Your profile has been verified by the admin.</p>
+                <p>You can now access all tabs and features in your account.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                  &copy; ${new Date().getFullYear()} DMYF Blood Bank.
+                </p>
+              </div>
             </div>
           `,
         });

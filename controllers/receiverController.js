@@ -131,7 +131,7 @@ const sendBloodRequestEmails = async ({
 
   await sendEmail({
     to: recipients.join(","),
-    subject: "New Blood Request - DMYVF",
+    subject: "New Blood Request - DMYF",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
         <h2>New Blood Request</h2>
@@ -161,7 +161,7 @@ const sendAvailabilityRequestEmailToAdmins = async ({
 
   await sendEmail({
     to: adminEmails.join(","),
-    subject: "Receiver Availability Request - DMYVF",
+    subject: "Receiver Availability Request - DMYF",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
         <h2>Receiver Availability Request</h2>
@@ -193,7 +193,7 @@ const sendRequestStatusEmailToReceiver = async ({
 
   await sendEmail({
     to: receiver.email,
-    subject: `Blood Request ${statusText} - DMYVF`,
+    subject: `Blood Request ${statusText} - DMYF`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
         <h2>Blood Request ${statusText}</h2>

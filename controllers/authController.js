@@ -101,7 +101,7 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
 
     return await sendEmail({
       to: adminEmails.join(","),
-      subject: "New Profile Verification Request - DMYVF",
+      subject: "New Profile Verification Request - DMYF",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
           <h2 style="color: #2c3e50;">New Verification Request Received</h2>
@@ -209,20 +209,25 @@ const registerController = async (req, res) => {
     // Send OTP email
     const emailSent = await sendEmail({
       to: email,
-      subject: "Verify Your Email - DMYVF",
+      subject: "Verify Your Email - DMYF",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #2c3e50;">Welcome to ${process.env.APP_NAME || "DMYVF"}!</h2>
-          <p>Thank you for registering.</p>
-          <p style="font-size: 24px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0;">
-            ${otp}
-          </p>
-          <p>This code will expire in <strong>10 minutes</strong>.</p>
-          <p>If you didn't request this, please ignore this email.</p>
-          <hr style="border: none; border-top: 1px solid #eee;">
-          <p style="font-size: 12px; color: #777;">
-            © ${new Date().getFullYear()} ${process.env.APP_NAME || "DMYVF"}. All rights reserved.
-          </p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+          </div>
+          <div style="padding: 30px; color: #333; line-height: 1.6;">
+            <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF!</h2>
+            <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
+            <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
+              ${otp}
+            </p>
+            <p>This code will expire in <strong>10 minutes</strong>.</p>
+            <p>If you didn't request this registration, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+            <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+              &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
+            </p>
+          </div>
         </div>
       `,
     });
@@ -472,21 +477,32 @@ const forgotPasswordRequestOtpController = async (req, res) => {
     const clientBaseUrl = process.env.CLIENT_URL || "http://localhost:3000";
     const resetUrl = `${clientBaseUrl}/reset-password?email=${encodeURIComponent(email)}`;
 
+    const displayName = getDisplayNameForRole(user) || "User";
     await sendEmail({
       to: email,
-      subject: "Password Reset OTP - DMYVF",
+      subject: "Password Reset Request - DMYF",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #2c3e50;">Reset Your Password</h2>
-          <p>Use the OTP below to reset your password:</p>
-          <p style="font-size: 24px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0;">
-            ${otp}
-          </p>
-          <p>Or click this reset link:</p>
-          <p><a href="${resetUrl}" target="_blank" rel="noreferrer">${resetUrl}</a></p>
-          <p>This OTP expires in <strong>10 minutes</strong>.</p>
-          <p>For security, password reset can be requested only once per hour.</p>
-          <p>If you did not request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+          </div>
+          <div style="padding: 30px; color: #333; line-height: 1.6;">
+            <p style="font-size: 18px; margin-top: 0;">Hello <strong>${displayName}</strong>,</p>
+            <p>We received a request to reset your password. Click the button below to set a new password for your account.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #b4232b; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
+            </div>
+            <p>If you prefer using an OTP, your code is:</p>
+            <p style="font-size: 28px; font-weight: bold; letter-spacing: 5px; text-align: center; margin: 20px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
+              ${otp}
+            </p>
+            <p style="font-style: italic; color: #666;">If you did not request this, please ignore this email. Your password will remain unchanged.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+            <p style="font-size: 13px; color: #999; margin-bottom: 0;">
+              For security reasons, this link and OTP will expire in <strong>10 mins</strong>.<br>
+              © ${new Date().getFullYear()} DMYF Blood Bank.
+            </p>
+          </div>
         </div>
       `,
     });
@@ -693,17 +709,22 @@ const updateProfileController = async (req, res) => {
       try {
         await sendEmail({
           to: user.email,
-          subject: "Password Reset Successful - DMYVF",
+          subject: "Password Reset Successful - DMYF",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-              <h2 style="color: #2c3e50;">Password Updated Successfully</h2>
-              <p>Hello ${displayName},</p>
-              <p>Your account password was changed successfully.</p>
-              <p>If you did not perform this action, please reset your password immediately and contact support.</p>
-              <hr style="border: none; border-top: 1px solid #eee;">
-              <p style="font-size: 12px; color: #777;">
-                &copy; ${new Date().getFullYear()} ${process.env.APP_NAME || "DMYVF"}.
-              </p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+              <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+              </div>
+              <div style="padding: 30px; color: #333; line-height: 1.6;">
+                <h2 style="color: #2c3e50; margin-top: 0;">Password Updated Successfully</h2>
+                <p>Hello <strong>${displayName}</strong>,</p>
+                <p>Your account password was changed successfully.</p>
+                <p>If you did not perform this action, please reset your password immediately and contact support.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                  &copy; ${new Date().getFullYear()} DMYF Blood Bank.
+                </p>
+              </div>
             </div>
           `,
         });
