@@ -9,16 +9,13 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
+import PublicRoute from "./components/Routes/PublicRoute";
 import Donor from "./pages/Dashboard/Donor";
-import Hospital from "./pages/Dashboard/Hospital";
-import OrganizationPage from "./pages/Dashboard/OrganizationPage";
-import Consumer from "./pages/Dashboard/Consumer";
 import Donation from "./pages/Dashboard/Donation";
 import Analytics from "./pages/Dashboard/Analytics";
 import Profile from "./pages/Dashboard/Profile";
 import Settings from "./pages/Dashboard/Settings";
 import DonorList from "./pages/Admin/DonorList";
-import HospitalList from "./pages/Admin/HospitalList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
 import ReceiverList from "./pages/Admin/ReceiverLIst";
@@ -103,14 +100,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/hospital-list"
-          element={
-            <ProtectedRoute>
-              <HospitalList />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/org-list"
           element={
@@ -119,14 +109,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/consumer"
-          element={
-            <ProtectedRoute>
-              <Consumer />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/donation"
           element={
@@ -135,22 +118,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/organization"
-          element={
-            <ProtectedRoute>
-              <OrganizationPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/hospital"
-          element={
-            <ProtectedRoute>
-              <Hospital />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/donor"
           element={
@@ -212,8 +180,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       </Routes>
     </div>
   );

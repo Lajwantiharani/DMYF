@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../../../redux/features/auth/authSlice";
 import { toast } from "react-toastify";
 import "../../../../Styles/layout.css";
 
@@ -18,8 +19,10 @@ const Sidebar = ({ onNavigate }) => {
     }
   };
 
+  const dispatch = useDispatch();
+
   const handleLogout = () => {
-    localStorage.clear();
+    dispatch(logout());
     toast.success("Logout successful");
     handleNavigate();
     navigate("/login");
@@ -59,8 +62,6 @@ const Sidebar = ({ onNavigate }) => {
         {renderMenuItem("/donor-list", "Donor List", "fa-solid fa-warehouse", user?.role === "admin")}
         {renderMenuItem("/org-list", "Organization List", "fa-solid fa-hospital", user?.role === "admin")}
         {renderMenuItem("/verification-requests", "Verification Requests", "fa-solid fa-circle-check", user?.role === "admin")}
-        {renderMenuItem("/organization", "Organization", "fa-sharp fa-solid fa-building-ngo", user?.role === "hospital")}
-        {renderMenuItem("/consumer", "Consumer", "fa-sharp fa-solid fa-building-ngo", user?.role === "hospital")}
         {renderMenuItem("/receiver", "Blood Request", "fa-solid fa-droplet", user?.role === "receiver")}
         {renderMenuItem("/donation", "Donated", "fa-sharp fa-solid fa-building-ngo", user && user?.role !== "receiver")}
         {renderMenuItem("/analytics", "Analytics", "fa-solid fa-chart-column", user?.role === "admin")}

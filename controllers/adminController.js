@@ -27,7 +27,6 @@ const mapUsersForExport = (users) =>
     role: user.role || "",
     name: user.name || "",
     organizationName: user.organizationName || "",
-    hospitalName: user.hospitalName || "",
     email: user.email || "",
     phone: user.phone || "",
     city: user.city || "",
@@ -53,7 +52,6 @@ const mapDonatedRecordsForExport = (records) =>
     donatedByName:
       record?.organization?.name ||
       record?.organization?.organizationName ||
-      record?.organization?.hospitalName ||
       "",
     donatedByEmail: record?.organization?.email || "",
     donatedByPhone: record?.organization?.phone || "",
@@ -62,12 +60,10 @@ const mapDonatedRecordsForExport = (records) =>
     donatedByBloodGroup: record?.organization?.bloodGroup || "",
     donatedByNukh: record?.organization?.nukh || "",
     donatedByAkaah: record?.organization?.akaah || "",
-    donatedByIsVerified: record?.organization?.isVerified ? "Yes" : "No",
     receiverRole: record?.hospital?.role || "",
     receiverName:
       record?.hospital?.name ||
       record?.hospital?.organizationName ||
-      record?.hospital?.hospitalName ||
       "",
     receiverEmail: record?.hospital?.email || "",
     receiverPhone: record?.hospital?.phone || "",
@@ -123,31 +119,7 @@ const getDonorsListController = async (req, res) => {
     });
   }
 };
-//GET HOSPITAL LIST
-const getHospitalListController = async (req, res) => {
-  try {
-    const hospitalData = await userModel
-      .find({ role: "hospital" })
 
-      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).send({
-      success: true,
-      Toatlcount: hospitalData.length,
-      message: "HOSPITAL List Fetched Successfully",
-      hospitalData,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error In Hospital List API",
-
-      error: error.message,
-    });
-  }
-};
 //GET ORG LIST
 const getOrgListController = async (req, res) => {
   try {
@@ -351,11 +323,11 @@ const exportDonatedExcelController = async (req, res) => {
     const donatedRecords = await InventoryModel.find(filter)
       .populate(
         "organization",
-        "role name organizationName hospitalName email phone city address bloodGroup nukh akaah isVerified",
+        "role name organizationName email phone city address bloodGroup nukh akaah isVerified",
       )
       .populate(
         "hospital",
-        "role name organizationName hospitalName email phone city address bloodGroup nukh akaah isVerified",
+        "role name organizationName email phone city address bloodGroup nukh akaah isVerified",
       )
       .sort({ createdAt: -1 });
 
@@ -449,7 +421,7 @@ const updateProfileVerificationStatusController = async (req, res) => {
 
     if (action === "verify") {
       const displayName =
-        user.name || user.organizationName || user.hospitalName || "User";
+        user.name || user.organizationName || "User";
       try {
         await sendEmail({
           to: user.email,
@@ -500,7 +472,6 @@ const updateProfileVerificationStatusController = async (req, res) => {
 //EXPORT
 module.exports = {
   getDonorsListController,
-  getHospitalListController,
   getOrgListController,
   deleteDonorController,
   getReceiverListController,

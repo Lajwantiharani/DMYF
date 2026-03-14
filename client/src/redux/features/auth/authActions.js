@@ -12,9 +12,6 @@ export const userLogin = createAsyncThunk(
       if (data.success) {
         toast.success(data.message || "Login successful");
         localStorage.setItem("token", data.token);
-
-        // Always land users on Profile after login (all roles).
-        window.location.replace("/profile");
       }
       return data;
     } catch (error) {

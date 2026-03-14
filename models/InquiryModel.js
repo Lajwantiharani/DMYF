@@ -9,7 +9,7 @@ const inquiryMessageSchema = new mongoose.Schema(
     },
     senderRole: {
       type: String,
-      enum: ["admin", "organization", "donor", "hospital", "receiver"],
+      enum: ["admin", "organization", "donor", "receiver"],
       required: true,
     },
     message: {

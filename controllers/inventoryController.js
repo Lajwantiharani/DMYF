@@ -215,32 +215,7 @@ const getDonorsController = async (req, res) => {
   }
 };
 
-const getHospitalController = async (req, res) => {
-  try {
-    const organization = req.body.userId;
-    //GET HOSPITAL ID
-    const hospitalId = await InventoryModel.distinct("hospital", {
-      organization,
-    });
-    //FIND HOSPITAL
-    const hospitals = await userModel.find({
-      _id: { $in: hospitalId },
-    });
-    return res.status(200).send({
-      success: true,
-      message: "Hospitals Data Fetched Successfully",
-      hospitals,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error In get Hospital API",
 
-      error: error.message,
-    });
-  }
-};
 const getRecentInventoryController = async (req, res) => {
   try {
     const inventory = await InventoryModel
@@ -287,30 +262,7 @@ const getOrgnaizationController = async (req, res) => {
     });
   }
 };
-// GET ORG for Hospital
-const getOrgnaisationForHospitalController = async (req, res) => {
-  try {
-    const hospital = req.body.userId;
-    const orgId = await InventoryModel.distinct("organization", { hospital });
-    //find org
-    const organizations = await userModel.find({
-      _id: { $in: orgId },
-    });
-    return res.status(200).send({
-      success: true,
-      message: "Hospital Org Data Fetched Successfully",
-      organizations,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error In Hospital ORG API",
 
-      error: error.message,
-    });
-  }
-};
 
 const getDonatedRecordsController = async (req, res) => {
   try {
@@ -345,7 +297,7 @@ const getDonatedRecordsController = async (req, res) => {
       }
 
       query.organization = { $in: orgIds };
-    } else if (currentUser.role === "hospital" || currentUser.role === "receiver") {
+    } else if (currentUser.role === "receiver") {
       query.hospital = userId;
     }
     // admin: no extra filter, can see all out records
@@ -515,9 +467,7 @@ module.exports = {
   createInventoryController,
   getInventoryController,
   getDonorsController,
-  getHospitalController,
   getOrgnaizationController,
-  getOrgnaisationForHospitalController,
   getInventoryHospitalController,
   getRecentInventoryController,
   getDonatedRecordsController,

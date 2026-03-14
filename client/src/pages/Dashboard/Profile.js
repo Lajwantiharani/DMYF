@@ -70,7 +70,6 @@ const Profile = () => {
     ...user,
     name: formData.name,
     organizationName: user?.role === "organization" ? formData.name : user?.organizationName,
-    hospitalName: user?.role === "hospital" ? formData.name : user?.hospitalName,
     email: formData.email,
     phone: formData.phone,
 
@@ -86,7 +85,7 @@ const Profile = () => {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        name: user?.name || user?.organizationName || user?.hospitalName || "",
+        name: user?.name || user?.organizationName || "",
         email: user?.email || "",
         phone: user?.phone || "",
 

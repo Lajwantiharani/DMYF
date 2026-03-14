@@ -2,7 +2,6 @@ const express = require("express");
 
 const {
   getDonorsListController,
-  getHospitalListController,
   getOrgListController,
   deleteDonorController,
   addReceiverController,
@@ -29,8 +28,6 @@ router.use(authMiddleware, adminMiddleware);
 //get || donor list
 router.get("/donor-list", getDonorsListController);
 
-//GET || HOSPITAL LIST
-router.get("/hospital-list", getHospitalListController);
 
 router.get("/org-list", getOrgListController);
 

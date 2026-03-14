@@ -86,7 +86,6 @@ const ProtectedRoute = ({ children }) => {
       "/analytics",
       "/donor-list",
       "/org-list",
-      "/hospital-list",
       "/verification-requests",
     ]);
 
@@ -100,7 +99,6 @@ const ProtectedRoute = ({ children }) => {
 
     if (path === "/receiver") return role === "receiver";
 
-    if (path === "/organization" || path === "/consumer") return role === "hospital";
 
     if (path === "/donation") return role !== "receiver";
 

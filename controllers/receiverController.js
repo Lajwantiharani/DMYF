@@ -6,7 +6,7 @@ const userModel = require("../models/userModel");
 const sendEmail = require("../client/src/utils/sendEmail");
 
 const toDisplayName = (user) =>
-  user?.name || user?.organizationName || user?.hospitalName || "User";
+  user?.name || user?.organizationName || "User";
 
 const escapeRegex = (value = "") =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -850,7 +850,7 @@ const getReceiverRequestsController = async (req, res) => {
     }
 
     const requests = await ReceiverRequestModel.find(query)
-      .populate("targetUser", "name organizationName hospitalName email phone role city")
+      .populate("targetUser", "name organizationName email phone role city")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({

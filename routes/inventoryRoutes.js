@@ -4,9 +4,7 @@ const {
   createInventoryController,
   getInventoryController,
   getDonorsController,
-  getHospitalController,
   getOrgnaizationController,
-  getOrgnaisationForHospitalController,
   getInventoryHospitalController,
   getRecentInventoryController,
   getDonatedRecordsController,
@@ -39,17 +37,9 @@ router.post(
 );
 //get donor records
 router.get("/get-donors", authMiddleware, getDonorsController);
-//get hospital  records
-router.get("/get-hospitals", authMiddleware, getHospitalController);
 //get organization  records
 router.get("/get-organization", authMiddleware, getOrgnaizationController);
 
-//get organization  records
-router.get(
-  "/get-organization-for-hospital",
-  authMiddleware,
-  getOrgnaisationForHospitalController
-);
 router.get("/get-donated-records", authMiddleware, getDonatedRecordsController);
 router.get(
   "/get-organization-available-stock",

@@ -4,9 +4,10 @@ import Form from "../../components/Shared/Form/Form";
 import "./Auth.css";
 
 const Register = () => {
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, user } = useSelector((state) => state.auth);
+  const token = localStorage.getItem("token");
 
-  if (loading) {
+  if (loading || (user && token)) {
     return (
       <div className="auth-loading-overlay">
         <div className="auth-loading-spinner" aria-label="Loading" />
