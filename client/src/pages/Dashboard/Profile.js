@@ -30,9 +30,10 @@ const Profile = () => {
   const [requestingVerification, setRequestingVerification] = useState(false);
   const isAdmin = user?.role === "admin";
   const isProfileApproved = isAdmin || user?.profileVerificationStatus === "approved";
-  const isVerifiedAndLocked = !isAdmin && (user?.profileVerificationStatus === "approved" || user?.profileVerificationStatus === "pending");
+  const isVerifiedAndLocked = !isAdmin && (user?.profileVerificationStatus === "approved" || user?.profileVerificationStatus === "pending" || user?.profileVerificationStatus === "rejected");
   const canEditProfile = !isVerifiedAndLocked;
   const isVerificationPending = user?.profileVerificationStatus === "pending";
+  const isVerificationRejected = user?.profileVerificationStatus === "rejected";
   const dateInputRef = useRef(null);
   const formatDateDisplay = (value) => {
     if (!value) return "";
@@ -369,39 +370,50 @@ const Profile = () => {
 
           </div>
 
-          {/* Show centered message when verification is pending */}
-          {!isAdmin && user?.profileVerificationStatus === "pending" ? (
+          {/* Show status messages with consistent styling */}
+          {!isAdmin && user?.profileVerificationStatus === "pending" && (
             <div className="text-center mt-4">
               <p className="text-danger mb-0 fw-semibold fs-5">
                 Verification request submitted. Please wait for the admin approval.
               </p>
             </div>
-          ) : (
-            <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
-              {isVerifiedAndLocked ? (
-                <p className="text-dark mb-0 fw-semibold">
-                  Note: Profile is saved and can't be edited. To edit it contact admin.
-                </p>
-              ) : isProfileApproved ? (
-                <button type="submit" className="btn btn-danger px-4" disabled={loading}>
-                  {loading ? "Saving..." : "Save"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-danger px-4"
-                  onClick={handleRequestVerification}
-                  disabled={requestingVerification}
-                >
-                  {requestingVerification ? "Submitting..." : "Request for Verification"}
-                </button>
-              )}
+          )}
+
+          {!isAdmin && user?.profileVerificationStatus === "rejected" && (
+            <div className="text-center mt-4">
+              <p className="text-danger mb-0 fw-semibold fs-5">
+                Your profile verification was rejected. Please contact admin for more information.
+              </p>
             </div>
           )}
-          {!isAdmin && user?.profileVerificationStatus === "rejected" && (
-            <p className="text-danger mt-3 mb-0 fw-semibold">
-              Your verification request was not approved. Update your profile and request again.
-            </p>
+
+          {!isAdmin && user?.profileVerificationStatus === "approved" && (
+            <div className="text-center mt-4">
+              <p className="text-danger mb-0 fw-semibold fs-5">
+                Profile is saved and can't be edited.
+              </p>
+            </div>
+          )}
+
+          {isAdmin && (
+            <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
+              <button type="submit" className="btn btn-danger px-4" disabled={loading}>
+                {loading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          )}
+
+          {!isAdmin && !isVerificationPending && !isVerificationRejected && user?.profileVerificationStatus !== "approved" && (
+            <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
+              <button
+                type="button"
+                className="btn btn-danger px-4"
+                onClick={handleRequestVerification}
+                disabled={requestingVerification}
+              >
+                {requestingVerification ? "Submitting..." : "Request for Verification"}
+              </button>
+            </div>
           )}
         </form>
       </div>
