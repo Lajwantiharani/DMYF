@@ -213,16 +213,15 @@ const registerController = async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #b4232b; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF Blood Bank</h1>
           </div>
           <div style="padding: 30px; color: #333; line-height: 1.6;">
-            <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF!</h2>
+            <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF Blood Bank!</h2>
             <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
             <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
               ${otp}
             </p>
             <p>This code will expire in <strong>10 minutes</strong>.</p>
-            <p>If you didn't request this registration, please ignore this email.</p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
             <p style="font-size: 12px; color: #777; margin-bottom: 0;">
               &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
