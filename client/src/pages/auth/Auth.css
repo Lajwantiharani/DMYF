@@ -296,12 +296,13 @@
     box-sizing: border-box;
     min-height: 100dvh;
     height: 100dvh;
-    overflow: hidden;
+    overflow-y: auto;
+    padding: 32px;
   }
 
   .auth-page--register .auth-shell {
-    min-height: 0;
-    height: min(720px, calc(100dvh - 48px));
+    min-height: auto;
+    height: auto;
   }
 }
 
