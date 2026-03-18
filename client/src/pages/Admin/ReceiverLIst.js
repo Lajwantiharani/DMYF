@@ -11,6 +11,8 @@ const ReceiverList = () => {
   const isOrganization = user?.role === "organization";
   const [data, setData] = useState([]);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -42,11 +44,6 @@ const ReceiverList = () => {
   const handleDelete = async (id) => {
     if (!isAdmin) return;
     try {
-      let answer = window.prompt(
-        "Are you sure you want to delete this receiver?",
-        "Sure"
-      );
-      if (!answer) return;
       const { data } = await API.delete(`/admin/delete-receiver/${id}`);
       toast.success(data?.message || "Receiver deleted");
       getReceivers(); // Refresh the list after deletion
@@ -155,7 +152,9 @@ const ReceiverList = () => {
               </tr>
             </thead>
             <tbody>
-              {data?.map((record) => (
+              {data
+                ?.filter((record) => record.profileVerificationStatus === "approved")
+                .map((record) => (
                 <tr key={record._id || record.receiverId}>
 
                       <td>{record.name}</td>
@@ -166,9 +165,9 @@ const ReceiverList = () => {
                       {isAdmin && (
                         <td>
                           <div className="d-flex gap-2 flex-wrap">
-                            {record?.profileVerificationStatus === "pending" && (
+                            {record?.profileVerificationStatus !== "approved" && (
                               <button
-                                className="btn btn-primary"
+                                className="btn btn-danger"
                                 onClick={() => {
                                   window.location.href = "/verification-requests";
                                 }}
@@ -176,16 +175,19 @@ const ReceiverList = () => {
                                 View Profile
                               </button>
                             )}
-                            {record?.profileVerificationStatus !== "pending" && (
+                            {record?.profileVerificationStatus === "approved" && (
                               <button
-                                className="btn btn-danger"
-                                onClick={() => handleDelete(record._id)}
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                  setDeleteId(record._id);
+                                  setShowDeleteModal(true);
+                                }}
                               >
                                 Delete
                               </button>
                             )}
                             <button
-                              className="btn btn-info text-white"
+                              className="btn btn-danger"
                               onClick={() => openDetailsModal(record)}
                             >
                               View
@@ -221,8 +223,7 @@ const ReceiverList = () => {
                   {Object.entries(selectedRecord)
                     .filter(
                       ([key, value]) =>
-
-                        !["_id", "__v", "password", "otp", "otpExpires"].includes(key) &&
+                        !["_id", "__v", "password", "otp", "otpExpires", "isVerified", "updatedAt"].includes(key) &&
                         value !== undefined &&
                         value !== null &&
                         value !== ""
@@ -235,22 +236,57 @@ const ReceiverList = () => {
                     ))}
                 </div>
               </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-danger"
-                  onClick={() => {
-                    if (selectedRecord?._id) {
-                      handleDelete(selectedRecord._id);
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(15, 23, 42, 0.55)", zIndex: 2000 }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="bg-white rounded p-4"
+            style={{ width: "min(400px, 92vw)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0">Confirm Delete</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setShowDeleteModal(false)}
+                aria-label="Close"
+              ></button>
+            </div>
+            <p className="mb-4">Are you sure you want to delete this receiver?</p>
+            <div className="d-flex justify-content-center gap-3">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                No
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={async () => {
+                  if (deleteId) {
+                    try {
+                      const { data } = await API.delete(`/admin/delete-receiver/${deleteId}`);
+                      toast.success(data?.message || "Receiver deleted");
+                      getReceivers();
+                    } catch (error) {
+                      toast.error(error?.response?.data?.message || "Unable to delete receiver");
                     }
-                    closeDetailsModal();
-                  }}
-                >
-                  Delete
-                </button>
-                <button className="btn btn-secondary" onClick={closeDetailsModal}>
-                  Close
-                </button>
-              </div>
+                  }
+                  setShowDeleteModal(false);
+                }}
+              >
+                Yes
+              </button>
             </div>
           </div>
         </div>

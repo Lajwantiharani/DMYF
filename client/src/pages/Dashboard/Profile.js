@@ -30,7 +30,7 @@ const Profile = () => {
   const [requestingVerification, setRequestingVerification] = useState(false);
   const isAdmin = user?.role === "admin";
   const isProfileApproved = isAdmin || user?.profileVerificationStatus === "approved";
-  const isVerifiedAndLocked = !isAdmin && user?.profileVerificationStatus === "approved";
+  const isVerifiedAndLocked = !isAdmin && (user?.profileVerificationStatus === "approved" || user?.profileVerificationStatus === "pending");
   const canEditProfile = !isVerifiedAndLocked;
   const isVerificationPending = user?.profileVerificationStatus === "pending";
   const dateInputRef = useRef(null);
@@ -38,7 +38,10 @@ const Profile = () => {
     if (!value) return "";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return "";
-    return `${d.getDate()} / ${d.getMonth() + 1} / ${d.getFullYear()}`;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day} / ${month} / ${year}`;
   };
   const parseDateFromInput = (value) => {
     if (!value) return null;
@@ -129,6 +132,14 @@ const Profile = () => {
       const { data } = await API.put("/auth/update-profile", payload);
       if (data?.success) {
         dispatch(setCurrentUser(data.user));
+        // Update formData with the saved date to ensure it displays correctly
+        const savedUser = data.user;
+        if (savedUser?.dob) {
+          setFormData((prev) => ({
+            ...prev,
+            dob: formatDateDisplay(savedUser.dob)
+          }));
+        }
         toast.success(data?.message || "Profile updated successfully");
         if (!isAdmin && isMinor) {
           try {
@@ -169,6 +180,14 @@ const Profile = () => {
       });
       if (profileUpdateResponse?.data?.success) {
         dispatch(setCurrentUser(profileUpdateResponse.data.user));
+        // Update formData with the saved date to ensure it displays correctly
+        const savedUser = profileUpdateResponse.data.user;
+        if (savedUser?.dob) {
+          setFormData((prev) => ({
+            ...prev,
+            dob: formatDateDisplay(savedUser.dob)
+          }));
+        }
       } else {
         toast.error(profileUpdateResponse?.data?.message || "Unable to save profile");
         return;
@@ -350,34 +369,34 @@ const Profile = () => {
 
           </div>
 
-          <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
-            {isVerifiedAndLocked ? (
-              <p className="text-dark mb-0 fw-semibold text-center w-100">
-                Note: Profile is saved and can't be edited. To edit it contact admin.
+          {/* Show centered message when verification is pending */}
+          {!isAdmin && user?.profileVerificationStatus === "pending" ? (
+            <div className="text-center mt-4">
+              <p className="text-danger mb-0 fw-semibold fs-5">
+                Verification request submitted. Please wait for the admin approval.
               </p>
-            ) : isProfileApproved ? (
-              <button type="submit" className="btn btn-danger px-4" disabled={loading}>
-                {loading ? "Saving..." : "Save"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary px-4"
-                onClick={handleRequestVerification}
-                disabled={requestingVerification || isVerificationPending}
-              >
-                {isVerificationPending
-                  ? "Request Pending"
-                  : requestingVerification
-                    ? "Submitting..."
-                    : "Request for Verification"}
-              </button>
-            )}
-          </div>
-          {!isAdmin && user?.profileVerificationStatus === "pending" && (
-            <p className="text-warning mt-3 mb-0 fw-semibold">
-              Verification request submitted. Please wait for the admin approval.
-            </p>
+            </div>
+          ) : (
+            <div className="d-flex justify-content-end pe-2 mt-4 profile-save-wrap">
+              {isVerifiedAndLocked ? (
+                <p className="text-dark mb-0 fw-semibold">
+                  Note: Profile is saved and can't be edited. To edit it contact admin.
+                </p>
+              ) : isProfileApproved ? (
+                <button type="submit" className="btn btn-danger px-4" disabled={loading}>
+                  {loading ? "Saving..." : "Save"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-danger px-4"
+                  onClick={handleRequestVerification}
+                  disabled={requestingVerification}
+                >
+                  {requestingVerification ? "Submitting..." : "Request for Verification"}
+                </button>
+              )}
+            </div>
           )}
           {!isAdmin && user?.profileVerificationStatus === "rejected" && (
             <p className="text-danger mt-3 mb-0 fw-semibold">

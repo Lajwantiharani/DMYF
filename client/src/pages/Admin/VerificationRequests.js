@@ -101,7 +101,7 @@ const VerificationRequests = () => {
                     </td>
                     <td>
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-danger btn-sm"
                         onClick={() => setSelectedUser(record)}
                       >
                         View Profile
@@ -132,7 +132,15 @@ const VerificationRequests = () => {
             style={{ width: "min(720px, 92vw)", maxHeight: "88vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h4 className="mb-3">User Profile Details</h4>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4 className="mb-0">User Profile Details</h4>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setSelectedUser(null)}
+                aria-label="Close"
+              ></button>
+            </div>
             <div className="row g-2">
               <div className="col-6"><strong>Role:</strong> {selectedUser.role}</div>
               <div className="col-6"><strong>Name:</strong> {getUserDisplayName(selectedUser)}</div>
@@ -148,8 +156,9 @@ const VerificationRequests = () => {
                   <div className="col-6"><strong>Akaah:</strong> {selectedUser.akaah || "-"}</div>
                 </>
               )}
-              <div className="col-6"><strong>Website:</strong> {selectedUser.website || "-"}</div>
-              <div className="col-6"><strong>Email Verified:</strong> {selectedUser.isVerified ? "Yes" : "No"}</div>
+              {selectedUser.role === "organization" && (
+                <div className="col-6"><strong>Website:</strong> {selectedUser.website || "-"}</div>
+              )}
               <div className="col-6">
                 <strong>Requested At:</strong>{" "}
                 {selectedUser.profileVerificationRequestedAt
@@ -160,27 +169,20 @@ const VerificationRequests = () => {
               </div>
             </div>
 
-            <div className="d-flex justify-content-end gap-2 mt-4">
+            <div className="d-flex justify-content-center gap-3 mt-4">
               <button
-                className="btn btn-secondary"
-                onClick={() => setSelectedUser(null)}
-                disabled={updating}
-              >
-                Close
-              </button>
-              <button
-                className="btn btn-outline-danger"
+                className="btn btn-danger"
                 onClick={() => handleDecision("not_verify")}
                 disabled={updating}
               >
-                Not Verify
+                Reject
               </button>
               <button
                 className="btn btn-success"
                 onClick={() => handleDecision("verify")}
                 disabled={updating}
               >
-                Verify
+                Accept
               </button>
             </div>
           </div>

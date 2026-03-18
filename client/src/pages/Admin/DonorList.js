@@ -10,6 +10,8 @@ const DonorList = () => {
   const isReceiver = user?.role === "receiver";
   const [data, setData] = useState([]);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   //find donar records
@@ -192,7 +194,7 @@ const DonorList = () => {
                       <div className="d-flex gap-2 flex-wrap">
                         {record?.profileVerificationStatus === "pending" && (
                           <button
-                            className="btn btn-primary"
+                            className="btn btn-danger"
                             onClick={() => {
                               window.location.href = "/verification-requests";
                             }}
@@ -202,14 +204,17 @@ const DonorList = () => {
                         )}
                         {record?.profileVerificationStatus !== "pending" && (
                           <button
-                            className="btn btn-danger"
-                            onClick={() => handelDelete(record._id)}
+                            className="btn btn-secondary"
+                            onClick={() => {
+                              setDeleteId(record._id);
+                              setShowDeleteModal(true);
+                            }}
                           >
                             Delete
                           </button>
                         )}
                         <button
-                          className="btn btn-info text-white"
+                          className="btn btn-danger"
                           onClick={() => openDetailsModal(record)}
                         >
                           View
@@ -266,27 +271,62 @@ const DonorList = () => {
                       ))}
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => {
-                      if (selectedRecord?._id) {
-                        handelDelete(selectedRecord._id);
-                      }
-                      closeDetailsModal();
-                    }}
-                  >
-                    Delete
-                  </button>
-                  <button className="btn btn-secondary" onClick={closeDetailsModal}>
-                    Close
-                  </button>
-                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Custom Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(15, 23, 42, 0.55)", zIndex: 2000 }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="bg-white rounded p-4"
+            style={{ width: "min(400px, 92vw)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0">Confirm Delete</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setShowDeleteModal(false)}
+                aria-label="Close"
+              ></button>
+            </div>
+            <p className="mb-4">Are you sure you want to delete this donor?</p>
+            <div className="d-flex justify-content-center gap-3">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                No
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={async () => {
+                  if (deleteId) {
+                    try {
+                      const { data } = await API.delete(`/admin/delete-donor/${deleteId}`);
+                      toast.success(data?.message || "Donor deleted");
+                      setData((prev) => prev.filter((item) => item._id !== deleteId));
+                    } catch (error) {
+                      toast.error(error?.response?.data?.message || "Unable to delete donor");
+                    }
+                  }
+                  setShowDeleteModal(false);
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
