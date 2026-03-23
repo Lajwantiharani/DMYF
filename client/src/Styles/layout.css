@@ -681,3 +681,29 @@
   border-color: #921c23 !important;
   box-shadow: 0 4px 12px rgba(180, 35, 43, 0.25) !important;
 }
+
+.admin-dashboard-page {
+  min-height: 100%;
+}
+
+.admin-dashboard-stat-card {
+  border: 1px solid #f2c7ca;
+  background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
+}
+
+.admin-dashboard-stat-label {
+  display: inline-block;
+  color: #8f0f18;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-dashboard-stat-value {
+  margin: 0;
+  color: #111827;
+  font-size: 2.2rem;
+  font-weight: 800;
+}

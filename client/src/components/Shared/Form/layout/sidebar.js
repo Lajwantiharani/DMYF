@@ -55,7 +55,9 @@ const Sidebar = ({ onNavigate }) => {
   return (
     <div className="sidebar">
       <div className="menu">
-        {user && renderMenuItem("/profile", "Profile", "fa-solid fa-user")}
+        {user?.role === "admin"
+          ? renderMenuItem("/admin", "Dashboard", "fa-solid fa-gauge-high")
+          : user && renderMenuItem("/profile", "Profile", "fa-solid fa-user")}
         {renderMenuItem("/inventory", "Inventory", "fa-solid fa-warehouse", user?.role === "organization" || user?.role === "donor")}
         {renderMenuItem("/blood-requests", "Blood Requests", "fa-solid fa-droplet", user?.role === "organization" || user?.role === "donor")}
         {renderMenuItem("/receiver-list", "Receiver List", "fa-solid fa-list", user?.role === "organization" || user?.role === "admin")}

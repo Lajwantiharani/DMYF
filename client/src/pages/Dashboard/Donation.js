@@ -109,13 +109,11 @@ const Donation = () => {
                   <td>
                     {record?.organization?.organizationName ||
                       record?.organization?.name ||
-                      record?.organization?.hospitalName ||
                       "-"}
                   </td>
                   <td>{record?.organization?.role || "-"}</td>
                   <td>
                     {record?.hospital?.name ||
-                      record?.hospital?.hospitalName ||
                       record?.hospital?.organizationName ||
                       "-"}
                   </td>

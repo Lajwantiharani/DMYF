@@ -43,6 +43,47 @@ const ProtectedRoute = ({ children }) => {
     getUser();
   }, [getUser, user]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+
+    let intervalId;
+
+    const updateActivity = async () => {
+      try {
+        await API.post("/auth/activity");
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    updateActivity();
+
+    const onFocus = () => {
+      updateActivity();
+    };
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        updateActivity();
+      }
+    };
+
+    intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        updateActivity();
+      }
+    }, 60000);
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [user]);
+
 
   if (loading) {
     return null;
@@ -54,12 +95,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
   const allowedWhileLocked = ["/profile", "/inquiry"];
+  const isAdmin = user?.role === "admin";
 
-  if (!isProfileComplete(user) && !allowedWhileLocked.includes(location.pathname)) {
+  if (!isAdmin && !isProfileComplete(user) && !allowedWhileLocked.includes(location.pathname)) {
     return <Navigate to="/profile" replace />;
   }
 
   if (
+    !isAdmin &&
     !isProfileVerificationApproved(user) &&
     !allowedWhileLocked.includes(location.pathname)
   ) {

@@ -28,7 +28,7 @@ router.get(
   authMiddleware,
   getRecentInventoryController
 );
-//get hospital  BLOOD DONORS
+// get receiver blood records
 
 router.post(
   "/get-inventory-hospital",

@@ -13,6 +13,7 @@ const {
   exportDonatedExcelController,
   getPendingVerificationUsersController,
   updateProfileVerificationStatusController,
+  getDashboardStatsController,
 } = require("../controllers/adminController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -24,6 +25,8 @@ const router = express.Router();
 
 // All admin endpoints must be authenticated and admin-only.
 router.use(authMiddleware, adminMiddleware);
+
+router.get("/dashboard-stats", getDashboardStatsController);
 
 //get || donor list
 router.get("/donor-list", getDonorsListController);

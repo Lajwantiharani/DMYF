@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -18,7 +18,7 @@ import Settings from "./pages/Dashboard/Settings";
 import DonorList from "./pages/Admin/DonorList";
 import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
-import ReceiverList from "./pages/Admin/ReceiverLIst";
+import ReceiverList from "./pages/Admin/ReceiverList";
 import VerificationRequests from "./pages/Admin/VerificationRequests";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
@@ -44,14 +44,7 @@ function App() {
         bodyClassName="app-toast-body"
       />
       <Routes>
-                <Route
-                  path="/organization-list"
-                  element={
-                    <ProtectedRoute>
-                      <OrgList />
-                    </ProtectedRoute>
-                  }
-                />
+        <Route path="/organization-list" element={<Navigate to="/org-list" replace />} />
         <Route
           path="/analytics"
           element={

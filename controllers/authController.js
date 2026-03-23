@@ -58,7 +58,6 @@ const otpMatches = (storedOtp, providedOtp) => {
 const getDisplayNameForRole = (user) => {
   if (!user) return "";
   if (user.role === "organization") return user.organizationName || "";
-  if (user.role === "hospital") return user.hospitalName || "";
   return user.name || "";
 };
 
@@ -99,10 +98,11 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
       ? new Date(requestUser.profileVerificationRequestedAt).toLocaleString()
       : new Date().toLocaleString();
 
-    return await sendEmail({
-      to: adminEmails.join(","),
-      subject: "New Profile Verification Request - DMYF",
-      html: `
+    process.nextTick(() => {
+      sendEmail({
+        to: adminEmails.join(","),
+        subject: "New Profile Verification Request - DMYF",
+        html: `
         <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
           <h2 style="color: #2c3e50;">New Verification Request Received</h2>
           <p>A user has requested profile verification.</p>
@@ -115,8 +115,12 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
           </table>
           <p style="margin-top: 16px;">Please review this request in the admin panel.</p>
         </div>
-      `,
+        `,
+      }).catch((err) => {
+        console.log("Admin verification request notification failed:", err?.message);
+      });
     });
+    return true;
   } catch (error) {
     console.log("Admin verification request notification failed:", error.message);
     return false;
@@ -131,10 +135,7 @@ const registerController = async (req, res) => {
       role,
       name,
       organizationName,
-      hospitalName,
-      address,
       phone,
-      website,
       bloodGroup,
     } = req.body;
 
@@ -150,7 +151,7 @@ const registerController = async (req, res) => {
       });
     }
 
-    const allowedRoles = new Set(["admin", "organization", "donor", "hospital", "receiver"]);
+    const allowedRoles = new Set(["admin", "organization", "donor", "receiver"]);
     if (!allowedRoles.has(role)) {
       return res.status(400).send({ success: false, message: "Invalid role" });
     }
@@ -159,11 +160,7 @@ const registerController = async (req, res) => {
       return res.status(400).send({ success: false, message: "Organization name is required" });
     }
 
-    if (role === "hospital" && !hasValue(hospitalName)) {
-      return res.status(400).send({ success: false, message: "Hospital name is required" });
-    }
-
-    if (role !== "organization" && role !== "hospital" && !hasValue(name)) {
+    if (role !== "organization" && !hasValue(name)) {
       return res.status(400).send({ success: false, message: "Name is required" });
     }
 
@@ -193,10 +190,7 @@ const registerController = async (req, res) => {
       role,
       name,
       organizationName,
-      hospitalName,
-      address,
       phone,
-      website,
       bloodGroup,
       isVerified: false,
 
@@ -206,42 +200,35 @@ const registerController = async (req, res) => {
 
     await user.save();
 
-    // Send OTP email
-    const emailSent = await sendEmail({
-      to: email,
-      subject: "Verify Your Email - DMYF",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
-          <div style="background-color: #b4232b; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+    // Send OTP email asynchronously to avoid blocking the response
+    process.nextTick(() => {
+      sendEmail({
+        to: email,
+        subject: "Verify Your Email - DMYF",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+            </div>
+            <div style="padding: 30px; color: #333; line-height: 1.6;">
+              <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF!</h2>
+              <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
+              <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
+                ${otp}
+              </p>
+              <p>This code will expire in <strong>10 minutes</strong>.</p>
+              <p>If you didn't request this registration, please ignore this email.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+              <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
+              </p>
+            </div>
           </div>
-          <div style="padding: 30px; color: #333; line-height: 1.6;">
-            <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF!</h2>
-            <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
-            <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
-              ${otp}
-            </p>
-            <p>This code will expire in <strong>10 minutes</strong>.</p>
-            <p>If you didn't request this registration, please ignore this email.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
-            <p style="font-size: 12px; color: #777; margin-bottom: 0;">
-              &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
-            </p>
-          </div>
-        </div>
-      `,
-    });
-
-    if (!emailSent) {
-      console.log("❌ Email sending failed for:", email);
-      // Optional: delete user if email fails (depends on your policy)
-      await userModel.findByIdAndDelete(user._id);
-      return res.status(500).send({
-        success: false,
-        message:
-          "Failed to send verification email. Please check your email configuration.",
+        `,
+      }).catch((err) => {
+        console.log("❌ Async email send failed for:", email, err?.message);
       });
-    }
+    });
 
     console.log("✅ User registered successfully. OTP sent to:", email);
     return res.status(201).send({
@@ -306,6 +293,8 @@ const loginController = async (req, res) => {
       expiresIn: "1d",
     });
 
+    user.lastActiveAt = new Date();
+    await user.save();
 
     const isProd = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
@@ -336,6 +325,10 @@ const loginController = async (req, res) => {
 const currentUserController = async (req, res) => {
   try {
     const user = await userModel.findOne({ _id: req.body.userId });
+    if (user) {
+      user.lastActiveAt = new Date();
+      await user.save();
+    }
     return res.status(200).send({
       success: true,
       message: "User Fetched Successfully",
@@ -348,6 +341,26 @@ const currentUserController = async (req, res) => {
       success: false,
       message: "unable to get current user",
 
+      error: error.message,
+    });
+  }
+};
+
+const updateActivityController = async (req, res) => {
+  try {
+    await userModel.findByIdAndUpdate(req.body.userId, {
+      $set: { lastActiveAt: new Date() },
+    });
+
+    return res.status(200).send({
+      success: true,
+      message: "Activity updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error updating activity",
       error: error.message,
     });
   }
@@ -478,10 +491,11 @@ const forgotPasswordRequestOtpController = async (req, res) => {
     const resetUrl = `${clientBaseUrl}/reset-password?email=${encodeURIComponent(email)}`;
 
     const displayName = getDisplayNameForRole(user) || "User";
-    await sendEmail({
-      to: email,
-      subject: "Password Reset Request - DMYF",
-      html: `
+    process.nextTick(() => {
+      sendEmail({
+        to: email,
+        subject: "Password Reset Request - DMYF",
+        html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #b4232b; padding: 20px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
@@ -505,6 +519,9 @@ const forgotPasswordRequestOtpController = async (req, res) => {
           </div>
         </div>
       `,
+      }).catch((err) => {
+        console.log("Password reset email failed:", err?.message);
+      });
     });
 
     return res.status(200).send({
@@ -637,8 +654,6 @@ const updateProfileController = async (req, res) => {
     if (typeof name === "string") {
       if (user.role === "organization") {
         user.organizationName = name;
-      } else if (user.role === "hospital") {
-        user.hospitalName = name;
       } else {
         user.name = name;
       }
@@ -704,10 +719,10 @@ const updateProfileController = async (req, res) => {
 
     if (isPasswordUpdated) {
       const displayName =
-        user.name || user.organizationName || user.hospitalName || "User";
+        user.name || user.organizationName || "User";
 
-      try {
-        await sendEmail({
+      process.nextTick(() => {
+        sendEmail({
           to: user.email,
           subject: "Password Reset Successful - DMYF",
           html: `
@@ -727,10 +742,10 @@ const updateProfileController = async (req, res) => {
               </div>
             </div>
           `,
+        }).catch((emailError) => {
+          console.log("Password reset email failed:", emailError.message);
         });
-      } catch (emailError) {
-        console.log("Password reset email failed:", emailError.message);
-      }
+      });
     }
 
     return res.status(200).send({
@@ -812,6 +827,7 @@ module.exports = {
   resetForgotPasswordController,
   updateProfileController,
   requestProfileVerificationController,
+  updateActivityController,
 };
 
 

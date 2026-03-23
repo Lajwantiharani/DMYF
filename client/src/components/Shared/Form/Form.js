@@ -41,10 +41,6 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               email,
               password,
               role === "organization" ? organizationName : "",
-              "",
-              "",
-              "",
-
               `+92${phone}`,
             );
           }

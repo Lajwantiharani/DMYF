@@ -11,7 +11,7 @@ const createInventoryController = async (req, res) => {
       throw new Error("Current user not found");
     }
 
-    // Counter-party user (donor/receiver/hospital) identified by email
+    // Counter-party user (donor/receiver) identified by email
     const user = await userModel.findOne({ email });
 
     if (!user) {
@@ -166,7 +166,7 @@ const getInventoryController = async (req, res) => {
     });
   }
 };
-//get hospital blood records
+// get receiver blood records
 const getInventoryHospitalController = async (req, res) => {
   try {
     const inventory = await InventoryModel.find(req.body.filters)
@@ -177,7 +177,7 @@ const getInventoryHospitalController = async (req, res) => {
 
     return res.status(200).send({
       success: true,
-      message: "Get hospital consumer  records successfully",
+      message: "Get receiver consumer records successfully",
       inventory,
     });
   } catch (error) {
@@ -303,8 +303,8 @@ const getDonatedRecordsController = async (req, res) => {
     // admin: no extra filter, can see all out records
 
     const donated = await InventoryModel.find(query)
-      .populate("hospital", "name hospitalName organizationName email role")
-      .populate("organization", "name organizationName hospitalName email role")
+      .populate("hospital", "name organizationName email role")
+      .populate("organization", "name organizationName email role")
       .sort({ createdAt: -1 });
 
     return res.status(200).send({

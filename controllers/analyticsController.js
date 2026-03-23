@@ -9,7 +9,7 @@ const getRoleScope = async (userId) => {
   if (user.role === "admin") return {};
   if (user.role === "organization") return { organization: new mongoose.Types.ObjectId(userId) };
   if (user.role === "donor") return { donor: new mongoose.Types.ObjectId(userId) };
-  if (user.role === "hospital" || user.role === "receiver") {
+  if (user.role === "receiver") {
     return { hospital: new mongoose.Types.ObjectId(userId) };
   }
 

@@ -6,7 +6,7 @@ import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
 
 const getUserDisplayName = (user) =>
-  user?.name || user?.organizationName || user?.hospitalName || "-";
+  user?.name || user?.organizationName || "-";
 
 const VerificationRequests = () => {
   const { user } = useSelector((state) => state.auth);

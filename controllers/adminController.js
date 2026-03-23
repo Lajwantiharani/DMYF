@@ -474,6 +474,37 @@ const updateProfileVerificationStatusController = async (req, res) => {
     });
   }
 };
+
+const getDashboardStatsController = async (req, res) => {
+  try {
+    const activeWindowMs = 2 * 60 * 1000;
+    const activeSince = new Date(Date.now() - activeWindowMs);
+
+    const [registeredUsers, activeUsers] = await Promise.all([
+      userModel.countDocuments({ role: { $ne: "admin" } }),
+      userModel.countDocuments({
+        role: { $ne: "admin" },
+        lastActiveAt: { $gte: activeSince },
+      }),
+    ]);
+
+    return res.status(200).send({
+      success: true,
+      message: "Dashboard stats fetched successfully",
+      stats: {
+        registeredUsers,
+        activeUsers,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error fetching dashboard stats",
+      error: error.message,
+    });
+  }
+};
 //EXPORT
 module.exports = {
   getDonorsListController,
@@ -488,4 +519,5 @@ module.exports = {
   deleteReceiverController,
   getPendingVerificationUsersController,
   updateProfileVerificationStatusController,
+  getDashboardStatsController,
 };

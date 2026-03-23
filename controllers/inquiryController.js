@@ -2,7 +2,7 @@ const InquiryModel = require("../models/InquiryModel");
 const userModel = require("../models/userModel");
 
 const toDisplayName = (user) =>
-  user?.name || user?.organizationName || user?.hospitalName || "User";
+  user?.name || user?.organizationName || "User";
 
 const hasUnread = (messages = [], lastReadAt = null, viewerRole = "") => {
   if (!messages.length) return false;
@@ -67,13 +67,13 @@ const serializeUserThread = (thread, user) => ({
 const getMyInquiryController = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const user = await userModel.findById(userId).select("role name organizationName hospitalName email");
+    const user = await userModel.findById(userId).select("role name organizationName email");
     if (!user) {
       return res.status(404).send({ success: false, message: "User not found" });
     }
 
     const thread = await getOrCreateThreadForUser(userId);
-    await thread.populate("messages.sender", "name organizationName hospitalName email role");
+    await thread.populate("messages.sender", "name organizationName email role");
 
     return res.status(200).send({
       success: true,
@@ -121,9 +121,9 @@ const sendMyInquiryMessageController = async (req, res) => {
     thread.lastReadAtUser = new Date();
     await thread.save();
 
-    await thread.populate("messages.sender", "name organizationName hospitalName email role");
+    await thread.populate("messages.sender", "name organizationName email role");
 
-    const userDisplay = await userModel.findById(userId).select("role name organizationName hospitalName email");
+    const userDisplay = await userModel.findById(userId).select("role name organizationName email");
 
     return res.status(201).send({
       success: true,
@@ -161,7 +161,7 @@ const listInquiriesAdminController = async (req, res) => {
   try {
     const threads = await InquiryModel.find({})
       .sort({ lastMessageAt: -1, updatedAt: -1 })
-      .populate("user", "name organizationName hospitalName email role phone city");
+      .populate("user", "name organizationName email role phone city");
 
     const items = threads.map((t) => ({
       _id: t._id,
@@ -192,8 +192,8 @@ const getInquiryAdminController = async (req, res) => {
   try {
     const { id } = req.params;
     const thread = await InquiryModel.findById(id)
-      .populate("user", "name organizationName hospitalName email role")
-      .populate("messages.sender", "name organizationName hospitalName email role");
+      .populate("user", "name organizationName email role")
+      .populate("messages.sender", "name organizationName email role");
 
     if (!thread) {
       return res.status(404).send({ success: false, message: "Inquiry not found" });
@@ -239,8 +239,8 @@ const replyInquiryAdminController = async (req, res) => {
     thread.lastReadAtAdmin = new Date();
     await thread.save();
 
-    await thread.populate("user", "name organizationName hospitalName email role");
-    await thread.populate("messages.sender", "name organizationName hospitalName email role");
+    await thread.populate("user", "name organizationName email role");
+    await thread.populate("messages.sender", "name organizationName email role");
 
     return res.status(201).send({ success: true, message: "Reply sent", thread });
   } catch (error) {
