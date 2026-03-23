@@ -172,18 +172,12 @@ const registerController = async (req, res) => {
       });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate OTP
     const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-
-    // OTP is emailed to the user. Avoid logging secrets in production.
-
-    // Create user (not verified yet)
     const user = new userModel({
       email,
       password: hashedPassword,
@@ -193,44 +187,47 @@ const registerController = async (req, res) => {
       phone,
       bloodGroup,
       isVerified: false,
-
       otp: hashOtp(otp),
       otpExpires,
     });
 
     await user.save();
 
-    // Send OTP email asynchronously to avoid blocking the response
-    process.nextTick(() => {
-      sendEmail({
-        to: email,
-        subject: "Verify Your Email - DMYF",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
-            <div style="background-color: #b4232b; padding: 20px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
-            </div>
-            <div style="padding: 30px; color: #333; line-height: 1.6;">
-              <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF!</h2>
-              <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
-              <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
-                ${otp}
-              </p>
-              <p>This code will expire in <strong>10 minutes</strong>.</p>
-              <p>If you didn't request this registration, please ignore this email.</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
-              <p style="font-size: 12px; color: #777; margin-bottom: 0;">
-                &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
-              </p>
-            </div>
+    const emailSent = await sendEmail({
+      to: email,
+      subject: "Verify Your Email - DMYF",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF Blood Bank</h1>
           </div>
-        `,
-      }).catch((err) => {
-        console.log("❌ Async email send failed for:", email, err?.message);
-      });
+          <div style="padding: 30px; color: #333; line-height: 1.6;">
+            <h2 style="color: #2c3e50; margin-top: 0;">Welcome to DMYF Blood Bank!</h2>
+            <p>Thank you for registering with us. To complete your registration, please use the following verification code:</p>
+            <p style="font-size: 28px; font-weight: bold; letter-spacing: 8px; text-align: center; margin: 30px 0; color: #b4232b; background: #fff5f5; padding: 10px; border-radius: 4px;">
+              ${otp}
+            </p>
+            <p>This code will expire in <strong>10 minutes</strong>.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+            <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+              &copy; ${new Date().getFullYear()} DMYF Blood Bank. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
     });
 
-    console.log("✅ User registered successfully. OTP sent to:", email);
+    if (!emailSent) {
+      console.log("Email sending failed for:", email);
+      await userModel.findByIdAndDelete(user._id);
+      return res.status(500).send({
+        success: false,
+        message:
+          "Failed to send verification email. Please check your email configuration.",
+      });
+    }
+
+    console.log("User registered successfully. OTP sent to:", email);
     return res.status(201).send({
       success: true,
       message:
@@ -829,6 +826,7 @@ module.exports = {
   requestProfileVerificationController,
   updateActivityController,
 };
+
 
 
 

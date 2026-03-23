@@ -447,6 +447,36 @@ const updateProfileVerificationStatusController = async (req, res) => {
       } catch (emailError) {
         console.log("Verification approval email failed:", emailError.message);
       }
+    } else {
+      // Profile rejected
+      const displayName =
+        user.name || user.organizationName || "User";
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Profile Verification Rejected - DMYF",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+              <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+              </div>
+              <div style="padding: 30px; color: #333; line-height: 1.6;">
+                <h2 style="color: #dc3545; margin-top: 0;">Profile Verification Rejected</h2>
+                <p>Hello <strong>${displayName}</strong>,</p>
+                <p>Your profile verification request has been rejected.</p>
+                <p>Your profile is currently locked. Please contact the admin for more information about the reason for rejection.</p>
+                <p>You may update your profile and resubmit for verification after consulting with the admin.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                  &copy; ${new Date().getFullYear()} DMYF Blood Bank.
+                </p>
+              </div>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.log("Verification rejection email failed:", emailError.message);
+      }
     }
 
     return res.status(200).send({

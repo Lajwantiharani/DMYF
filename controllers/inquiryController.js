@@ -53,15 +53,21 @@ const countUserMessagesTodayPk = (thread, userId) => {
   }, 0);
 };
 
-const serializeUserThread = (thread, user) => ({
-  _id: thread._id,
-  user: { _id: user._id, role: user.role, name: toDisplayName(user), email: user.email },
-  messages: thread.messages || [],
-  lastMessageAt: thread.lastMessageAt,
-  lastReadAtUser: thread.lastReadAtUser,
-  lastReadAtAdmin: thread.lastReadAtAdmin,
-  unreadForUser: hasUnread(thread.messages, thread.lastReadAtUser, user.role),
-});
+const serializeUserThread = (thread, user) => {
+  const todaysCount = countUserMessagesTodayPk(thread, user._id);
+  const DAILY_LIMIT = 3;
+  return {
+    _id: thread._id,
+    user: { _id: user._id, role: user.role, name: toDisplayName(user), email: user.email },
+    messages: thread.messages || [],
+    lastMessageAt: thread.lastMessageAt,
+    lastReadAtUser: thread.lastReadAtUser,
+    lastReadAtAdmin: thread.lastReadAtAdmin,
+    unreadForUser: hasUnread(thread.messages, thread.lastReadAtUser, user.role),
+    messagesUsedToday: todaysCount,
+    dailyLimit: DAILY_LIMIT,
+  };
+};
 
 // USER: get their thread
 const getMyInquiryController = async (req, res) => {

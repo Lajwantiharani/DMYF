@@ -23,6 +23,25 @@ const Inquiry = () => {
   const messages = useMemo(() => thread?.messages || [], [thread]);
   const unreadForUser = Boolean(thread?.unreadForUser);
   const lastReadAtAdmin = thread?.lastReadAtAdmin ? new Date(thread.lastReadAtAdmin) : null;
+  
+  // Calculate messages sent by user today (not admin)
+  const messagesUsedToday = useMemo(() => {
+    if (!messages.length) return 0;
+    const today = new Date();
+    const pkOffset = 5 * 60 * 60 * 1000; // Pakistan is UTC+5
+    const pkToday = new Date(today.getTime() + pkOffset);
+    const pkDayStart = new Date(Date.UTC(pkToday.getUTCFullYear(), pkToday.getUTCMonth(), pkToday.getUTCDate(), 0, 0, 0, 0));
+    const pkDayEnd = new Date(pkDayStart.getTime() + 24 * 60 * 60 * 1000);
+    
+    return messages.filter(m => {
+      if (m.senderRole === "admin") return false;
+      const msgTime = new Date(m.createdAt).getTime();
+      return msgTime >= pkDayStart.getTime() && msgTime < pkDayEnd.getTime();
+    }).length;
+  }, [messages]);
+  
+  const dailyLimit = 3;
+  const remainingMessages = dailyLimit - messagesUsedToday;
 
   const load = async () => {
     setLoading(true);
@@ -54,9 +73,13 @@ const Inquiry = () => {
   }, [messages.length]);
 
   const handleSend = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const trimmed = message.trim();
     if (!trimmed) return;
+    if (remainingMessages <= 0) {
+      toast.error("Daily message limit reached. Try again tomorrow.");
+      return;
+    }
 
     setSending(true);
     try {
@@ -79,9 +102,16 @@ const Inquiry = () => {
       <div className="container mt-4" style={{ maxWidth: "980px" }}>
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h3 className="page-heading mb-0">{pageTitle}</h3>
-          {unreadForUser && (
-            <span className="badge text-bg-danger">New reply</span>
-          )}
+          <div className="d-flex align-items-center gap-3">
+            {user?.role !== "admin" && (
+              <span className={`badge ${remainingMessages > 0 ? 'bg-success' : 'bg-danger'}`}>
+                {remainingMessages} / {dailyLimit} messages
+              </span>
+            )}
+            {unreadForUser && (
+              <span className="badge text-bg-danger">New reply</span>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -131,14 +161,30 @@ const Inquiry = () => {
                 rows={4}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Write your message..."
+                onKeyDown={(e) => {
+                  // Ctrl+Enter to send
+                  if (e.ctrlKey && e.key === "Enter") {
+                    e.preventDefault();
+                    if (message.trim() && remainingMessages > 0 && !sending) {
+                      handleSend(e);
+                    }
+                  }
+                  // Enter key - allow new line (don't prevent default)
+                  // Shift+Enter - allow new line (don't prevent default)
+                  // Default behavior: Enter creates new line, which is what we want
+                }}
+                placeholder="Write your message... (Ctrl+Enter to send)"
                 maxLength={2000}
                 required
               />
 
               <div className="d-flex justify-content-end pe-2 mt-3">
-                <button type="submit" className="btn btn-danger px-4" disabled={sending}>
-                  {sending ? "Sending..." : "Send"}
+                <button 
+                  type="submit" 
+                  className="btn btn-danger px-4" 
+                  disabled={sending || remainingMessages <= 0}
+                >
+                  {sending ? "Sending..." : remainingMessages <= 0 ? "Limit reached" : "Send"}
                 </button>
               </div>
             </form>
