@@ -99,13 +99,13 @@ const getDonorsListController = async (req, res) => {
   try {
     const donorData = await userModel
       .find({ role: "donor" })
-
       .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.status(200).send({
       success: true,
-      Toatlcount: donorData.length,
+      totalCount: donorData.length,
       message: "Donor List Fetched Successfully",
       donorData,
     });
@@ -125,13 +125,13 @@ const getOrgListController = async (req, res) => {
   try {
     const orgData = await userModel
       .find({ role: "organization" })
-
       .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.status(200).send({
       success: true,
-      Toatlcount: orgData.length,
+      totalCount: orgData.length,
       message: "ORG List Fetched Successfully",
       orgData,
     });
@@ -173,9 +173,9 @@ const getReceiverListController = async (req, res) => {
   try {
     const receiverData = await userModel
       .find({ role: "receiver" })
-
       .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.status(200).send({
       success: true,
