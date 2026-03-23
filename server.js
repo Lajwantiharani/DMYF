@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 
 const mongoSanitize = require("./middlewares/mongoSanitize");
 const securityHeaders = require("./middlewares/securityHeaders");
+const apiLogger = require("./middlewares/apiLogger");
 
 //dot config
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(express.json());
 
 app.use(mongoSanitize());
 app.use(securityHeaders());
+app.use(apiLogger);
 
 const allowedOrigins = new Set(
   [
