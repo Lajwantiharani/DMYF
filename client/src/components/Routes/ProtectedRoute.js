@@ -126,6 +126,7 @@ const ProtectedRoute = ({ children }) => {
 
     const adminOnlyPaths = new Set([
       "/admin",
+      "/users",
       "/analytics",
       "/donor-list",
       "/org-list",

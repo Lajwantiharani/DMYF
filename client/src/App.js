@@ -20,6 +20,7 @@ import OrgList from "./pages/Admin/OrgList";
 import AdminHome from "./pages/Admin/AdminHome";
 import ReceiverList from "./pages/Admin/ReceiverList";
 import VerificationRequests from "./pages/Admin/VerificationRequests";
+import Users from "./pages/Admin/Users";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import ReceiverDashboard from "./pages/Dashboard/Receiver";
@@ -50,6 +51,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <Users />
             </ProtectedRoute>
           }
         />

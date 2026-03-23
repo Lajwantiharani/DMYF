@@ -3,10 +3,11 @@ import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const PublicRoute = ({ children }) => {
-  const { token } = useSelector((state) => state.auth);
+  const { token, user } = useSelector((state) => state.auth);
+  const redirectPath = user?.role === "admin" ? "/admin" : "/profile";
 
   if (localStorage.getItem("token") || token) {
-    return <Navigate to="/profile" />;
+    return <Navigate to={redirectPath} replace />;
   } else {
     return children;
   }

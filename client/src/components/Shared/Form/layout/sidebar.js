@@ -60,9 +60,8 @@ const Sidebar = ({ onNavigate }) => {
           : user && renderMenuItem("/profile", "Profile", "fa-solid fa-user")}
         {renderMenuItem("/inventory", "Inventory", "fa-solid fa-warehouse", user?.role === "organization" || user?.role === "donor")}
         {renderMenuItem("/blood-requests", "Blood Requests", "fa-solid fa-droplet", user?.role === "organization" || user?.role === "donor")}
-        {renderMenuItem("/receiver-list", "Receiver List", "fa-solid fa-list", user?.role === "organization" || user?.role === "admin")}
-        {renderMenuItem("/donor-list", "Donor List", "fa-solid fa-warehouse", user?.role === "admin")}
-        {renderMenuItem("/org-list", "Organization List", "fa-solid fa-hospital", user?.role === "admin")}
+        {renderMenuItem("/receiver-list", "Receiver List", "fa-solid fa-list", user?.role === "organization")}
+        {renderMenuItem("/users", "Users", "fa-solid fa-users", user?.role === "admin")}
         {renderMenuItem("/verification-requests", "Verification Requests", "fa-solid fa-circle-check", user?.role === "admin")}
         {renderMenuItem("/receiver", "Blood Request", "fa-solid fa-droplet", user?.role === "receiver")}
         {renderMenuItem("/donation", "Donated", "fa-sharp fa-solid fa-building-ngo", user && user?.role !== "receiver")}
