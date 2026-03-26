@@ -113,6 +113,11 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/inventory" replace />;
   }
 
+  // Redirect admin users away from /profile (not needed for admins)
+  if (user?.role === "admin" && location.pathname === "/profile") {
+    return <Navigate to="/admin" replace />;
+  }
+
 
   const path = location.pathname;
   const role = user?.role;

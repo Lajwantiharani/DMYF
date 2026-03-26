@@ -7,6 +7,10 @@ const PublicRoute = ({ children }) => {
   const redirectPath = user?.role === "admin" ? "/admin" : "/profile";
 
   if (localStorage.getItem("token") || token) {
+    // If admin is logged in, redirect to admin dashboard
+    if (user?.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to={redirectPath} replace />;
   } else {
     return children;
