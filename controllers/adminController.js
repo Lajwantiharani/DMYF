@@ -435,7 +435,7 @@ const updateProfileVerificationStatusController = async (req, res) => {
                 <h2 style="color: #2c3e50; margin-top: 0;">Profile Verified Successfully</h2>
                 <p>Hello <strong>${displayName}</strong>,</p>
                 <p>Your profile has been verified by the admin.</p>
-                <p>You can now access all tabs and features in your account.</p>
+                <p>You can now access the features in your account.</p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
                 <p style="font-size: 12px; color: #777; margin-bottom: 0;">
                   &copy; ${new Date().getFullYear()} DMYF Blood Bank.

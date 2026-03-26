@@ -3,11 +3,12 @@ import moment from "moment";
 import { toast } from "react-toastify";
 import Layout from "../../components/Shared/Form/layout/layout";
 import API from "../../services/API";
+import DeleteConfirmModal from "../../components/Shared/Form/modal/DeleteConfirmModal";
 
 const TABS = [
-  { key: "organizations", label: "Organization List" },
-  { key: "donors", label: "Donor List" },
-  { key: "receivers", label: "Receiver List" },
+  { key: "organizations", label: "Organizations" },
+  { key: "donors", label: "Donors" },
+  { key: "receivers", label: "Receivers" },
 ];
 
 const Users = () => {
@@ -21,6 +22,7 @@ const Users = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null });
 
   const getUsersData = useCallback(async () => {
     try {
@@ -50,11 +52,9 @@ const Users = () => {
 
   const getRows = () => data[activeTab] || [];
 
-  const handleDelete = async (record) => {
+  const handleDelete = async () => {
+    const record = deleteModal.record;
     if (!record?._id) return;
-
-    const confirmed = window.confirm("Are you sure you want to delete this user?");
-    if (!confirmed) return;
 
     try {
       const endpoint =
@@ -69,10 +69,16 @@ const Users = () => {
         [activeTab]: prev[activeTab].filter((item) => item._id !== record._id),
       }));
       setSelectedRecord(null);
+      setDeleteModal({ isOpen: false, record: null });
     } catch (error) {
       toast.error(error?.response?.data?.message || "Unable to delete user");
       console.log(error);
+      setDeleteModal({ isOpen: false, record: null });
     }
+  };
+
+  const openDeleteModal = (record) => {
+    setDeleteModal({ isOpen: true, record });
   };
 
   const formatLabel = (key) =>
@@ -141,8 +147,9 @@ const Users = () => {
   };
 
   return (
-    <Layout>
-      <div className="container mt-4">
+    <>
+      <Layout>
+        <div className="container mt-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <h2 className="m-0 page-heading">Users</h2>
           <div className="d-flex justify-content-end align-items-end gap-2 flex-wrap">
@@ -232,7 +239,7 @@ const Users = () => {
                         {record.profileVerificationStatus !== "pending" && (
                           <button
                             className="btn btn-danger"
-                            onClick={() => handleDelete(record)}
+                            onClick={() => openDeleteModal(record)}
                           >
                             Delete
                           </button>
@@ -290,7 +297,14 @@ const Users = () => {
         </div>
       )}
     </Layout>
-  );
+    <DeleteConfirmModal
+      isOpen={deleteModal.isOpen}
+      onClose={() => setDeleteModal({ isOpen: false, record: null })}
+      onConfirm={handleDelete}
+      role={activeTab === "receivers" ? "receiver" : activeTab === "donors" ? "donor" : "organization"}
+      name={deleteModal.record ? renderName(deleteModal.record) : ""}
+    />
+  </>);
 };
 
 export default Users;

@@ -350,7 +350,7 @@ const Receiver = () => {
             </form>
 
             <div className="mt-4">
-              <h5>Donor List</h5>
+              <h5>Donors</h5>
               <div className="table-responsive">
 
                 <table className="table" style={{ tableLayout: "fixed" }}>
@@ -395,7 +395,7 @@ const Receiver = () => {
                 </table>
               </div>
 
-              <h5 className="mt-4">Organization List</h5>
+              <h5 className="mt-4">Organizations</h5>
               <div className="table-responsive">
 
                 <table className="table" style={{ tableLayout: "fixed" }}>

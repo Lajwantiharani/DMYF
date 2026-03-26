@@ -60,7 +60,7 @@ const Sidebar = ({ onNavigate }) => {
           : user && renderMenuItem("/profile", "Profile", "fa-solid fa-user")}
         {renderMenuItem("/inventory", "Inventory", "fa-solid fa-warehouse", user?.role === "organization" || user?.role === "donor")}
         {renderMenuItem("/blood-requests", "Blood Requests", "fa-solid fa-droplet", user?.role === "organization" || user?.role === "donor")}
-        {renderMenuItem("/receiver-list", "Receiver List", "fa-solid fa-list", user?.role === "organization")}
+        {renderMenuItem("/receiver-list", "Receivers", "fa-solid fa-list", user?.role === "organization")}
         {renderMenuItem("/users", "Users", "fa-solid fa-users", user?.role === "admin")}
         {renderMenuItem("/verification-requests", "Verification Requests", "fa-solid fa-circle-check", user?.role === "admin")}
         {renderMenuItem("/receiver", "Blood Request", "fa-solid fa-droplet", user?.role === "receiver")}
@@ -70,7 +70,11 @@ const Sidebar = ({ onNavigate }) => {
         {renderMenuItem("/inquiry", user?.role === "admin" ? "Inquiry" : "Technical Support", "fa-solid fa-envelope", user && user?.role !== "admin")}
         {renderMenuItem("/settings", "Settings", "fa-solid fa-gear", !!user)}
         {user && (
-          <div className="menu-item" style={{ cursor: "pointer" }} onClick={handleLogout}>
+          <div
+            className="menu-item"
+            style={{ cursor: "pointer" }}
+            onClick={handleLogout}
+          >
             <i className="fa-solid fa-right-from-bracket"></i>
             <span>Logout</span>
           </div>
