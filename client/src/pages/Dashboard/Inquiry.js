@@ -13,7 +13,7 @@ const formatWhen = (value) => {
 
 const Inquiry = () => {
   const { user } = useSelector((state) => state.auth);
-  const pageTitle = user?.role === "admin" ? "Inquiry" : "Technical Support";
+  const pageTitle = "Technical Support";
   const [thread, setThread] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");

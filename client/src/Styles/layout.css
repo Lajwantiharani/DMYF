@@ -22,13 +22,15 @@
   padding: 12px 14px;
   border-radius: 10px;
   transition: all 0.2s ease;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.menu-item a {
+.menu-item a,
+.menu-item span {
   color: #fff;
   text-decoration: none;
   font-size: 0.98rem;
@@ -41,13 +43,20 @@
 }
 
 .sidebar-logout-btn {
+  width: calc(100% - 12px);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
   background: transparent;
   border: none;
-  color: #fff;
-  font-size: 0.98rem;
-  font-weight: 600;
-  padding: 0;
   text-align: left;
+  color: inherit;
+  padding: 12px 14px;
+}
+
+.sidebar-logout-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  outline-offset: 2px;
 }
 
 .mobile-only-logout {
@@ -74,7 +83,8 @@
 }
 
 .menu-item.disabled a,
-.menu-item.disabled i {
+.menu-item.disabled i,
+.menu-item.disabled span {
   color: #e5e7eb;
 }
 

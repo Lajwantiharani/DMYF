@@ -90,6 +90,11 @@ const ReceiverList = () => {
     setSelectedRecord(null);
   };
 
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
+  };
+
   const formatLabel = (key) =>
     key
       .replace(/([A-Z])/g, " $1")
@@ -246,7 +251,7 @@ const ReceiverList = () => {
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
           style={{ background: "rgba(15, 23, 42, 0.55)", zIndex: 2000 }}
-          onClick={() => setShowDeleteModal(false)}
+          onClick={closeDeleteModal}
         >
           <div
             className="bg-white rounded p-4"
@@ -258,7 +263,7 @@ const ReceiverList = () => {
               <button
                 type="button"
                 className="btn-close"
-                onClick={() => setShowDeleteModal(false)}
+                onClick={closeDeleteModal}
                 aria-label="Close"
               ></button>
             </div>
@@ -266,7 +271,7 @@ const ReceiverList = () => {
             <div className="d-flex justify-content-center gap-3">
               <button
                 className="btn btn-secondary"
-                onClick={() => setShowDeleteModal(false)}
+                onClick={closeDeleteModal}
               >
                 No
               </button>
@@ -274,15 +279,9 @@ const ReceiverList = () => {
                 className="btn btn-danger"
                 onClick={async () => {
                   if (deleteId) {
-                    try {
-                      const { data } = await API.delete(`/admin/delete-receiver/${deleteId}`);
-                      toast.success(data?.message || "Receiver deleted");
-                      getReceivers();
-                    } catch (error) {
-                      toast.error(error?.response?.data?.message || "Unable to delete receiver");
-                    }
+                    await handleDelete(deleteId);
                   }
-                  setShowDeleteModal(false);
+                  closeDeleteModal();
                 }}
               >
                 Yes

@@ -169,22 +169,24 @@ const listInquiriesAdminController = async (req, res) => {
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .populate("user", "name organizationName email role phone city");
 
-    const items = threads.map((t) => ({
-      _id: t._id,
-      user: {
-        _id: t.user?._id,
-        role: t.user?.role,
-        name: toDisplayName(t.user),
-        email: t.user?.email,
-      },
-      lastMessageAt: t.lastMessageAt,
-      lastReadAtUser: t.lastReadAtUser,
-      lastReadAtAdmin: t.lastReadAtAdmin,
-      unreadForAdmin: hasUnread(t.messages, t.lastReadAtAdmin, "admin"),
-      lastMessagePreview: t.messages?.length
-        ? t.messages[t.messages.length - 1].message.slice(0, 80)
-        : "",
-    }));
+    const items = threads
+      .filter((t) => t.user && Array.isArray(t.messages) && t.messages.length > 0)
+      .map((t) => ({
+        _id: t._id,
+        user: {
+          _id: t.user?._id,
+          role: t.user?.role,
+          name: toDisplayName(t.user),
+          email: t.user?.email,
+        },
+        lastMessageAt: t.lastMessageAt,
+        lastReadAtUser: t.lastReadAtUser,
+        lastReadAtAdmin: t.lastReadAtAdmin,
+        unreadForAdmin: hasUnread(t.messages, t.lastReadAtAdmin, "admin"),
+        lastMessagePreview: t.messages?.length
+          ? t.messages[t.messages.length - 1].message.slice(0, 80)
+          : "",
+      }));
 
     return res.status(200).send({ success: true, items });
   } catch (error) {

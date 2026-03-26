@@ -9,7 +9,8 @@ const Sidebar = ({ onNavigate }) => {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
-  const canAccessOtherTabs = user?.role === "admin" || user?.profileVerificationStatus === "approved";
+  const isAdmin = user?.role === "admin";
+  const canAccessOtherTabs = isAdmin || user?.profileVerificationStatus === "approved";
 
   const allowedWhileLocked = new Set(["/profile", "/inquiry"]);
   
@@ -65,19 +66,19 @@ const Sidebar = ({ onNavigate }) => {
         {renderMenuItem("/verification-requests", "Verification Requests", "fa-solid fa-circle-check", user?.role === "admin")}
         {renderMenuItem("/receiver", "Blood Request", "fa-solid fa-droplet", user?.role === "receiver")}
         {renderMenuItem("/donation", "Donated", "fa-sharp fa-solid fa-building-ngo", user && user?.role !== "receiver")}
-        {renderMenuItem("/analytics", "Analytics", "fa-solid fa-chart-column", user?.role === "admin")}
-        {renderMenuItem("/user-inquiries", "User Inquiries", "fa-solid fa-envelope", user?.role === "admin")}
-        {renderMenuItem("/inquiry", user?.role === "admin" ? "Inquiry" : "Technical Support", "fa-solid fa-envelope", user && user?.role !== "admin")}
+        {renderMenuItem("/analytics", "Analytics", "fa-solid fa-chart-column", isAdmin)}
+        {renderMenuItem("/user-inquiries", "User Inquiries", "fa-solid fa-envelope", isAdmin)}
+        {renderMenuItem("/inquiry", "Technical Support", "fa-solid fa-envelope", user && !isAdmin)}
         {renderMenuItem("/settings", "Settings", "fa-solid fa-gear", !!user)}
         {user && (
-          <div
-            className="menu-item"
-            style={{ cursor: "pointer" }}
+          <button
+            type="button"
+            className="menu-item sidebar-logout-btn"
             onClick={handleLogout}
           >
             <i className="fa-solid fa-right-from-bracket"></i>
             <span>Logout</span>
-          </div>
+          </button>
         )}
       </div>
     </div>

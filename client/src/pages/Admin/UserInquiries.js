@@ -44,9 +44,16 @@ const UserInquiries = () => {
         toast.error(data?.message || "Unable to load inquiries");
         return;
       }
-      setThreads(data.items || []);
-      if (!selectedId && data.items?.length) {
-        setSelectedId(data.items[0]._id);
+      const nextThreads = data.items || [];
+      setThreads(nextThreads);
+      setSelectedId((currentSelectedId) => {
+        if (!nextThreads.length) return null;
+        return nextThreads.some((thread) => thread._id === currentSelectedId)
+          ? currentSelectedId
+          : nextThreads[0]._id;
+      });
+      if (!nextThreads.length) {
+        setThreadDetails(null);
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Unable to load inquiries");
