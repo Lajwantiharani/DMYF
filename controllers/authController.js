@@ -619,7 +619,7 @@ const updateProfileController = async (req, res) => {
       bloodGroup,
       nukh,
       akaah,
-
+      dob,
       website,
       newPassword,
       confirmPassword,
@@ -678,6 +678,24 @@ const updateProfileController = async (req, res) => {
 
     if (typeof akaah === "string") {
       user.akaah = akaah;
+    }
+
+    // Handle date of birth - store as user entered format (DD/MM/YYYY)
+    // If it's an ISO string (from date picker), convert to DD/MM/YYYY format
+    if (typeof dob === "string") {
+      if (dob.includes("T") && dob.includes("Z")) {
+        // It's an ISO string from date picker - convert to DD/MM/YYYY
+        const dateObj = new Date(dob);
+        if (!isNaN(dateObj.getTime())) {
+          const day = String(dateObj.getDate()).padStart(2, "0");
+          const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+          const year = dateObj.getFullYear();
+          user.dob = `${day}/${month}/${year}`;
+        }
+      } else {
+        // It's already in user-entered format
+        user.dob = dob;
+      }
     }
 
 

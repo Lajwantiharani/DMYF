@@ -31,6 +31,7 @@ const CityAutocompleteInput = ({
   name = "city",
 }) => {
   const [open, setOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const rootRef = useRef(null);
 
   const suggestions = useMemo(() => getCitySuggestions(value, 10), [value]);
@@ -43,6 +44,39 @@ const CityAutocompleteInput = ({
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, []);
+
+  // Reset highlighted index when suggestions change
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [suggestions]);
+
+  const handleKeyDown = (e) => {
+    if (!open || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+          onChange?.(suggestions[highlightedIndex]);
+          setOpen(false);
+        }
+        break;
+      case "Escape":
+        setOpen(false);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
 
   const showSuggestions = open && !disabled && suggestions.length > 0 && String(value || "").trim().length > 0;
 
@@ -59,10 +93,15 @@ const CityAutocompleteInput = ({
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
         autoComplete="off"
         disabled={disabled}
         required={required}
         placeholder={placeholder}
+        aria-autocomplete="list"
+        aria-expanded={showSuggestions}
+        aria-haspopup="listbox"
+        role="combobox"
       />
 
       {showSuggestions && (
@@ -72,7 +111,7 @@ const CityAutocompleteInput = ({
           role="listbox"
           aria-label="City suggestions"
         >
-          {suggestions.map((city) => (
+          {suggestions.map((city, index) => (
             <button
               key={city}
               type="button"
@@ -81,6 +120,10 @@ const CityAutocompleteInput = ({
                 onChange?.(city);
                 setOpen(false);
               }}
+              onMouseEnter={() => setHighlightedIndex(index)}
+              role="option"
+              aria-selected={index === highlightedIndex}
+              style={index === highlightedIndex ? { backgroundColor: '#cce5ff' } : {}}
             >
               {renderHighlightedPrefix(city, value)}
             </button>

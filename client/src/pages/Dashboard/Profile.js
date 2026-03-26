@@ -39,10 +39,14 @@ const Profile = () => {
     if (!value) return "";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return "";
+    // Check if value already has slashes (user saved date format)
+    if (String(value).includes("/")) {
+      return String(value);
+    }
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
-    return `${day} / ${month} / ${year}`;
+    return `${day}/${month}/${year}`;
   };
   const parseDateFromInput = (value) => {
     if (!value) return null;
@@ -61,6 +65,27 @@ const Profile = () => {
       }
     }
     return null;
+  };
+  
+  // Format date input with auto-slashes as user types
+  const handleDateInputChange = (e) => {
+    if (!canEditProfile) return;
+    let value = e.target.value.replace(/[^0-9]/g, ""); // Only allow numbers
+    
+    // Add slashes automatically
+    if (value.length >= 2) {
+      value = value.slice(0, 2) + "/" + value.slice(2);
+    }
+    if (value.length >= 5) {
+      value = value.slice(0, 5) + "/" + value.slice(5);
+    }
+    
+    // Limit to 10 characters (DD/MM/YYYY)
+    if (value.length > 10) {
+      value = value.slice(0, 10);
+    }
+    
+    setFormData((prev) => ({ ...prev, dob: value }));
   };
   const getAgeYears = (date) => {
     if (!date) return null;
@@ -99,7 +124,8 @@ const Profile = () => {
         bloodGroup: user?.bloodGroup || "",
         nukh: user?.nukh || "",
         akaah: user?.akaah || "",
-        dob: user?.dob ? formatDateDisplay(user.dob) : "",
+        // Store the date as-is from the database (already formatted by backend or saved by user)
+        dob: user?.dob || "",
       }));
     }
   }, [user]);
@@ -121,6 +147,8 @@ const Profile = () => {
       toast.error("Please enter Date of Birth in Day / Month / Year format.");
       return;
     }
+    // Append time to ensure local timezone is used, not UTC
+    const dobWithTime = new Date(dobDate.getTime() - dobDate.getTimezoneOffset() * 60000);
     const age = getAgeYears(dobDate);
     const isMinor = age !== null && age < 18;
     setLoading(true);
@@ -128,17 +156,17 @@ const Profile = () => {
 
       const payload = isAdmin
         ? { name: formData.name, email: formData.email }
-        : { ...formData, dob: dobDate.toISOString() };
+        : { ...formData, dob: dobWithTime.toISOString() };
 
       const { data } = await API.put("/auth/update-profile", payload);
       if (data?.success) {
         dispatch(setCurrentUser(data.user));
-        // Update formData with the saved date to ensure it displays correctly
+        // Keep the date as user entered it (don't reformat)
         const savedUser = data.user;
         if (savedUser?.dob) {
           setFormData((prev) => ({
             ...prev,
-            dob: formatDateDisplay(savedUser.dob)
+            dob: savedUser.dob
           }));
         }
         toast.success(data?.message || "Profile updated successfully");
@@ -175,18 +203,20 @@ const Profile = () => {
 
     setRequestingVerification(true);
     try {
+      // Append time to ensure local timezone is used, not UTC
+      const dobWithTime = new Date(dobDate.getTime() - dobDate.getTimezoneOffset() * 60000);
       const profileUpdateResponse = await API.put("/auth/update-profile", {
         ...formData,
-        dob: dobDate.toISOString(),
+        dob: dobWithTime.toISOString(),
       });
       if (profileUpdateResponse?.data?.success) {
         dispatch(setCurrentUser(profileUpdateResponse.data.user));
-        // Update formData with the saved date to ensure it displays correctly
+        // Keep the date as user entered it (don't reformat)
         const savedUser = profileUpdateResponse.data.user;
         if (savedUser?.dob) {
           setFormData((prev) => ({
             ...prev,
-            dob: formatDateDisplay(savedUser.dob)
+            dob: savedUser.dob
           }));
         }
       } else {
@@ -261,17 +291,15 @@ const Profile = () => {
                       className="form-control"
                       name="dob"
                       value={formData.dob}
-                      onChange={(e) => {
-                        if (!canEditProfile) return;
-                        setFormData((prev) => ({ ...prev, dob: e.target.value }));
-                      }}
+                      onChange={handleDateInputChange}
                       onFocus={() => {
                         if (!canEditProfile) return;
                         dateInputRef.current?.showPicker?.();
                       }}
-                      placeholder="DD / MM / YYYY"
+                      placeholder="DD/MM/YYYY"
                       disabled={!canEditProfile}
                       required
+                      maxLength={10}
                     />
                     {canEditProfile && (
                       <button

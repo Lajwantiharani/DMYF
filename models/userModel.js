@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    dob: {
+      type: String,
+      default: "",
+    },
     profileVerificationStatus: {
       type: String,
       enum: ["not_requested", "pending", "approved", "rejected"],
