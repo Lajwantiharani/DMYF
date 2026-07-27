@@ -7,7 +7,6 @@ const Analytics = () => {
   const [data, setData] = useState([]);
 
   const [totals, setTotals] = useState({ totalIn: 0, totalOut: 0, available: 0 });
-  const [loading, setLoading] = useState(false);
 
   const [inventoryData, setInventoryData] = useState([]);
   const [txPage, setTxPage] = useState(1);
@@ -32,7 +31,6 @@ const Analytics = () => {
 
   const getSummaryData = useCallback(async () => {
     try {
-      setLoading(true);
       const { data } = await API.get("/analytics/dashboard-data");
       if (data?.success) {
         setData(data?.bloodGroupData);
@@ -40,9 +38,6 @@ const Analytics = () => {
       }
     } catch (error) {
       console.log(error);
-
-    } finally {
-      setLoading(false);
     }
   }, []);
 

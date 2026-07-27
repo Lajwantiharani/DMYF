@@ -33,6 +33,7 @@ const CityAutocompleteInput = ({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const rootRef = useRef(null);
+  const listboxId = `${id || name}-suggestions`;
 
   const suggestions = useMemo(() => getCitySuggestions(value, 10), [value]);
 
@@ -99,6 +100,7 @@ const CityAutocompleteInput = ({
         required={required}
         placeholder={placeholder}
         aria-autocomplete="list"
+        aria-controls={showSuggestions ? listboxId : undefined}
         aria-expanded={showSuggestions}
         aria-haspopup="listbox"
         role="combobox"
@@ -106,6 +108,7 @@ const CityAutocompleteInput = ({
 
       {showSuggestions && (
         <div
+          id={listboxId}
           className="list-group position-absolute w-100 shadow"
           style={{ zIndex: 2000, maxHeight: 220, overflowY: "auto" }}
           role="listbox"

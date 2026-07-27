@@ -31,24 +31,6 @@ const DonorList = () => {
     getDonors();
   }, []);
 
-  //DELETE FUNCTION
-  const handelDelete = async (id) => {
-    if (!isAdmin) return;
-    try {
-      let answer = window.prompt(
-        "Are You SUre Want To Delete This Donor",
-        "Sure"
-      );
-      if (!answer) return;
-      const { data } = await API.delete(`/admin/delete-donor/${id}`);
-      toast.success(data?.message || "Donor deleted");
-      setData((prev) => prev.filter((item) => item._id !== id));
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Unable to delete donor");
-      console.log(error);
-    }
-  };
-
   const handleReceive = async (record) => {
     if (!isReceiver) return;
     try {

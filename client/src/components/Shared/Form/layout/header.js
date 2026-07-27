@@ -1,9 +1,7 @@
 import React from 'react';
 import logo from "../../../../pages/logo.png";
 import "./header.css";
-import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { toast } from "react-toastify";
 
 const Header = ({ onToggleSidebar }) => {
   const { user } = useSelector((state) => state.auth);

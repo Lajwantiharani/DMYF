@@ -12,6 +12,14 @@ const isValidEmail = (email) =>
   typeof email === "string" &&
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const sanitizeUser = (user) => {
   if (!user) return null;
   const obj = typeof user.toObject === "function" ? user.toObject() : { ...user };
@@ -93,10 +101,14 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
       return false;
     }
 
-    const displayName = getDisplayNameForRole(requestUser) || "Unknown User";
+    const displayName = escapeHtml(getDisplayNameForRole(requestUser) || "Unknown User");
     const requestedAt = requestUser?.profileVerificationRequestedAt
       ? new Date(requestUser.profileVerificationRequestedAt).toLocaleString()
       : new Date().toLocaleString();
+    const requestEmail = escapeHtml(requestUser?.email || "");
+    const requestRole = escapeHtml(requestUser?.role || "");
+    const requestUserId = escapeHtml(requestUser?._id?.toString() || "");
+    const safeRequestedAt = escapeHtml(requestedAt);
 
     process.nextTick(() => {
       sendEmail({
@@ -108,10 +120,10 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
           <p>A user has requested profile verification.</p>
           <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
             <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Name</strong></td><td style="padding: 8px; border: 1px solid #eee;">${displayName}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?.email || ""}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Role</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?.role || ""}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUser?._id?.toString() || ""}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Requested At</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestedAt}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestEmail}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Role</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestRole}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #eee;">${requestUserId}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Requested At</strong></td><td style="padding: 8px; border: 1px solid #eee;">${safeRequestedAt}</td></tr>
           </table>
           <p style="margin-top: 16px;">Please review this request in the admin panel.</p>
         </div>
@@ -379,20 +391,10 @@ const verifyOTPController = async (req, res) => {
       });
     }
 
-    // Debug logs
-    console.log("📝 OTP Verification Debug:");
-    console.log("   Email:", email);
-
-    // Avoid logging OTP values.
-    console.log("   Current Time:", new Date());
-
-    // Convert both to string for comparison (handle number/string mismatch)
     const otpFromReq = String(otp).trim();
-    const otpFromDB = String(user.otp).trim();
 
 
     if (!user.otp || !otpMatches(user.otp, otpFromReq)) {
-      console.log("❌ OTP Mismatch!");
       return res.status(400).send({
         success: false,
         message: "Invalid OTP",
@@ -400,20 +402,17 @@ const verifyOTPController = async (req, res) => {
     }
 
     if (!user.otpExpires || user.otpExpires < new Date()) {
-      console.log("❌ OTP Expired!");
       return res.status(400).send({
         success: false,
         message: "OTP has expired. Please register again.",
       });
     }
 
-    // Success → verify user & clear OTP
     user.isVerified = true;
     user.otp = null;
     user.otpExpires = null;
     await user.save();
 
-    console.log("✅ Email verified successfully for:", email);
     return res.status(200).send({
       success: true,
       message: "Email verified successfully! You can now login.",
@@ -479,7 +478,7 @@ const forgotPasswordRequestOtpController = async (req, res) => {
     const clientBaseUrl = process.env.CLIENT_URL || "http://localhost:3000";
     const resetUrl = `${clientBaseUrl}/reset-password?email=${encodeURIComponent(email)}`;
 
-    const displayName = getDisplayNameForRole(user) || "User";
+    const displayName = escapeHtml(getDisplayNameForRole(user) || "User");
     process.nextTick(() => {
       sendEmail({
         to: email,
@@ -723,8 +722,7 @@ const updateProfileController = async (req, res) => {
     await user.save();
 
     if (isPasswordUpdated) {
-      const displayName =
-        user.name || user.organizationName || "User";
+      const displayName = escapeHtml(user.name || user.organizationName || "User");
 
       process.nextTick(() => {
         sendEmail({
