@@ -76,9 +76,7 @@ const bloodGroupDetailsContoller = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error In Bloodgroup Data Analytics API",
-
-      error: error.message,
+      message: "Error In Bloodgroup Data Analytics API",
     });
   }
 };
@@ -161,9 +159,7 @@ const analyticsDashboardController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error in analytics dashboard API",
-
-      error: error.message,
+      message: "Error in analytics dashboard API",
     });
   }
 };
@@ -230,8 +226,7 @@ const analyticsTransactionsController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error in transactions API",
-      error: error.message,
+      message: "Error in transactions API",
     });
   }
 };

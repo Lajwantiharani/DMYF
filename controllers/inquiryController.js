@@ -87,7 +87,7 @@ const getMyInquiryController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error fetching inquiry", error: error.message });
+    return res.status(500).send({ success: false, message: "Error fetching inquiry" });
   }
 };
 
@@ -138,7 +138,7 @@ const sendMyInquiryMessageController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error sending inquiry", error: error.message });
+    return res.status(500).send({ success: false, message: "Error sending inquiry" });
   }
 };
 
@@ -158,7 +158,7 @@ const markMyInquiryReadController = async (req, res) => {
     return res.status(200).send({ success: true });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error marking as read", error: error.message });
+    return res.status(500).send({ success: false, message: "Error marking as read" });
   }
 };
 
@@ -191,7 +191,7 @@ const listInquiriesAdminController = async (req, res) => {
     return res.status(200).send({ success: true, items });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error fetching inquiries", error: error.message });
+    return res.status(500).send({ success: false, message: "Error fetching inquiries" });
   }
 };
 
@@ -214,7 +214,7 @@ const getInquiryAdminController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error fetching inquiry", error: error.message });
+    return res.status(500).send({ success: false, message: "Error fetching inquiry" });
   }
 };
 
@@ -253,7 +253,7 @@ const replyInquiryAdminController = async (req, res) => {
     return res.status(201).send({ success: true, message: "Reply sent", thread });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error replying", error: error.message });
+    return res.status(500).send({ success: false, message: "Error replying" });
   }
 };
 
@@ -272,7 +272,7 @@ const markInquiryReadAdminController = async (req, res) => {
     return res.status(200).send({ success: true });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ success: false, message: "Error marking as read", error: error.message });
+    return res.status(500).send({ success: false, message: "Error marking as read" });
   }
 };
 

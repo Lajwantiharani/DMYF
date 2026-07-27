@@ -48,7 +48,7 @@ const otpMatches = (storedOtp, providedOtp) => {
   const provided = String(providedOtp).trim();
 
   // Backward compatibility: accept old plaintext OTP values (typically 6 digits).
-  if (/^\\d{4,8}$/.test(stored)) {
+  if (/^\d{4,8}$/.test(stored)) {
     return safeEqual(stored, provided);
   }
 
@@ -151,7 +151,7 @@ const registerController = async (req, res) => {
       });
     }
 
-    const allowedRoles = new Set(["admin", "organization", "donor", "receiver"]);
+    const allowedRoles = new Set(["organization", "donor", "receiver"]);
     if (!allowedRoles.has(role)) {
       return res.status(400).send({ success: false, message: "Invalid role" });
     }
@@ -242,13 +242,11 @@ const registerController = async (req, res) => {
       return res.status(400).send({
         success: false,
         message: firstErrorMessage,
-        error: error.message,
       });
     }
     res.status(500).send({
       success: false,
       message: "Error in Register API",
-      error: error.message,
     });
   }
 };
@@ -274,7 +272,7 @@ const loginController = async (req, res) => {
       user.password,
     );
     if (!comparePassword) {
-      return res.status(500).send({
+      return res.status(401).send({
         success: false,
         message: "Invalid Credentials",
       });
@@ -312,8 +310,6 @@ const loginController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error In Login API",
-
-      error: error.message,
     });
   }
 };
@@ -337,8 +333,6 @@ const currentUserController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "unable to get current user",
-
-      error: error.message,
     });
   }
 };
@@ -358,7 +352,6 @@ const updateActivityController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error updating activity",
-      error: error.message,
     });
   }
 };
@@ -430,7 +423,6 @@ const verifyOTPController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error verifying OTP",
-      error: error.message,
     });
   }
 };
@@ -523,14 +515,13 @@ const forgotPasswordRequestOtpController = async (req, res) => {
 
     return res.status(200).send({
       success: true,
-      message: "OTP sent to your email",
+      message: "If this email exists, an OTP has been sent.",
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "Error sending password reset OTP",
-      error: error.message,
     });
   }
 };
@@ -603,7 +594,6 @@ const resetForgotPasswordController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error resetting password",
-      error: error.message,
     });
   }
 };
@@ -774,7 +764,6 @@ const updateProfileController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in profile update API",
-      error: error.message,
     });
   }
 };
@@ -829,7 +818,6 @@ const requestProfileVerificationController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error requesting profile verification",
-      error: error.message,
     });
   }
 };

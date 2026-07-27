@@ -417,8 +417,7 @@ const searchAvailabilityController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while searching availability",
-      error: error.message,
+      message: "Error while searching availability",
     });
   }
 };
@@ -561,8 +560,7 @@ const sendBloodRequestController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while sending blood request",
-      error: error.message,
+      message: "Error while sending blood request",
     });
   }
 };
@@ -619,8 +617,7 @@ const requestAvailabilityController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while requesting availability",
-      error: error.message,
+      message: "Error while requesting availability",
     });
   }
 };
@@ -641,8 +638,7 @@ const getSentTargetsController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching sent request targets",
-      error: error.message,
+      message: "Error fetching sent request targets",
     });
   }
 };
@@ -673,8 +669,7 @@ const getIncomingRequestsController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching incoming blood requests",
-      error: error.message,
+      message: "Error fetching incoming blood requests",
     });
   }
 };
@@ -815,8 +810,7 @@ const updateIncomingRequestStatusController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error updating request status",
-      error: error.message,
+      message: "Error updating request status",
     });
   }
 };
@@ -861,8 +855,7 @@ const getReceiverRequestsController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching receiver requests",
-      error: error.message,
+      message: "Error fetching receiver requests",
     });
   }
 };

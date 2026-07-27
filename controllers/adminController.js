@@ -1,7 +1,12 @@
 const userModel = require("../models/userModel");
 const InventoryModel = require("../models/InventoryModel");
 const XLSX = require("xlsx");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const sendEmail = require("../client/src/utils/sendEmail");
+
+const SENSITIVE_USER_EXCLUDE =
+  "-password -otp -otpExpires -forgotPasswordRequestedAt";
 
 const buildDateFilter = (startDate, endDate) => {
   if (!startDate || !endDate) return null;
@@ -99,7 +104,7 @@ const getDonorsListController = async (req, res) => {
   try {
     const donorData = await userModel
       .find({ role: "donor" })
-      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
+      .select(SENSITIVE_USER_EXCLUDE)
       .sort({ createdAt: -1 })
       .lean();
 
@@ -114,8 +119,6 @@ const getDonorsListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In DOnor List API",
-
-      error: error.message,
     });
   }
 };
@@ -125,7 +128,7 @@ const getOrgListController = async (req, res) => {
   try {
     const orgData = await userModel
       .find({ role: "organization" })
-      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
+      .select(SENSITIVE_USER_EXCLUDE)
       .sort({ createdAt: -1 })
       .lean();
 
@@ -140,8 +143,6 @@ const getOrgListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In ORG List API",
-
-      error: error.message,
     });
   }
 };
@@ -150,7 +151,18 @@ const getOrgListController = async (req, res) => {
 //DELETE DONAR
 const deleteDonorController = async (req, res) => {
   try {
-    await userModel.findByIdAndDelete(req.params.id);
+    const deleted = await userModel.findOneAndDelete({
+      _id: req.params.id,
+      role: "donor",
+    });
+
+    if (!deleted) {
+      return res.status(404).send({
+        success: false,
+        message: "Donor not found",
+      });
+    }
+
     return res.status(200).send({
       success: true,
       message: " Record Deleted successfully",
@@ -160,8 +172,6 @@ const deleteDonorController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error while deleting ",
-
-      error: error.message,
     });
   }
 };
@@ -173,7 +183,7 @@ const getReceiverListController = async (req, res) => {
   try {
     const receiverData = await userModel
       .find({ role: "receiver" })
-      .select("-password -otp -otpExpires -forgotPasswordRequestedAt")
+      .select(SENSITIVE_USER_EXCLUDE)
       .sort({ createdAt: -1 })
       .lean();
 
@@ -188,8 +198,6 @@ const getReceiverListController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Receiver List API",
-
-      error: error.message,
     });
   }
 };
@@ -198,13 +206,38 @@ const getReceiverListController = async (req, res) => {
 const addReceiverController = async (req, res) => {
   try {
     const { name, email, phone, address, bloodGroup } = req.body;
+
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await userModel.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).send({
+        success: false,
+        message: "Email already in use",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(
+      crypto.randomBytes(12).toString("base64url"),
+      salt,
+    );
+
     const newReceiver = new userModel({
       name,
-      email,
+      email: normalizedEmail,
       phone,
       address,
       bloodGroup,
       role: "receiver",
+      password: hashedPassword,
+      isVerified: true,
     });
     await newReceiver.save();
 
@@ -217,8 +250,6 @@ const addReceiverController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error Adding Receiver Record",
-
-      error: error.message,
     });
   }
 };
@@ -236,7 +267,10 @@ const exportDonorsExcelController = async (req, res) => {
     }
 
     const filter = { role: "donor", ...(dateFilter || {}) };
-    const donors = await userModel.find(filter).sort({ createdAt: -1 });
+    const donors = await userModel
+      .find(filter)
+      .select(SENSITIVE_USER_EXCLUDE)
+      .sort({ createdAt: -1 });
     const rows = mapUsersForExport(donors);
 
     return sendExcel(res, rows, "Donors", "donors-data");
@@ -245,8 +279,6 @@ const exportDonorsExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting donor data",
-
-      error: error.message,
     });
   }
 };
@@ -264,7 +296,10 @@ const exportOrganizationsExcelController = async (req, res) => {
     }
 
     const filter = { role: "organization", ...(dateFilter || {}) };
-    const organizations = await userModel.find(filter).sort({ createdAt: -1 });
+    const organizations = await userModel
+      .find(filter)
+      .select(SENSITIVE_USER_EXCLUDE)
+      .sort({ createdAt: -1 });
     const rows = mapUsersForExport(organizations);
 
     return sendExcel(res, rows, "Organizations", "organizations-data");
@@ -273,8 +308,6 @@ const exportOrganizationsExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting organization data",
-
-      error: error.message,
     });
   }
 };
@@ -292,7 +325,10 @@ const exportReceiversExcelController = async (req, res) => {
     }
 
     const filter = { role: "receiver", ...(dateFilter || {}) };
-    const receivers = await userModel.find(filter).sort({ createdAt: -1 });
+    const receivers = await userModel
+      .find(filter)
+      .select(SENSITIVE_USER_EXCLUDE)
+      .sort({ createdAt: -1 });
     const rows = mapUsersForExport(receivers);
 
     return sendExcel(res, rows, "Receivers", "receivers-data");
@@ -301,8 +337,6 @@ const exportReceiversExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting receiver data",
-
-      error: error.message,
     });
   }
 };
@@ -338,8 +372,6 @@ const exportDonatedExcelController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error exporting donated data",
-
-      error: error.message,
     });
   }
 };
@@ -356,8 +388,6 @@ const deleteReceiverController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error while deleting receiver",
-
-      error: error.message,
     });
   }
 };
@@ -369,6 +399,7 @@ const getPendingVerificationUsersController = async (req, res) => {
         role: { $ne: "admin" },
         profileVerificationStatus: "pending",
       })
+      .select(SENSITIVE_USER_EXCLUDE)
       .sort({ profileVerificationRequestedAt: -1, createdAt: -1 });
 
     return res.status(200).send({
@@ -382,8 +413,6 @@ const getPendingVerificationUsersController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error fetching pending verification users",
-
-      error: error.message,
     });
   }
 };
@@ -499,8 +528,6 @@ const updateProfileVerificationStatusController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error updating profile verification status",
-
-      error: error.message,
     });
   }
 };
@@ -531,7 +558,6 @@ const getDashboardStatsController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error fetching dashboard stats",
-      error: error.message,
     });
   }
 };

@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const dotenv = require("dotenv");
 const colors = require("colors");
@@ -20,7 +21,7 @@ connectDB();
 const app = express();
 
 //middlewares
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 
 
 app.use(mongoSanitize());
@@ -58,6 +59,16 @@ app.use("/api/v1/receiver", require("./routes/receiverRoutes"));
 
 app.use("/api/v1/inquiries", require("./routes/inquiryRoutes"));
 
+// Serve React build in production (single-service deploy)
+const clientBuildPath = path.join(__dirname, "client", "build");
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(clientBuildPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) return next();
+    return res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+}
+
 // Basic error handler (e.g., CORS rejections)
 app.use((err, req, res, next) => {
   if (err && err.message === "Not allowed by CORS") {
@@ -66,15 +77,14 @@ app.use((err, req, res, next) => {
   console.log(err);
   return res
     .status(500)
-    .send({ success: false, message: "Server error", error: err?.message });
+    .send({ success: false, message: "Server error" });
 });
-//const
+
 const PORT = process.env.PORT || 8080;
 
-//listen
 app.listen(PORT, () => {
   console.log(
-    `Node Server Running in ${process.env.DEV_MODE} ModeOn port ${process.env.PORT}`
+    `Node Server Running in ${process.env.DEV_MODE || process.env.NODE_ENV || "development"} mode on port ${PORT}`
       .bgBlue.white
   );
 });

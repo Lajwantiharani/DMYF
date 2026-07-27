@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const InventoryModel = require("../models/InventoryModel");
 const userModel = require("../models/userModel");
 
+const USER_PUBLIC_FIELDS =
+  "name organizationName email phone role city address bloodGroup nukh akaah website dob profileVerificationStatus isVerified createdAt";
+
 const createInventoryController = async (req, res) => {
   try {
     const { email } = req.body;
@@ -135,8 +138,6 @@ const createInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in create inventory API",
-
-      error: error.message,
     });
   }
 };
@@ -147,8 +148,8 @@ const getInventoryController = async (req, res) => {
     const inventory = await InventoryModel.find({
       organization: req.body.userId,
     })
-      .populate("donor")
-      .populate("hospital")
+      .populate("donor", USER_PUBLIC_FIELDS)
+      .populate("hospital", USER_PUBLIC_FIELDS)
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -161,18 +162,42 @@ const getInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get all inventory",
-
-      error: error.message,
     });
   }
 };
 // get receiver blood records
 const getInventoryHospitalController = async (req, res) => {
   try {
-    const inventory = await InventoryModel.find(req.body.filters)
-      .populate("donor")
-      .populate("hospital")
-      .populate("organization")
+    const userId = req.body.userId;
+    const currentUser = await userModel.findById(userId).select("role");
+
+    if (!currentUser) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    let query = {};
+    if (currentUser.role === "receiver") {
+      query = { hospital: userId };
+    } else if (currentUser.role === "organization") {
+      query = { organization: userId };
+    } else if (currentUser.role === "donor") {
+      query = { donor: userId };
+    } else if (currentUser.role === "admin") {
+      query = {};
+    } else {
+      return res.status(403).send({
+        success: false,
+        message: "Not allowed to view inventory",
+      });
+    }
+
+    const inventory = await InventoryModel.find(query)
+      .populate("donor", USER_PUBLIC_FIELDS)
+      .populate("hospital", USER_PUBLIC_FIELDS)
+      .populate("organization", USER_PUBLIC_FIELDS)
       .sort({ createdAt: -1 });
 
     return res.status(200).send({
@@ -185,8 +210,6 @@ const getInventoryHospitalController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get consumer  inventory",
-
-      error: error.message,
     });
   }
 };
@@ -198,7 +221,9 @@ const getDonorsController = async (req, res) => {
     //find donor
     const donorId = await InventoryModel.distinct("donor", { organization });
     //console.log(donorId);
-    const donors = await userModel.find({ _id: { $in: donorId } });
+    const donors = await userModel
+      .find({ _id: { $in: donorId } })
+      .select(USER_PUBLIC_FIELDS);
     return res.status(200).send({
       success: true,
       message: "Get donors successfully",
@@ -209,8 +234,6 @@ const getDonorsController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in get donors irecords ",
-
-      error: error.message,
     });
   }
 };
@@ -234,8 +257,6 @@ const getRecentInventoryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In Recent Inventory API",
-
-      error: error.message,
     });
   }
 };
@@ -244,9 +265,11 @@ const getOrgnaizationController = async (req, res) => {
     const donor = req.body.userId;
     const orgId = await InventoryModel.distinct("organization", { donor });
     //find org
-    const organizations = await userModel.find({
-      _id: { $in: orgId },
-    });
+    const organizations = await userModel
+      .find({
+        _id: { $in: orgId },
+      })
+      .select(USER_PUBLIC_FIELDS);
     return res.status(200).send({
       success: true,
       message: "Org Data Fetched Successfully",
@@ -257,8 +280,6 @@ const getOrgnaizationController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error In ORG API",
-
-      error: error.message,
     });
   }
 };
@@ -317,8 +338,6 @@ const getDonatedRecordsController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in donated records API",
-
-      error: error.message,
     });
   }
 };
@@ -399,8 +418,6 @@ const getOrganizationAvailableStockController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in organization stock API",
-
-      error: error.message,
     });
   }
 };
@@ -457,8 +474,6 @@ const getOrganizationReceiverSummaryController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in organization receiver summary API",
-
-      error: error.message,
     });
   }
 };
