@@ -1,5 +1,33 @@
-const InquiryModel = require("../models/InquiryModel");
-const userModel = require("../models/userModel");
+const prisma = require("../config/prisma");
+const { mapInquiry, mapInquiryMessage } = require("../utils/serialize");
+
+const INQUIRY_INCLUDE = {
+  user: {
+    select: {
+      id: true,
+      role: true,
+      name: true,
+      organizationName: true,
+      email: true,
+      phone: true,
+      city: true,
+    },
+  },
+  messages: {
+    orderBy: { createdAt: "asc" },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          role: true,
+          name: true,
+          organizationName: true,
+          email: true,
+        },
+      },
+    },
+  },
+};
 
 const toDisplayName = (user) =>
   user?.name || user?.organizationName || "User";
@@ -14,9 +42,16 @@ const hasUnread = (messages = [], lastReadAt = null, viewerRole = "") => {
 };
 
 const getOrCreateThreadForUser = async (userId) => {
-  const existing = await InquiryModel.findOne({ user: userId });
+  const existing = await prisma.inquiry.findUnique({
+    where: { userId },
+    include: INQUIRY_INCLUDE,
+  });
   if (existing) return existing;
-  return InquiryModel.create({ user: userId, messages: [], lastMessageAt: null });
+
+  return prisma.inquiry.create({
+    data: { userId },
+    include: INQUIRY_INCLUDE,
+  });
 };
 
 const PK_TIMEZONE_OFFSET_MS = 5 * 60 * 60 * 1000;
@@ -46,7 +81,7 @@ const countUserMessagesTodayPk = (thread, userId) => {
   return thread.messages.reduce((count, m) => {
     if (!m) return count;
     if (String(m.senderRole) === "admin") return count;
-    if (String(m.sender) !== String(userId)) return count;
+    if (String(m.senderId) !== String(userId)) return count;
     const messageTime = new Date(m.createdAt).getTime();
     if (Number.isNaN(messageTime)) return count;
     return messageTime >= startMs && messageTime < endMs ? count + 1 : count;
@@ -54,12 +89,17 @@ const countUserMessagesTodayPk = (thread, userId) => {
 };
 
 const serializeUserThread = (thread, user) => {
-  const todaysCount = countUserMessagesTodayPk(thread, user._id);
+  const todaysCount = countUserMessagesTodayPk(thread, user.id);
   const DAILY_LIMIT = 3;
   return {
-    _id: thread._id,
-    user: { _id: user._id, role: user.role, name: toDisplayName(user), email: user.email },
-    messages: thread.messages || [],
+    _id: thread.id,
+    user: {
+      _id: user.id,
+      role: user.role,
+      name: toDisplayName(user),
+      email: user.email,
+    },
+    messages: (thread.messages || []).map(mapInquiryMessage),
     lastMessageAt: thread.lastMessageAt,
     lastReadAtUser: thread.lastReadAtUser,
     lastReadAtAdmin: thread.lastReadAtAdmin,
@@ -73,13 +113,21 @@ const serializeUserThread = (thread, user) => {
 const getMyInquiryController = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const user = await userModel.findById(userId).select("role name organizationName email");
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        name: true,
+        organizationName: true,
+        email: true,
+      },
+    });
     if (!user) {
       return res.status(404).send({ success: false, message: "User not found" });
     }
 
     const thread = await getOrCreateThreadForUser(userId);
-    await thread.populate("messages.sender", "name organizationName email role");
 
     return res.status(200).send({
       success: true,
@@ -100,9 +148,15 @@ const sendMyInquiryMessageController = async (req, res) => {
       return res.status(400).send({ success: false, message: "Message is required" });
     }
 
-    const user = await userModel.findById(userId).select("role");
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, name: true, organizationName: true, email: true },
+    });
     if (!user || user.role === "admin") {
-      return res.status(403).send({ success: false, message: "Only non-admin users can send inquiries here" });
+      return res.status(403).send({
+        success: false,
+        message: "Only non-admin users can send inquiries here",
+      });
     }
 
     const thread = await getOrCreateThreadForUser(userId);
@@ -118,23 +172,33 @@ const sendMyInquiryMessageController = async (req, res) => {
       });
     }
 
-    thread.messages.push({
-      sender: userId,
-      senderRole: user.role,
-      message,
+    await prisma.inquiryMessage.create({
+      data: {
+        inquiryId: thread.id,
+        senderId: userId,
+        senderRole: user.role,
+        message,
+      },
     });
-    thread.lastMessageAt = new Date();
-    thread.lastReadAtUser = new Date();
-    await thread.save();
 
-    await thread.populate("messages.sender", "name organizationName email role");
+    await prisma.inquiry.update({
+      where: { id: thread.id },
+      data: {
+        lastMessageAt: new Date(),
+        lastReadAtUser: new Date(),
+      },
+    });
 
-    const userDisplay = await userModel.findById(userId).select("role name organizationName email");
+    const updatedThread = await prisma.inquiry.findUnique({
+      where: { id: thread.id },
+      include: INQUIRY_INCLUDE,
+    });
 
+    // Reuse the user object already fetched instead of querying again
     return res.status(201).send({
       success: true,
       message: "Message sent",
-      thread: serializeUserThread(thread, userDisplay),
+      thread: serializeUserThread(updatedThread, user),
     });
   } catch (error) {
     console.log(error);
@@ -146,14 +210,22 @@ const sendMyInquiryMessageController = async (req, res) => {
 const markMyInquiryReadController = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const user = await userModel.findById(userId).select("role");
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
     if (!user) {
       return res.status(404).send({ success: false, message: "User not found" });
     }
 
-    const thread = await getOrCreateThreadForUser(userId);
-    thread.lastReadAtUser = new Date();
-    await thread.save();
+    // Only update if thread exists, don't create one for a read operation
+    const existingThread = await prisma.inquiry.findUnique({ where: { userId } });
+    if (existingThread) {
+      await prisma.inquiry.update({
+        where: { userId },
+        data: { lastReadAtUser: new Date() },
+      });
+    }
 
     return res.status(200).send({ success: true });
   } catch (error) {
@@ -165,25 +237,41 @@ const markMyInquiryReadController = async (req, res) => {
 // ADMIN: list threads
 const listInquiriesAdminController = async (req, res) => {
   try {
-    const threads = await InquiryModel.find({})
-      .sort({ lastMessageAt: -1, updatedAt: -1 })
-      .populate("user", "name organizationName email role phone city");
+    const threads = await prisma.inquiry.findMany({
+      orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            organizationName: true,
+            email: true,
+            role: true,
+            phone: true,
+            city: true,
+          },
+        },
+        messages: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
 
     const items = threads
       .filter((t) => t.user && Array.isArray(t.messages) && t.messages.length > 0)
       .map((t) => ({
-        _id: t._id,
+        _id: t.id,
         user: {
-          _id: t.user?._id,
-          role: t.user?.role,
+          _id: t.user.id,
+          role: t.user.role,
           name: toDisplayName(t.user),
-          email: t.user?.email,
+          email: t.user.email,
         },
         lastMessageAt: t.lastMessageAt,
         lastReadAtUser: t.lastReadAtUser,
         lastReadAtAdmin: t.lastReadAtAdmin,
         unreadForAdmin: hasUnread(t.messages, t.lastReadAtAdmin, "admin"),
-        lastMessagePreview: t.messages?.length
+        lastMessagePreview: t.messages.length
           ? t.messages[t.messages.length - 1].message.slice(0, 80)
           : "",
       }));
@@ -199,9 +287,10 @@ const listInquiriesAdminController = async (req, res) => {
 const getInquiryAdminController = async (req, res) => {
   try {
     const { id } = req.params;
-    const thread = await InquiryModel.findById(id)
-      .populate("user", "name organizationName email role")
-      .populate("messages.sender", "name organizationName email role");
+    const thread = await prisma.inquiry.findUnique({
+      where: { id },
+      include: INQUIRY_INCLUDE,
+    });
 
     if (!thread) {
       return res.status(404).send({ success: false, message: "Inquiry not found" });
@@ -209,7 +298,7 @@ const getInquiryAdminController = async (req, res) => {
 
     return res.status(200).send({
       success: true,
-      thread,
+      thread: mapInquiry(thread),
       unreadForAdmin: hasUnread(thread.messages, thread.lastReadAtAdmin, "admin"),
     });
   } catch (error) {
@@ -228,29 +317,46 @@ const replyInquiryAdminController = async (req, res) => {
     }
 
     const adminId = req.body.userId;
-    const admin = await userModel.findById(adminId).select("role");
+    const admin = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: { role: true },
+    });
     if (!admin || admin.role !== "admin") {
       return res.status(403).send({ success: false, message: "Admin only" });
     }
 
-    const thread = await InquiryModel.findById(id);
+    const thread = await prisma.inquiry.findUnique({ where: { id } });
     if (!thread) {
       return res.status(404).send({ success: false, message: "Inquiry not found" });
     }
 
-    thread.messages.push({
-      sender: adminId,
-      senderRole: "admin",
-      message,
+    await prisma.inquiryMessage.create({
+      data: {
+        inquiryId: thread.id,
+        senderId: adminId,
+        senderRole: "admin",
+        message,
+      },
     });
-    thread.lastMessageAt = new Date();
-    thread.lastReadAtAdmin = new Date();
-    await thread.save();
 
-    await thread.populate("user", "name organizationName email role");
-    await thread.populate("messages.sender", "name organizationName email role");
+    await prisma.inquiry.update({
+      where: { id: thread.id },
+      data: {
+        lastMessageAt: new Date(),
+        lastReadAtAdmin: new Date(),
+      },
+    });
 
-    return res.status(201).send({ success: true, message: "Reply sent", thread });
+    const updatedThread = await prisma.inquiry.findUnique({
+      where: { id: thread.id },
+      include: INQUIRY_INCLUDE,
+    });
+
+    return res.status(201).send({
+      success: true,
+      message: "Reply sent",
+      thread: mapInquiry(updatedThread),
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).send({ success: false, message: "Error replying" });
@@ -261,13 +367,15 @@ const replyInquiryAdminController = async (req, res) => {
 const markInquiryReadAdminController = async (req, res) => {
   try {
     const { id } = req.params;
-    const thread = await InquiryModel.findById(id);
+    const thread = await prisma.inquiry.findUnique({ where: { id } });
     if (!thread) {
       return res.status(404).send({ success: false, message: "Inquiry not found" });
     }
 
-    thread.lastReadAtAdmin = new Date();
-    await thread.save();
+    await prisma.inquiry.update({
+      where: { id },
+      data: { lastReadAtAdmin: new Date() },
+    });
 
     return res.status(200).send({ success: true });
   } catch (error) {

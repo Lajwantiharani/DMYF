@@ -1,18 +1,20 @@
-const userModel = require("../models/userModel");
+const prisma = require("../config/prisma");
 
 module.exports = async (req, res, next) => {
   try {
-    const user = await userModel.findById(req.body.userId);
+    const user = await prisma.user.findUnique({
+      where: { id: req.body.userId },
+      select: { role: true },
+    });
 
-    // Check if the user is an admin
     if (user?.role !== "admin") {
       return res.status(401).send({
         success: false,
         message: "Auth failed: Admin access required",
       });
-    } else {
-      next(); // Pass control to the next middleware or route handler
     }
+
+    next();
   } catch (error) {
     console.error(error);
     return res.status(401).send({

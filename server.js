@@ -4,27 +4,30 @@ const dotenv = require("dotenv");
 const colors = require("colors");
 const morgan = require("morgan");
 const cors = require("cors");
-const connectDB = require("./config/db");
+const helmet = require("helmet");
 
-const mongoSanitize = require("./middlewares/mongoSanitize");
+const sanitizeRequest = require("./middlewares/sanitizeRequest");
 const securityHeaders = require("./middlewares/securityHeaders");
 const apiLogger = require("./middlewares/apiLogger");
 
-//dot config
 dotenv.config();
 
-//
-//mongodb connection
-connectDB();
-//rest object
+// Fail fast if critical secrets are missing or weak.
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
+  console.error("FATAL: JWT_SECRET is missing or too short (min 16 chars). Set a strong secret in .env".red);
+  process.exit(1);
+}
+
+if (!process.env.DATABASE_URL) {
+  console.error("FATAL: DATABASE_URL is missing. Set it in .env".red);
+  process.exit(1);
+}
 
 const app = express();
 
-//middlewares
 app.use(express.json({ limit: "100kb" }));
-
-
-app.use(mongoSanitize());
+app.use(helmet());
+app.use(sanitizeRequest());
 app.use(securityHeaders());
 app.use(apiLogger);
 
@@ -39,7 +42,6 @@ const allowedOrigins = new Set(
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow non-browser requests (no Origin) and allowlisted origins
       if (!origin || allowedOrigins.has(origin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
@@ -49,17 +51,20 @@ app.use(
   }),
 );
 app.use(morgan("dev"));
-//routes
+
 app.use("/api/v1/test", require("./routes/testRoutes"));
 app.use("/api/v1/auth", require("./routes/authRoutes"));
-app.use ("/api/v1/inventory",require("./routes/inventoryRoutes"));
+app.use("/api/v1/inventory", require("./routes/inventoryRoutes"));
 app.use("/api/v1/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/v1/admin", require("./routes/adminRoutes"));
 app.use("/api/v1/receiver", require("./routes/receiverRoutes"));
-
 app.use("/api/v1/inquiries", require("./routes/inquiryRoutes"));
 
-// Serve React build in production (single-service deploy)
+// 404 handler for unknown API routes
+app.use("/api", (req, res) => {
+  return res.status(404).send({ success: false, message: "API route not found" });
+});
+
 const clientBuildPath = path.join(__dirname, "client", "build");
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(clientBuildPath));
@@ -69,15 +74,17 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Basic error handler (e.g., CORS rejections)
 app.use((err, req, res, next) => {
   if (err && err.message === "Not allowed by CORS") {
     return res.status(403).send({ success: false, message: "CORS blocked" });
   }
-  console.log(err);
-  return res
-    .status(500)
-    .send({ success: false, message: "Server error" });
+  // Log full error server-side, but send a generic message to clients.
+  if (process.env.NODE_ENV === "production") {
+    console.error("[ERROR]", req.method, req.originalUrl, err.message);
+  } else {
+    console.error("[ERROR]", err);
+  }
+  return res.status(500).send({ success: false, message: "Server error" });
 });
 
 const PORT = process.env.PORT || 8080;
@@ -85,6 +92,6 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(
     `Node Server Running in ${process.env.DEV_MODE || process.env.NODE_ENV || "development"} mode on port ${PORT}`
-      .bgBlue.white
+      .bgBlue.white,
   );
 });

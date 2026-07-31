@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  organization
+  donor
+  receiver
+}
+
+enum ProfileVerificationStatus {
+  not_requested
+  pending
+  approved
+  rejected
+}
+
+enum InventoryType {
+  in
+  out
+}
+
+enum RequestType {
+  blood_request
+  availability_request
+}
+
+enum TargetType {
+  donor
+  organization
+  admin
+}
+
+enum RequestStatus {
+  pending
+  accepted
+  rejected
+  approved
+}
+
+model User {
+  id                              String                      @id @default(cuid())
+  role                            Role
+  name                            String?
+  organizationName                String?
+  email                           String                      @unique
+  password                        String
+  website                         String?
+  address                         String                      @default("")
+  phone                           String?
+  city                            String                      @default("")
+  bloodGroup                      String                      @default("")
+  nukh                            String                      @default("")
+  akaah                           String                      @default("")
+  dob                             String                      @default("")
+  profileVerificationStatus       ProfileVerificationStatus   @default(not_requested)
+  profileVerificationRequestedAt  DateTime?
+  isVerified                      Boolean                     @default(false)
+  otp                             String?
+  otpExpires                      DateTime?
+  forgotPasswordRequestedAt       DateTime?
+  lastActiveAt                    DateTime?
+  createdAt                       DateTime                    @default(now())
+  updatedAt                       DateTime                    @updatedAt
+
+  inventoryAsOrganization Inventory[]       @relation("InventoryOrganization")
+  inventoryAsHospital     Inventory[]       @relation("InventoryHospital")
+  inventoryAsDonor        Inventory[]       @relation("InventoryDonor")
+  requestsAsReceiver      ReceiverRequest[] @relation("RequestReceiver")
+  requestsAsTarget        ReceiverRequest[] @relation("RequestTarget")
+  inquiry                 Inquiry?
+  inquiryMessages         InquiryMessage[]
+
+  @@index([role, createdAt])
+}
+
+model Inventory {
+  id             String        @id @default(cuid())
+  inventoryType  InventoryType
+  bloodGroup     String
+  quantity       Int
+  email          String        @default("")
+  organizationId String
+  hospitalId     String?
+  donorId        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization User  @relation("InventoryOrganization", fields: [organizationId], references: [id])
+  hospital     User? @relation("InventoryHospital", fields: [hospitalId], references: [id])
+  donor        User? @relation("InventoryDonor", fields: [donorId], references: [id])
+
+  @@index([organizationId, inventoryType, bloodGroup])
+  @@index([donorId, inventoryType, bloodGroup])
+  @@index([hospitalId])
+}
+
+model ReceiverRequest {
+  id          String        @id @default(cuid())
+  requestType RequestType
+  receiverId  String
+  targetUserId String?
+  targetType  TargetType
+  bloodGroup  String
+  city        String        @default("")
+  quantity    Int
+  status      RequestStatus @default(pending)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  receiver   User  @relation("RequestReceiver", fields: [receiverId], references: [id])
+  targetUser User? @relation("RequestTarget", fields: [targetUserId], references: [id])
+
+  @@unique([receiverId, targetUserId, requestType])
+  @@index([targetUserId, requestType, status])
+  @@index([receiverId, requestType])
+}
+
+model Inquiry {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  lastMessageAt   DateTime?
+  lastReadAtUser  DateTime?
+  lastReadAtAdmin DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id])
+  messages InquiryMessage[]
+}
+
+model InquiryMessage {
+  id         String   @id @default(cuid())
+  inquiryId  String
+  senderId   String
+  senderRole Role
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id])
+
+  @@index([inquiryId, createdAt])
+}

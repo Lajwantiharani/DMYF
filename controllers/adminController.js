@@ -1,12 +1,47 @@
-const userModel = require("../models/userModel");
-const InventoryModel = require("../models/InventoryModel");
+const prisma = require("../config/prisma");
+const { mapUserPublic } = require("../utils/serialize");
+const { isValidEmail, isValidBloodGroup, normalizeBloodGroup, escapeHtml, hasValue } = require("../utils/validation");
 const XLSX = require("xlsx");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const sendEmail = require("../client/src/utils/sendEmail");
 
-const SENSITIVE_USER_EXCLUDE =
-  "-password -otp -otpExpires -forgotPasswordRequestedAt";
+const USER_PUBLIC_SELECT = {
+  id: true,
+  role: true,
+  name: true,
+  organizationName: true,
+  email: true,
+  website: true,
+  address: true,
+  phone: true,
+  city: true,
+  bloodGroup: true,
+  nukh: true,
+  akaah: true,
+  dob: true,
+  profileVerificationStatus: true,
+  profileVerificationRequestedAt: true,
+  isVerified: true,
+  lastActiveAt: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+const USER_RELATION_SELECT = {
+  id: true,
+  role: true,
+  name: true,
+  organizationName: true,
+  email: true,
+  phone: true,
+  city: true,
+  address: true,
+  bloodGroup: true,
+  nukh: true,
+  akaah: true,
+  isVerified: true,
+};
 
 const buildDateFilter = (startDate, endDate) => {
   if (!startDate || !endDate) return null;
@@ -23,12 +58,17 @@ const buildDateFilter = (startDate, endDate) => {
   }
 
   end.setHours(23, 59, 59, 999);
-  return { createdAt: { $gte: start, $lte: end } };
+  return {
+    createdAt: {
+      gte: start,
+      lte: end,
+    },
+  };
 };
 
 const mapUsersForExport = (users) =>
   users.map((user) => ({
-    id: user._id?.toString() || "",
+    _id: user.id || "",
     role: user.role || "",
     name: user.name || "",
     organizationName: user.organizationName || "",
@@ -47,7 +87,7 @@ const mapUsersForExport = (users) =>
 
 const mapDonatedRecordsForExport = (records) =>
   records.map((record) => ({
-    donationId: record._id?.toString() || "",
+    donationId: record.id || "",
     inventoryType: record.inventoryType || "",
     bloodGroup: record.bloodGroup || "",
     quantityML: record.quantity || 0,
@@ -102,11 +142,12 @@ const sendExcel = (res, rows, sheetName, filePrefix) => {
 
 const getDonorsListController = async (req, res) => {
   try {
-    const donorData = await userModel
-      .find({ role: "donor" })
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 })
-      .lean();
+    const donors = await prisma.user.findMany({
+      where: { role: "donor" },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
+    const donorData = donors.map(mapUserPublic);
 
     return res.status(200).send({
       success: true,
@@ -123,14 +164,14 @@ const getDonorsListController = async (req, res) => {
   }
 };
 
-//GET ORG LIST
 const getOrgListController = async (req, res) => {
   try {
-    const orgData = await userModel
-      .find({ role: "organization" })
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 })
-      .lean();
+    const orgs = await prisma.user.findMany({
+      where: { role: "organization" },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
+    const orgData = orgs.map(mapUserPublic);
 
     return res.status(200).send({
       success: true,
@@ -146,17 +187,17 @@ const getOrgListController = async (req, res) => {
     });
   }
 };
-// =======================================
 
-//DELETE DONAR
 const deleteDonorController = async (req, res) => {
   try {
-    const deleted = await userModel.findOneAndDelete({
-      _id: req.params.id,
-      role: "donor",
+    const deleted = await prisma.user.deleteMany({
+      where: {
+        id: req.params.id,
+        role: "donor",
+      },
     });
 
-    if (!deleted) {
+    if (deleted.count === 0) {
       return res.status(404).send({
         success: false,
         message: "Donor not found",
@@ -176,16 +217,14 @@ const deleteDonorController = async (req, res) => {
   }
 };
 
-
-
-
 const getReceiverListController = async (req, res) => {
   try {
-    const receiverData = await userModel
-      .find({ role: "receiver" })
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 })
-      .lean();
+    const receivers = await prisma.user.findMany({
+      where: { role: "receiver" },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
+    const receiverData = receivers.map(mapUserPublic);
 
     return res.status(200).send({
       success: true,
@@ -202,22 +241,37 @@ const getReceiverListController = async (req, res) => {
   }
 };
 
-// ADD RECEIVER RECORD
 const addReceiverController = async (req, res) => {
   try {
     const { name, email, phone, address, bloodGroup } = req.body;
 
-    if (!email || typeof email !== "string" || !email.trim()) {
+    if (!hasValue(name)) {
       return res.status(400).send({
         success: false,
-        message: "Email is required",
+        message: "Name is required",
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).send({
+        success: false,
+        message: "Valid email is required",
+      });
+    }
+
+    if (bloodGroup && !isValidBloodGroup(bloodGroup)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid blood group",
       });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const existingUser = await userModel.findOne({ email: normalizedEmail });
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (existingUser) {
-      return res.status(400).send({
+      return res.status(409).send({
         success: false,
         message: "Email already in use",
       });
@@ -229,17 +283,18 @@ const addReceiverController = async (req, res) => {
       salt,
     );
 
-    const newReceiver = new userModel({
-      name,
-      email: normalizedEmail,
-      phone,
-      address,
-      bloodGroup,
-      role: "receiver",
-      password: hashedPassword,
-      isVerified: true,
+    await prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: normalizedEmail,
+        phone: phone ? phone.trim() : "",
+        address: address ? address.trim() : "",
+        bloodGroup: bloodGroup ? normalizeBloodGroup(bloodGroup) : "",
+        role: "receiver",
+        password: hashedPassword,
+        isVerified: true,
+      },
     });
-    await newReceiver.save();
 
     return res.status(200).send({
       success: true,
@@ -266,11 +321,14 @@ const exportDonorsExcelController = async (req, res) => {
       });
     }
 
-    const filter = { role: "donor", ...(dateFilter || {}) };
-    const donors = await userModel
-      .find(filter)
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 });
+    const donors = await prisma.user.findMany({
+      where: {
+        role: "donor",
+        ...(dateFilter || {}),
+      },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
     const rows = mapUsersForExport(donors);
 
     return sendExcel(res, rows, "Donors", "donors-data");
@@ -295,11 +353,14 @@ const exportOrganizationsExcelController = async (req, res) => {
       });
     }
 
-    const filter = { role: "organization", ...(dateFilter || {}) };
-    const organizations = await userModel
-      .find(filter)
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 });
+    const organizations = await prisma.user.findMany({
+      where: {
+        role: "organization",
+        ...(dateFilter || {}),
+      },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
     const rows = mapUsersForExport(organizations);
 
     return sendExcel(res, rows, "Organizations", "organizations-data");
@@ -324,11 +385,14 @@ const exportReceiversExcelController = async (req, res) => {
       });
     }
 
-    const filter = { role: "receiver", ...(dateFilter || {}) };
-    const receivers = await userModel
-      .find(filter)
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ createdAt: -1 });
+    const receivers = await prisma.user.findMany({
+      where: {
+        role: "receiver",
+        ...(dateFilter || {}),
+      },
+      select: USER_PUBLIC_SELECT,
+      orderBy: { createdAt: "desc" },
+    });
     const rows = mapUsersForExport(receivers);
 
     return sendExcel(res, rows, "Receivers", "receivers-data");
@@ -353,17 +417,17 @@ const exportDonatedExcelController = async (req, res) => {
       });
     }
 
-    const filter = { inventoryType: "out", ...(dateFilter || {}) };
-    const donatedRecords = await InventoryModel.find(filter)
-      .populate(
-        "organization",
-        "role name organizationName email phone city address bloodGroup nukh akaah isVerified",
-      )
-      .populate(
-        "hospital",
-        "role name organizationName email phone city address bloodGroup nukh akaah isVerified",
-      )
-      .sort({ createdAt: -1 });
+    const donatedRecords = await prisma.inventory.findMany({
+      where: {
+        inventoryType: "out",
+        ...(dateFilter || {}),
+      },
+      include: {
+        organization: { select: USER_RELATION_SELECT },
+        hospital: { select: USER_RELATION_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     const rows = mapDonatedRecordsForExport(donatedRecords);
     return sendExcel(res, rows, "Donated", "donated-data");
@@ -378,7 +442,20 @@ const exportDonatedExcelController = async (req, res) => {
 
 const deleteReceiverController = async (req, res) => {
   try {
-    await userModel.findOneAndDelete({ _id: req.params.id, role: "receiver" });
+    const deleted = await prisma.user.deleteMany({
+      where: {
+        id: req.params.id,
+        role: "receiver",
+      },
+    });
+
+    if (deleted.count === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Receiver not found",
+      });
+    }
+
     return res.status(200).send({
       success: true,
       message: "Receiver deleted successfully",
@@ -394,13 +471,18 @@ const deleteReceiverController = async (req, res) => {
 
 const getPendingVerificationUsersController = async (req, res) => {
   try {
-    const users = await userModel
-      .find({
-        role: { $ne: "admin" },
+    const pendingUsers = await prisma.user.findMany({
+      where: {
+        role: { not: "admin" },
         profileVerificationStatus: "pending",
-      })
-      .select(SENSITIVE_USER_EXCLUDE)
-      .sort({ profileVerificationRequestedAt: -1, createdAt: -1 });
+      },
+      select: USER_PUBLIC_SELECT,
+      orderBy: [
+        { profileVerificationRequestedAt: "desc" },
+        { createdAt: "desc" },
+      ],
+    });
+    const users = pendingUsers.map(mapUserPublic);
 
     return res.status(200).send({
       success: true,
@@ -429,28 +511,32 @@ const updateProfileVerificationStatusController = async (req, res) => {
       });
     }
 
-    const user = await userModel.findById(id);
-    if (!user) {
+    const existingUser = await prisma.user.findUnique({ where: { id } });
+    if (!existingUser) {
       return res.status(404).send({
         success: false,
         message: "User not found",
       });
     }
 
-    if (user.role === "admin") {
+    if (existingUser.role === "admin") {
       return res.status(400).send({
         success: false,
         message: "Admin account is not eligible for this action",
       });
     }
 
-    user.profileVerificationStatus =
-      action === "verify" ? "approved" : "rejected";
-    await user.save();
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        profileVerificationStatus:
+          action === "verify" ? "approved" : "rejected",
+      },
+      select: USER_PUBLIC_SELECT,
+    });
 
     if (action === "verify") {
-      const displayName =
-        user.name || user.organizationName || "User";
+      const displayName = escapeHtml(user.name || user.organizationName || "User");
       try {
         await sendEmail({
           to: user.email,
@@ -474,12 +560,10 @@ const updateProfileVerificationStatusController = async (req, res) => {
           `,
         });
       } catch (emailError) {
-        console.log("Verification approval email failed:", emailError.message);
+        console.log("Verification approval email failed:", emailError);
       }
     } else {
-      // Profile rejected
-      const displayName =
-        user.name || user.organizationName || "User";
+      const displayName = escapeHtml(user.name || user.organizationName || "User");
       try {
         await sendEmail({
           to: user.email,
@@ -504,7 +588,7 @@ const updateProfileVerificationStatusController = async (req, res) => {
           `,
         });
       } catch (emailError) {
-        console.log("Verification rejection email failed:", emailError.message);
+        console.log("Verification rejection email failed:", emailError);
       }
     }
 
@@ -514,14 +598,7 @@ const updateProfileVerificationStatusController = async (req, res) => {
         action === "verify"
           ? "User verified successfully"
           : "User marked as not verified",
-
-      user: {
-        ...user.toObject(),
-        password: undefined,
-        otp: undefined,
-        otpExpires: undefined,
-        forgotPasswordRequestedAt: undefined,
-      },
+      user: mapUserPublic(user),
     });
   } catch (error) {
     console.log(error);
@@ -538,10 +615,12 @@ const getDashboardStatsController = async (req, res) => {
     const activeSince = new Date(Date.now() - activeWindowMs);
 
     const [registeredUsers, activeUsers] = await Promise.all([
-      userModel.countDocuments({ role: { $ne: "admin" } }),
-      userModel.countDocuments({
-        role: { $ne: "admin" },
-        lastActiveAt: { $gte: activeSince },
+      prisma.user.count({ where: { role: { not: "admin" } } }),
+      prisma.user.count({
+        where: {
+          role: { not: "admin" },
+          lastActiveAt: { gte: activeSince },
+        },
       }),
     ]);
 
@@ -561,7 +640,7 @@ const getDashboardStatsController = async (req, res) => {
     });
   }
 };
-//EXPORT
+
 module.exports = {
   getDonorsListController,
   getOrgListController,

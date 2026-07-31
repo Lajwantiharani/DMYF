@@ -1,34 +1,19 @@
-const userModel = require("../models/userModel");
+const prisma = require("../config/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 const crypto = require("crypto");
 const sendEmail = require("../client/src/utils/sendEmail");
 const generateOTP = require("../client/src/utils/generateOTP");
+const { mapUserPublic } = require("../utils/serialize");
+const {
+  isValidEmail,
+  isValidBloodGroup,
+  normalizeBloodGroup,
+  hasValue,
+  escapeHtml,
+} = require("../utils/validation");
 
-const hasValue = (value) => typeof value === "string" && value.trim().length > 0;
-
-const isValidEmail = (email) =>
-  typeof email === "string" &&
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-
-const escapeHtml = (value) =>
-  String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-const sanitizeUser = (user) => {
-  if (!user) return null;
-  const obj = typeof user.toObject === "function" ? user.toObject() : { ...user };
-  delete obj.password;
-  delete obj.otp;
-  delete obj.otpExpires;
-  delete obj.forgotPasswordRequestedAt;
-  return obj;
-};
+const sanitizeUser = (user) => mapUserPublic(user);
 
 const otpSecret = () =>
   process.env.OTP_SECRET || process.env.JWT_SECRET || "otp_secret";
@@ -55,7 +40,6 @@ const otpMatches = (storedOtp, providedOtp) => {
   const stored = String(storedOtp).trim();
   const provided = String(providedOtp).trim();
 
-  // Backward compatibility: accept old plaintext OTP values (typically 6 digits).
   if (/^\d{4,8}$/.test(stored)) {
     return safeEqual(stored, provided);
   }
@@ -78,7 +62,6 @@ const isProfileComplete = (user) => {
     user.phone,
     user.city,
     user.address,
-
   ];
 
   if (user.role !== "organization") {
@@ -91,7 +74,10 @@ const isProfileComplete = (user) => {
 
 const notifyAdminsForVerificationRequest = async (requestUser) => {
   try {
-    const admins = await userModel.find({ role: "admin" }).select("email");
+    const admins = await prisma.user.findMany({
+      where: { role: "admin" },
+      select: { email: true },
+    });
     const adminEmails = admins
       .map((admin) => admin?.email)
       .filter((email) => hasValue(email));
@@ -107,7 +93,7 @@ const notifyAdminsForVerificationRequest = async (requestUser) => {
       : new Date().toLocaleString();
     const requestEmail = escapeHtml(requestUser?.email || "");
     const requestRole = escapeHtml(requestUser?.role || "");
-    const requestUserId = escapeHtml(requestUser?._id?.toString() || "");
+    const requestUserId = escapeHtml(requestUser?.id || requestUser?._id || "");
     const safeRequestedAt = escapeHtml(requestedAt);
 
     process.nextTick(() => {
@@ -151,7 +137,6 @@ const registerController = async (req, res) => {
       bloodGroup,
     } = req.body;
 
-
     if (!isValidEmail(email)) {
       return res.status(400).send({ success: false, message: "Invalid email" });
     }
@@ -176,9 +161,15 @@ const registerController = async (req, res) => {
       return res.status(400).send({ success: false, message: "Name is required" });
     }
 
-    const existingUser = await userModel.findOne({ email });
+    // Validate blood group when provided
+    if (bloodGroup && !isValidBloodGroup(bloodGroup)) {
+      return res.status(400).send({ success: false, message: "Invalid blood group" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
-      return res.status(200).send({
+      return res.status(409).send({
         success: false,
         message: "User already exists",
       });
@@ -186,24 +177,23 @@ const registerController = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    const user = new userModel({
-      email,
-      password: hashedPassword,
-      role,
-      name,
-      organizationName,
-      phone,
-      bloodGroup,
-      isVerified: false,
-      otp: hashOtp(otp),
-      otpExpires,
+    const user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        password: hashedPassword,
+        role,
+        name: name || null,
+        organizationName: organizationName || null,
+        phone: phone || null,
+        bloodGroup: bloodGroup ? normalizeBloodGroup(bloodGroup) : "",
+        isVerified: false,
+        otp: hashOtp(otp),
+        otpExpires,
+      },
     });
-
-    await user.save();
 
     const emailSent = await sendEmail({
       to: email,
@@ -231,7 +221,7 @@ const registerController = async (req, res) => {
 
     if (!emailSent) {
       console.log("Email sending failed for:", email);
-      await userModel.findByIdAndDelete(user._id);
+      await prisma.user.delete({ where: { id: user.id } });
       return res.status(500).send({
         success: false,
         message:
@@ -244,16 +234,14 @@ const registerController = async (req, res) => {
       success: true,
       message:
         "Registration successful! Please check your email to verify your account.",
-      userId: user._id,
+      userId: user.id,
     });
   } catch (error) {
     console.log(error);
-    if (error?.name === "ValidationError") {
-      const firstErrorMessage =
-        Object.values(error.errors || {})[0]?.message || "Validation error";
-      return res.status(400).send({
+    if (error?.code === "P2002") {
+      return res.status(409).send({
         success: false,
-        message: firstErrorMessage,
+        message: "User already exists",
       });
     }
     res.status(500).send({
@@ -263,45 +251,42 @@ const registerController = async (req, res) => {
   }
 };
 
-//login call back
 const loginController = async (req, res) => {
   try {
-
     const email = typeof req.body.email === "string" ? req.body.email.trim() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
 
-    const user = await userModel.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).send({
         success: false,
         message: "Invalid Credentials",
       });
     }
-    //compare password
-    const comparePassword = await bcrypt.compare(
 
-      password,
-      user.password,
-    );
+    const comparePassword = await bcrypt.compare(password, user.password);
     if (!comparePassword) {
       return res.status(401).send({
         success: false,
         message: "Invalid Credentials",
       });
     }
-    // Check if email is verified
+
     if (!user.isVerified) {
       return res.status(403).send({
         success: false,
         message: "Please verify your email first.",
       });
     }
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
-    user.lastActiveAt = new Date();
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { lastActiveAt: new Date() },
+    });
 
     const isProd = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
@@ -314,8 +299,7 @@ const loginController = async (req, res) => {
       success: true,
       message: "Login Successfully",
       token,
-
-      user: sanitizeUser(user),
+      user: sanitizeUser(updatedUser),
     });
   } catch (error) {
     console.log(error);
@@ -326,18 +310,18 @@ const loginController = async (req, res) => {
   }
 };
 
-//GET CURRENT USER
 const currentUserController = async (req, res) => {
   try {
-    const user = await userModel.findOne({ _id: req.body.userId });
-    if (user) {
-      user.lastActiveAt = new Date();
-      await user.save();
-    }
+    const user = await prisma.user.update({
+      where: { id: req.body.userId },
+      data: { lastActiveAt: new Date() },
+    }).catch(async () => {
+      return prisma.user.findUnique({ where: { id: req.body.userId } });
+    });
+
     return res.status(200).send({
       success: true,
       message: "User Fetched Successfully",
-
       user: sanitizeUser(user),
     });
   } catch (error) {
@@ -351,8 +335,9 @@ const currentUserController = async (req, res) => {
 
 const updateActivityController = async (req, res) => {
   try {
-    await userModel.findByIdAndUpdate(req.body.userId, {
-      $set: { lastActiveAt: new Date() },
+    await prisma.user.update({
+      where: { id: req.body.userId },
+      data: { lastActiveAt: new Date() },
     });
 
     return res.status(200).send({
@@ -367,16 +352,16 @@ const updateActivityController = async (req, res) => {
     });
   }
 };
+
 const verifyOTPController = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
 
     if (!isValidEmail(email)) {
       return res.status(400).send({ success: false, message: "Invalid email" });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(400).send({
         success: false,
@@ -393,7 +378,6 @@ const verifyOTPController = async (req, res) => {
 
     const otpFromReq = String(otp).trim();
 
-
     if (!user.otp || !otpMatches(user.otp, otpFromReq)) {
       return res.status(400).send({
         success: false,
@@ -408,10 +392,14 @@ const verifyOTPController = async (req, res) => {
       });
     }
 
-    user.isVerified = true;
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        otp: null,
+        otpExpires: null,
+      },
+    });
 
     return res.status(200).send({
       success: true,
@@ -437,7 +425,6 @@ const forgotPasswordRequestOtpController = async (req, res) => {
       });
     }
 
-
     if (!isValidEmail(email)) {
       return res.status(200).send({
         success: true,
@@ -445,7 +432,7 @@ const forgotPasswordRequestOtpController = async (req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(200).send({
         success: true,
@@ -470,15 +457,19 @@ const forgotPasswordRequestOtpController = async (req, res) => {
 
     const otp = generateOTP();
 
-    user.otp = hashOtp(otp);
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    user.forgotPasswordRequestedAt = new Date();
-    await user.save();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        otp: hashOtp(otp),
+        otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+        forgotPasswordRequestedAt: new Date(),
+      },
+    });
 
     const clientBaseUrl = process.env.CLIENT_URL || "http://localhost:3000";
     const resetUrl = `${clientBaseUrl}/reset-password?email=${encodeURIComponent(email)}`;
-
     const displayName = escapeHtml(getDisplayNameForRole(user) || "User");
+
     process.nextTick(() => {
       sendEmail({
         to: email,
@@ -536,7 +527,6 @@ const resetForgotPasswordController = async (req, res) => {
       });
     }
 
-
     if (!isValidEmail(email)) {
       return res.status(400).send({ success: false, message: "Invalid email" });
     }
@@ -555,9 +545,8 @@ const resetForgotPasswordController = async (req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-
       return res.status(400).send({
         success: false,
         message: "Invalid OTP",
@@ -579,10 +568,16 @@ const resetForgotPasswordController = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        otp: null,
+        otpExpires: null,
+      },
+    });
 
     return res.status(200).send({
       success: true,
@@ -615,7 +610,7 @@ const updateProfileController = async (req, res) => {
     } = req.body;
     let isPasswordUpdated = false;
 
-    const user = await userModel.findById(req.body.userId);
+    const user = await prisma.user.findUnique({ where: { id: req.body.userId } });
     if (!user) {
       return res.status(404).send({
         success: false,
@@ -623,10 +618,15 @@ const updateProfileController = async (req, res) => {
       });
     }
 
+    const data = {};
+
     if (email && email !== user.email) {
-      const existingUser = await userModel.findOne({
-        email,
-        _id: { $ne: user._id },
+      const normalizedNewEmail = email.trim().toLowerCase();
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: normalizedNewEmail,
+          NOT: { id: user.id },
+        },
       });
       if (existingUser) {
         return res.status(400).send({
@@ -634,65 +634,62 @@ const updateProfileController = async (req, res) => {
           message: "Email already in use",
         });
       }
-      user.email = email;
+      data.email = normalizedNewEmail;
     }
 
     if (typeof name === "string") {
       if (user.role === "organization") {
-        user.organizationName = name;
+        data.organizationName = name;
       } else {
-        user.name = name;
+        data.name = name;
       }
     }
 
-    if (typeof phone === "string") {
-      user.phone = phone;
-    }
-
-    if (typeof city === "string") {
-      user.city = city;
-    }
-
-    if (typeof address === "string") {
-      user.address = address;
-    }
-
+    if (typeof phone === "string") data.phone = phone;
+    if (typeof city === "string") data.city = city;
+    if (typeof address === "string") data.address = address;
     if (typeof bloodGroup === "string") {
-      user.bloodGroup = bloodGroup;
+      if (bloodGroup && !isValidBloodGroup(bloodGroup)) {
+        return res.status(400).send({ success: false, message: "Invalid blood group" });
+      }
+      data.bloodGroup = bloodGroup ? normalizeBloodGroup(bloodGroup) : bloodGroup;
     }
+    if (typeof nukh === "string") data.nukh = nukh;
+    if (typeof akaah === "string") data.akaah = akaah;
+    if (typeof website === "string") data.website = website;
 
-    if (typeof nukh === "string") {
-      user.nukh = nukh;
-    }
-
-    if (typeof akaah === "string") {
-      user.akaah = akaah;
-    }
-
-    // Handle date of birth - store as user entered format (DD/MM/YYYY)
-    // If it's an ISO string (from date picker), convert to DD/MM/YYYY format
     if (typeof dob === "string") {
       if (dob.includes("T") && dob.includes("Z")) {
-        // It's an ISO string from date picker - convert to DD/MM/YYYY
         const dateObj = new Date(dob);
         if (!isNaN(dateObj.getTime())) {
           const day = String(dateObj.getDate()).padStart(2, "0");
           const month = String(dateObj.getMonth() + 1).padStart(2, "0");
           const year = dateObj.getFullYear();
-          user.dob = `${day}/${month}/${year}`;
+          data.dob = `${day}/${month}/${year}`;
         }
       } else {
-        // It's already in user-entered format
-        user.dob = dob;
+        data.dob = dob;
       }
     }
 
-
-    if (typeof website === "string") {
-      user.website = website;
-    }
-
     if (newPassword || confirmPassword) {
+      // Require current password to authorize a password change.
+      const currentPassword = req.body.currentPassword;
+      if (!currentPassword) {
+        return res.status(400).send({
+          success: false,
+          message: "Current password is required to change password",
+        });
+      }
+
+      const passwordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!passwordValid) {
+        return res.status(403).send({
+          success: false,
+          message: "Current password is incorrect",
+        });
+      }
+
       if (!newPassword || !confirmPassword) {
         return res.status(400).send({
           success: false,
@@ -715,18 +712,23 @@ const updateProfileController = async (req, res) => {
       }
 
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
+      data.password = await bcrypt.hash(newPassword, salt);
       isPasswordUpdated = true;
     }
 
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data,
+    });
 
     if (isPasswordUpdated) {
-      const displayName = escapeHtml(user.name || user.organizationName || "User");
+      const displayName = escapeHtml(
+        updatedUser.name || updatedUser.organizationName || "User",
+      );
 
       process.nextTick(() => {
         sendEmail({
-          to: user.email,
+          to: updatedUser.email,
           subject: "Password Reset Successful - DMYF",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
@@ -754,8 +756,7 @@ const updateProfileController = async (req, res) => {
     return res.status(200).send({
       success: true,
       message: "Profile updated successfully",
-
-      user: sanitizeUser(user),
+      user: sanitizeUser(updatedUser),
     });
   } catch (error) {
     console.log(error);
@@ -768,7 +769,7 @@ const updateProfileController = async (req, res) => {
 
 const requestProfileVerificationController = async (req, res) => {
   try {
-    const user = await userModel.findById(req.body.userId);
+    const user = await prisma.user.findUnique({ where: { id: req.body.userId } });
     if (!user) {
       return res.status(404).send({
         success: false,
@@ -794,22 +795,24 @@ const requestProfileVerificationController = async (req, res) => {
       return res.status(200).send({
         success: true,
         message: "Your profile is already verified",
-
         user: sanitizeUser(user),
       });
     }
 
-    user.profileVerificationStatus = "pending";
-    user.profileVerificationRequestedAt = new Date();
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        profileVerificationStatus: "pending",
+        profileVerificationRequestedAt: new Date(),
+      },
+    });
 
-    await notifyAdminsForVerificationRequest(user);
+    await notifyAdminsForVerificationRequest(updatedUser);
 
     return res.status(200).send({
       success: true,
       message: "Verification request submitted successfully",
-
-      user: sanitizeUser(user),
+      user: sanitizeUser(updatedUser),
     });
   } catch (error) {
     console.log(error);
@@ -819,6 +822,7 @@ const requestProfileVerificationController = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   registerController,
   loginController,
@@ -830,7 +834,3 @@ module.exports = {
   requestProfileVerificationController,
   updateActivityController,
 };
-
-
-
-

@@ -1,46 +1,53 @@
-# Deploy DMYF for free (Render)
+# DMYF PostgreSQL Setup
 
-This app can run as **one free web service** on [Render](https://render.com): API + React build together.
+## What I changed in the project
 
-## 1. MongoDB Atlas (free)
+1. The backend uses Prisma with PostgreSQL in `prisma/schema.prisma`.
+2. The shared Prisma client is in `config/prisma.js`.
+3. The app starts without any MongoDB connection.
+4. Request sanitizing is handled by `middlewares/sanitizeRequest.js`.
+5. Scripts now include `npm run db:setup` for PostgreSQL table setup.
 
-1. Open [MongoDB Atlas](https://cloud.mongodb.com)
-2. Network Access → Add IP → allow `0.0.0.0/0` (required for Render)
-3. Copy your connection string (`MONGO_URL`)
+## What you need to do locally
 
-## 2. Push this repo to GitHub
+1. Create a PostgreSQL database. Free options:
+   - Neon: https://neon.tech
+   - Supabase: https://supabase.com
+2. Put your PostgreSQL connection string in `.env`:
+   ```env
+   DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
+   ```
+3. Keep these `.env` values filled:
+   ```env
+   JWT_SECRET=change-this-to-a-long-random-secret
+   EMAIL_USER=your-gmail@gmail.com
+   EMAIL_PASS=your-gmail-app-password
+   CLIENT_URL=http://localhost:3000
+   ```
+4. Install dependencies and create PostgreSQL tables:
+   ```bash
+   npm install
+   npm run db:setup
+   ```
+5. If you have old MongoDB data to copy one time, add `MONGO_URL` temporarily and run:
+   ```bash
+   npm run migrate:from-mongo
+   ```
+6. Create admin user if none exists:
+   ```bash
+   npm run seed:admin -- admin@email.com YourPassword123 Admin
+   ```
+7. Start the project:
+   ```bash
+   npm run dev
+   ```
 
-Push `main` to `https://github.com/Lajwantiharani/DMYF.git`  
-Do **not** commit `.env` (already gitignored).
+## Deploy
 
-## 3. Create Render Web Service
+Use these settings on Render/Railway/Replit:
 
-1. Sign up at [https://render.com](https://render.com) with GitHub
-2. **New → Blueprint** (uses `render.yaml`) **or** **New → Web Service**
-3. Connect repo `Lajwantiharani/DMYF`
-4. Settings (if not using Blueprint):
-   - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm start`
-   - **Instance:** Free
+- Build: `npm install && npx prisma generate && npm run build`
+- Start: `npm start`
+- Environment: `DATABASE_URL`, `JWT_SECRET`, `EMAIL_USER`, `EMAIL_PASS`, `NODE_ENV=production`, `CLIENT_URL`, `REACT_APP_BASEURL=/api/v1`
 
-## 4. Environment variables on Render
-
-| Key | Value |
-|-----|--------|
-| `NODE_ENV` | `production` |
-| `DEV_MODE` | `production` |
-| `MONGO_URL` | your Atlas URI |
-| `JWT_SECRET` | long random secret (no spaces) |
-| `APP_NAME` | `DMYF` |
-| `EMAIL_USER` | your Gmail |
-| `EMAIL_PASS` | Gmail App Password |
-| `CLIENT_URL` | `https://YOUR-SERVICE.onrender.com` |
-| `REACT_APP_BASEURL` | `/api/v1` (build-time; also set in `client/.env.production`) |
-
-After the first deploy, set `CLIENT_URL` to the exact Render URL, then **Manual Deploy → Clear build cache & deploy**.
-
-## 5. Open the site
-
-Visit `https://YOUR-SERVICE.onrender.com`
-
-**Note:** Free tier sleeps after idle; first load can take ~30–60 seconds.
+After old data is copied successfully, remove `MONGO_URL` from `.env`.

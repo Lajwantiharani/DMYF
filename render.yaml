@@ -3,7 +3,7 @@ services:
     name: dmyf
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -12,9 +12,7 @@ services:
         value: production
       - key: REACT_APP_BASEURL
         value: /api/v1
-      - key: PORT
-        value: 10000
-      - key: MONGO_URL
+      - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
         sync: false

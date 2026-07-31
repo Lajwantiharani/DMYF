@@ -1,27 +1,100 @@
-const mongoose = require("mongoose");
-const InventoryModel = require("../models/InventoryModel");
-const userModel = require("../models/userModel");
+const prisma = require("../config/prisma");
+const { mapUserPublic, mapInventory } = require("../utils/serialize");
+const {
+  isValidBloodGroup,
+  normalizeBloodGroup,
+  isValidEmail,
+} = require("../utils/validation");
 
-const USER_PUBLIC_FIELDS =
-  "name organizationName email phone role city address bloodGroup nukh akaah website dob profileVerificationStatus isVerified createdAt";
+const USER_PUBLIC_SELECT = {
+  id: true,
+  name: true,
+  organizationName: true,
+  email: true,
+  phone: true,
+  role: true,
+  city: true,
+  address: true,
+  bloodGroup: true,
+  nukh: true,
+  akaah: true,
+  website: true,
+  dob: true,
+  profileVerificationStatus: true,
+  isVerified: true,
+  createdAt: true,
+};
+
+const USER_DONATED_SELECT = {
+  id: true,
+  name: true,
+  organizationName: true,
+  email: true,
+  role: true,
+};
+
+const getAvailableQuantity = async (organizationId, bloodGroup) => {
+  const [inResult, outResult] = await Promise.all([
+    prisma.inventory.aggregate({
+      where: {
+        organizationId,
+        inventoryType: "in",
+        bloodGroup,
+      },
+      _sum: { quantity: true },
+    }),
+    prisma.inventory.aggregate({
+      where: {
+        organizationId,
+        inventoryType: "out",
+        bloodGroup,
+      },
+      _sum: { quantity: true },
+    }),
+  ]);
+
+  const totalIn = inResult._sum.quantity || 0;
+  const totalOut = outResult._sum.quantity || 0;
+  return totalIn - totalOut;
+};
 
 const createInventoryController = async (req, res) => {
   try {
     const { email } = req.body;
-    const currentUser = await userModel.findById(req.body.userId);
+
+    if (!isValidEmail(email)) {
+      return res.status(400).send({ success: false, message: "Valid email is required" });
+    }
+
+    const requestedBloodGroup = req.body.bloodGroup;
+    if (!isValidBloodGroup(requestedBloodGroup)) {
+      return res.status(400).send({ success: false, message: "Invalid blood group" });
+    }
+
+    const requestedQuantity = Number(req.body.quantity);
+    if (!Number.isFinite(requestedQuantity) || requestedQuantity <= 0) {
+      return res.status(400).send({ success: false, message: "Quantity must be a positive number" });
+    }
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.body.userId },
+    });
 
     if (!currentUser) {
-      throw new Error("Current user not found");
+      return res.status(404).send({ success: false, message: "Current user not found" });
     }
 
-    // Counter-party user (donor/receiver) identified by email
-    const user = await userModel.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      throw new Error("User not found");
+      return res.status(404).send({ success: false, message: "User not found" });
     }
 
-    // Receiver flow: receiver takes blood from donor or organization
+    let organizationId = req.body.organization || req.body.userId;
+    let hospitalId = req.body.hospital || null;
+    let donorId = req.body.donor || null;
+    let inventoryType = req.body.inventoryType;
+
     if (currentUser.role === "receiver") {
       if (user.role !== "donor" && user.role !== "organization") {
         return res.status(400).send({
@@ -30,16 +103,18 @@ const createInventoryController = async (req, res) => {
         });
       }
 
-      // Force OUT for receiver-side receive and attach proper refs
-      req.body.inventoryType = "out";
-      req.body.hospital = currentUser._id;
+      inventoryType = "out";
+      hospitalId = currentUser.id;
 
       if (user.role === "donor") {
-        const latestDonation = await InventoryModel.findOne({
-          donor: user._id,
-          inventoryType: "in",
-          bloodGroup: req.body.bloodGroup,
-        }).sort({ createdAt: -1 });
+        const latestDonation = await prisma.inventory.findFirst({
+          where: {
+            donorId: user.id,
+            inventoryType: "in",
+            bloodGroup: req.body.bloodGroup,
+          },
+          orderBy: { createdAt: "desc" },
+        });
 
         if (!latestDonation) {
           return res.status(400).send({
@@ -48,86 +123,67 @@ const createInventoryController = async (req, res) => {
           });
         }
 
-        req.body.organization = latestDonation.organization;
+        organizationId = latestDonation.organizationId;
       } else if (user.role === "organization") {
-        req.body.organization = user._id;
+        organizationId = user.id;
       }
+    } else if (currentUser.role === "organization") {
+      if (organizationId && organizationId !== currentUser.id) {
+        return res.status(403).send({
+          success: false,
+          message: "Not authorized to create inventory for another organization",
+        });
+      }
+      organizationId = currentUser.id;
+    } else if (currentUser.role === "donor") {
+      if (donorId && donorId !== currentUser.id) {
+        return res.status(403).send({
+          success: false,
+          message: "Not authorized to create inventory for another donor",
+        });
+      }
+      donorId = currentUser.id;
     }
 
-    // Auto-convert to OUT when blood is issued to a receiver account.
-    // This ensures receiver-side receiving always deducts stock.
     const effectiveInventoryType =
-      req.body.inventoryType === "in" && user.role === "receiver"
-        ? "out"
-        : req.body.inventoryType;
+      inventoryType === "in" && user.role === "receiver" ? "out" : inventoryType;
 
-    req.body.inventoryType = effectiveInventoryType;
+    inventoryType = effectiveInventoryType;
 
     if (effectiveInventoryType === "out") {
       const requestedBloodGroup = req.body.bloodGroup;
-      const requestedQuantityOfBloodGroup = req.body.quantity;
-      const organization = new mongoose.Types.ObjectId(
-        req.body.organization || req.body.userId,
+      const orgId = organizationId || req.body.userId;
+
+      const availableQuantityOfBloodGroup = await getAvailableQuantity(
+        orgId,
+        requestedBloodGroup,
       );
 
-      // Calculate the total "in" quantity of the requested blood group
-      const totalInOfRequestedBloodGroup = await InventoryModel.aggregate([
-        {
-          $match: {
-            organization,
-            inventoryType: "in",
-            bloodGroup: requestedBloodGroup,
-          },
-        },
-        {
-          $group: {
-            _id: "$bloodGroup",
-            totalIn: { $sum: "$quantity" },
-          },
-        },
-      ]);
-
-      const totalIn = totalInOfRequestedBloodGroup[0]?.totalIn || 0;
-
-      // Calculate the total "out" quantity of the requested blood group
-      const totalOutOfRequestedBloodGroup = await InventoryModel.aggregate([
-        {
-          $match: {
-            organization,
-            inventoryType: "out",
-            bloodGroup: requestedBloodGroup,
-          },
-        },
-        {
-          $group: {
-            _id: "$bloodGroup",
-            totalOut: { $sum: "$quantity" },
-          },
-        },
-      ]);
-
-      const totalOut = totalOutOfRequestedBloodGroup[0]?.totalOut || 0;
-
-      const availableQuantityOfBloodGroup = totalIn - totalOut;
-
-      // Validate the requested quantity
-      if (availableQuantityOfBloodGroup < requestedQuantityOfBloodGroup) {
-        return res.status(500).send({
+      if (availableQuantityOfBloodGroup < requestedQuantity) {
+        return res.status(400).send({
           success: false,
           message: `Only ${availableQuantityOfBloodGroup}ML of ${requestedBloodGroup.toUpperCase()} is available.`,
         });
       }
 
-      if (!req.body.hospital) {
-        req.body.hospital = user?._id;
+      if (!hospitalId) {
+        hospitalId = user.id;
       }
     } else {
-      req.body.donor = user?._id;
+      donorId = user.id;
     }
 
-    // Save the inventory record
-    const inventory = new InventoryModel(req.body);
-    await inventory.save();
+    await prisma.inventory.create({
+      data: {
+        inventoryType,
+        bloodGroup: normalizeBloodGroup(req.body.bloodGroup),
+        quantity: requestedQuantity,
+        email: req.body.email || email,
+        organizationId,
+        hospitalId,
+        donorId,
+      },
+    });
 
     return res.status(201).send({
       success: true,
@@ -142,20 +198,21 @@ const createInventoryController = async (req, res) => {
   }
 };
 
-// Get all blood records
 const getInventoryController = async (req, res) => {
   try {
-    const inventory = await InventoryModel.find({
-      organization: req.body.userId,
-    })
-      .populate("donor", USER_PUBLIC_FIELDS)
-      .populate("hospital", USER_PUBLIC_FIELDS)
-      .sort({ createdAt: -1 });
+    const inventory = await prisma.inventory.findMany({
+      where: { organizationId: req.body.userId },
+      include: {
+        donor: { select: USER_PUBLIC_SELECT },
+        hospital: { select: USER_PUBLIC_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).send({
       success: true,
       message: "Get all records successfully",
-      inventory,
+      inventory: inventory.map(mapInventory),
     });
   } catch (error) {
     console.log(error);
@@ -165,11 +222,14 @@ const getInventoryController = async (req, res) => {
     });
   }
 };
-// get receiver blood records
+
 const getInventoryHospitalController = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const currentUser = await userModel.findById(userId).select("role");
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
 
     if (!currentUser) {
       return res.status(404).send({
@@ -178,15 +238,15 @@ const getInventoryHospitalController = async (req, res) => {
       });
     }
 
-    let query = {};
+    let where = {};
     if (currentUser.role === "receiver") {
-      query = { hospital: userId };
+      where = { hospitalId: userId };
     } else if (currentUser.role === "organization") {
-      query = { organization: userId };
+      where = { organizationId: userId };
     } else if (currentUser.role === "donor") {
-      query = { donor: userId };
+      where = { donorId: userId };
     } else if (currentUser.role === "admin") {
-      query = {};
+      where = {};
     } else {
       return res.status(403).send({
         success: false,
@@ -194,16 +254,20 @@ const getInventoryHospitalController = async (req, res) => {
       });
     }
 
-    const inventory = await InventoryModel.find(query)
-      .populate("donor", USER_PUBLIC_FIELDS)
-      .populate("hospital", USER_PUBLIC_FIELDS)
-      .populate("organization", USER_PUBLIC_FIELDS)
-      .sort({ createdAt: -1 });
+    const inventory = await prisma.inventory.findMany({
+      where,
+      include: {
+        donor: { select: USER_PUBLIC_SELECT },
+        hospital: { select: USER_PUBLIC_SELECT },
+        organization: { select: USER_PUBLIC_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).send({
       success: true,
       message: "Get receiver consumer records successfully",
-      inventory,
+      inventory: inventory.map(mapInventory),
     });
   } catch (error) {
     console.log(error);
@@ -214,20 +278,29 @@ const getInventoryHospitalController = async (req, res) => {
   }
 };
 
-//GET DONOR RECORD
 const getDonorsController = async (req, res) => {
   try {
-    const organization = req.body.userId;
-    //find donor
-    const donorId = await InventoryModel.distinct("donor", { organization });
-    //console.log(donorId);
-    const donors = await userModel
-      .find({ _id: { $in: donorId } })
-      .select(USER_PUBLIC_FIELDS);
+    const organizationId = req.body.userId;
+
+    const donorRecords = await prisma.inventory.findMany({
+      where: { organizationId },
+      distinct: ["donorId"],
+      select: { donorId: true },
+    });
+
+    const donorIds = donorRecords
+      .map((record) => record.donorId)
+      .filter(Boolean);
+
+    const donors = await prisma.user.findMany({
+      where: { id: { in: donorIds } },
+      select: USER_PUBLIC_SELECT,
+    });
+
     return res.status(200).send({
       success: true,
       message: "Get donors successfully",
-      donors,
+      donors: donors.map(mapUserPublic),
     });
   } catch (error) {
     console.log(error);
@@ -238,19 +311,18 @@ const getDonorsController = async (req, res) => {
   }
 };
 
-
 const getRecentInventoryController = async (req, res) => {
   try {
-    const inventory = await InventoryModel
-      .find({
-        organization: req.body.userId,
-      })
-      .limit(3)
-      .sort({ createdAt: -1 });
+    const inventory = await prisma.inventory.findMany({
+      where: { organizationId: req.body.userId },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    });
+
     return res.status(200).send({
       success: true,
       message: "recent Invenotry Data",
-      inventory,
+      inventory: inventory.map(mapInventory),
     });
   } catch (error) {
     console.log(error);
@@ -260,20 +332,28 @@ const getRecentInventoryController = async (req, res) => {
     });
   }
 };
+
 const getOrgnaizationController = async (req, res) => {
   try {
-    const donor = req.body.userId;
-    const orgId = await InventoryModel.distinct("organization", { donor });
-    //find org
-    const organizations = await userModel
-      .find({
-        _id: { $in: orgId },
-      })
-      .select(USER_PUBLIC_FIELDS);
+    const donorId = req.body.userId;
+
+    const orgRecords = await prisma.inventory.findMany({
+      where: { donorId },
+      distinct: ["organizationId"],
+      select: { organizationId: true },
+    });
+
+    const orgIds = orgRecords.map((record) => record.organizationId);
+
+    const organizations = await prisma.user.findMany({
+      where: { id: { in: orgIds } },
+      select: USER_PUBLIC_SELECT,
+    });
+
     return res.status(200).send({
       success: true,
       message: "Org Data Fetched Successfully",
-      organizations,
+      organizations: organizations.map(mapUserPublic),
     });
   } catch (error) {
     console.log(error);
@@ -284,11 +364,12 @@ const getOrgnaizationController = async (req, res) => {
   }
 };
 
-
 const getDonatedRecordsController = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const currentUser = await userModel.findById(userId);
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
     if (!currentUser) {
       return res.status(404).send({
@@ -297,17 +378,28 @@ const getDonatedRecordsController = async (req, res) => {
       });
     }
 
-    const query = { inventoryType: "out" };
+    const where = { inventoryType: "out" };
 
     if (currentUser.role === "organization") {
-      query.organization = userId;
-      const receiverIds = await userModel.distinct("_id", { role: "receiver" });
-      query.hospital = { $in: receiverIds };
-    } else if (currentUser.role === "donor") {
-      const orgIds = await InventoryModel.distinct("organization", {
-        donor: userId,
-        inventoryType: "in",
+      where.organizationId = userId;
+
+      const receivers = await prisma.user.findMany({
+        where: { role: "receiver" },
+        select: { id: true },
       });
+
+      where.hospitalId = { in: receivers.map((receiver) => receiver.id) };
+    } else if (currentUser.role === "donor") {
+      const orgRecords = await prisma.inventory.findMany({
+        where: {
+          donorId: userId,
+          inventoryType: "in",
+        },
+        distinct: ["organizationId"],
+        select: { organizationId: true },
+      });
+
+      const orgIds = orgRecords.map((record) => record.organizationId);
 
       if (!orgIds.length) {
         return res.status(200).send({
@@ -317,21 +409,24 @@ const getDonatedRecordsController = async (req, res) => {
         });
       }
 
-      query.organization = { $in: orgIds };
+      where.organizationId = { in: orgIds };
     } else if (currentUser.role === "receiver") {
-      query.hospital = userId;
+      where.hospitalId = userId;
     }
-    // admin: no extra filter, can see all out records
 
-    const donated = await InventoryModel.find(query)
-      .populate("hospital", "name organizationName email role")
-      .populate("organization", "name organizationName email role")
-      .sort({ createdAt: -1 });
+    const donated = await prisma.inventory.findMany({
+      where,
+      include: {
+        hospital: { select: USER_DONATED_SELECT },
+        organization: { select: USER_DONATED_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).send({
       success: true,
       message: "Donated records fetched successfully",
-      donated,
+      donated: donated.map(mapInventory),
     });
   } catch (error) {
     console.log(error);
@@ -344,69 +439,99 @@ const getDonatedRecordsController = async (req, res) => {
 
 const getOrganizationAvailableStockController = async (req, res) => {
   try {
-    const stock = await InventoryModel.aggregate([
-      {
-        $match: {
-          inventoryType: { $in: ["in", "out"] },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            organization: "$organization",
-            bloodGroup: "$bloodGroup",
-          },
-          totalIn: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
-            },
-          },
-          totalOut: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
-            },
-          },
-          lastUpdated: { $max: "$createdAt" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          organization: "$_id.organization",
-          bloodGroup: "$_id.bloodGroup",
-          availableQuantity: { $subtract: ["$totalIn", "$totalOut"] },
-          lastUpdated: 1,
-        },
-      },
-      {
-        $match: {
-          availableQuantity: { $gt: 0 },
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "organization",
-          foreignField: "_id",
-          as: "organizationInfo",
-        },
-      },
-      {
-        $unwind: "$organizationInfo",
-      },
-      {
-        $project: {
-          organization: 1,
-          bloodGroup: 1,
-          availableQuantity: 1,
-          lastUpdated: 1,
-          organizationName: "$organizationInfo.organizationName",
-          email: "$organizationInfo.email",
-          phone: "$organizationInfo.phone",
-        },
-      },
-      { $sort: { organizationName: 1, bloodGroup: 1 } },
+    const [inGroups, outGroups] = await Promise.all([
+      prisma.inventory.groupBy({
+        by: ["organizationId", "bloodGroup"],
+        where: { inventoryType: "in" },
+        _sum: { quantity: true },
+        _max: { createdAt: true },
+      }),
+      prisma.inventory.groupBy({
+        by: ["organizationId", "bloodGroup"],
+        where: { inventoryType: "out" },
+        _sum: { quantity: true },
+        _max: { createdAt: true },
+      }),
     ]);
+
+    const stockMap = new Map();
+
+    for (const row of inGroups) {
+      const key = `${row.organizationId}:${row.bloodGroup}`;
+      stockMap.set(key, {
+        organization: row.organizationId,
+        bloodGroup: row.bloodGroup,
+        totalIn: row._sum.quantity || 0,
+        totalOut: 0,
+        lastUpdated: row._max.createdAt,
+      });
+    }
+
+    for (const row of outGroups) {
+      const key = `${row.organizationId}:${row.bloodGroup}`;
+      const existing = stockMap.get(key) || {
+        organization: row.organizationId,
+        bloodGroup: row.bloodGroup,
+        totalIn: 0,
+        totalOut: 0,
+        lastUpdated: null,
+      };
+
+      existing.totalOut = row._sum.quantity || 0;
+
+      if (
+        row._max.createdAt &&
+        (!existing.lastUpdated || row._max.createdAt > existing.lastUpdated)
+      ) {
+        existing.lastUpdated = row._max.createdAt;
+      }
+
+      stockMap.set(key, existing);
+    }
+
+    const availableStock = Array.from(stockMap.values())
+      .map((entry) => ({
+        organization: entry.organization,
+        bloodGroup: entry.bloodGroup,
+        availableQuantity: entry.totalIn - entry.totalOut,
+        lastUpdated: entry.lastUpdated,
+      }))
+      .filter((entry) => entry.availableQuantity > 0);
+
+    const orgIds = [...new Set(availableStock.map((entry) => entry.organization))];
+
+    const organizations = await prisma.user.findMany({
+      where: { id: { in: orgIds } },
+      select: {
+        id: true,
+        organizationName: true,
+        email: true,
+        phone: true,
+      },
+    });
+
+    const orgMap = new Map(organizations.map((org) => [org.id, org]));
+
+    const stock = availableStock
+      .map((entry) => {
+        const org = orgMap.get(entry.organization);
+        return {
+          organization: entry.organization,
+          bloodGroup: entry.bloodGroup,
+          availableQuantity: entry.availableQuantity,
+          lastUpdated: entry.lastUpdated,
+          organizationName: org?.organizationName,
+          email: org?.email,
+          phone: org?.phone,
+        };
+      })
+      .sort((a, b) => {
+        const nameCompare = (a.organizationName || "").localeCompare(
+          b.organizationName || "",
+        );
+        if (nameCompare !== 0) return nameCompare;
+        return a.bloodGroup.localeCompare(b.bloodGroup);
+      });
 
     return res.status(200).send({
       success: true,
@@ -424,45 +549,53 @@ const getOrganizationAvailableStockController = async (req, res) => {
 
 const getOrganizationReceiverSummaryController = async (req, res) => {
   try {
-    const organization = new mongoose.Types.ObjectId(req.body.userId);
+    const organizationId = req.body.userId;
 
-    const summary = await InventoryModel.aggregate([
-      {
-        $match: {
-          organization,
-          inventoryType: "out",
-          hospital: { $ne: null },
-        },
+    const summaryGroups = await prisma.inventory.groupBy({
+      by: ["hospitalId"],
+      where: {
+        organizationId,
+        inventoryType: "out",
+        hospitalId: { not: null },
       },
-      {
-        $group: {
-          _id: "$hospital",
-          totalDonatedML: { $sum: "$quantity" },
-          lastDonatedAt: { $max: "$createdAt" },
-        },
+      _sum: { quantity: true },
+      _max: { createdAt: true },
+    });
+
+    const hospitalIds = summaryGroups
+      .map((group) => group.hospitalId)
+      .filter(Boolean);
+
+    const receivers = await prisma.user.findMany({
+      where: { id: { in: hospitalIds } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
       },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "receiverInfo",
-        },
-      },
-      { $unwind: "$receiverInfo" },
-      {
-        $project: {
-          _id: 0,
-          receiverId: "$receiverInfo._id",
-          name: "$receiverInfo.name",
-          email: "$receiverInfo.email",
-          phone: "$receiverInfo.phone",
-          totalDonatedML: 1,
-          lastDonatedAt: 1,
-        },
-      },
-      { $sort: { lastDonatedAt: -1 } },
-    ]);
+    });
+
+    const receiverMap = new Map(receivers.map((receiver) => [receiver.id, receiver]));
+
+    const summary = summaryGroups
+      .map((group) => {
+        const receiver = receiverMap.get(group.hospitalId);
+        if (!receiver) return null;
+
+        return {
+          receiverId: receiver.id,
+          name: receiver.name,
+          email: receiver.email,
+          phone: receiver.phone,
+          totalDonatedML: group._sum.quantity || 0,
+          lastDonatedAt: group._max.createdAt,
+        };
+      })
+      .filter(Boolean)
+      .sort(
+        (a, b) => new Date(b.lastDonatedAt) - new Date(a.lastDonatedAt),
+      );
 
     return res.status(200).send({
       success: true,

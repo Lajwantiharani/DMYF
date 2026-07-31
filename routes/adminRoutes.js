@@ -18,13 +18,20 @@ const {
 
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
+const { createRateLimiter } = require("../middlewares/rateLimit");
 //router object
 const router = express.Router();
 //routes
 
+const adminLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => `admin:${req.ip}:${req.path}`,
+  message: "Too many admin requests. Please try again later.",
+});
 
 // All admin endpoints must be authenticated and admin-only.
-router.use(authMiddleware, adminMiddleware);
+router.use(authMiddleware, adminMiddleware, adminLimiter);
 
 router.get("/dashboard-stats", getDashboardStatsController);
 

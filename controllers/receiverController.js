@@ -1,9 +1,11 @@
-
-const mongoose = require("mongoose");
-const InventoryModel = require("../models/InventoryModel");
-const ReceiverRequestModel = require("../models/ReceiverRequestModel");
-const userModel = require("../models/userModel");
+const prisma = require("../config/prisma");
 const sendEmail = require("../client/src/utils/sendEmail");
+const { mapReceiverRequest } = require("../utils/serialize");
+const {
+  isValidBloodGroup,
+  normalizeBloodGroup,
+  escapeHtml,
+} = require("../utils/validation");
 
 const toDisplayName = (user) =>
   user?.name || user?.organizationName || "User";
@@ -16,7 +18,6 @@ const normalizeCity = (value = "") =>
 
 const cityAliasGroups = [
   ["karachi", "khi"],
-
   ["hyderabad", "hyd", "hyderabaad"],
   ["lahore", "lahor"],
 ];
@@ -33,82 +34,76 @@ const buildCityRegex = (inputCity = "") => {
   return new RegExp(`(${patterns.map((item) => escapeRegex(item)).join("|")})`, "i");
 };
 
+const aggregateAvailabilityByField = (rows, field) => {
+  const totals = new Map();
+
+  for (const row of rows) {
+    const key = row[field];
+    if (!key) continue;
+
+    if (!totals.has(key)) {
+      totals.set(key, { totalIn: 0, totalOut: 0 });
+    }
+
+    const entry = totals.get(key);
+    if (row.inventoryType === "in") {
+      entry.totalIn += row.quantity;
+    } else if (row.inventoryType === "out") {
+      entry.totalOut += row.quantity;
+    }
+  }
+
+  return totals;
+};
 
 const getOrganizationAvailableQuantity = async ({ organizationId, bloodGroup }) => {
-  const organization = new mongoose.Types.ObjectId(organizationId);
-
-  const result = await InventoryModel.aggregate([
-    {
-      $match: {
-        organization,
-        bloodGroup,
-      },
-    },
-    {
-      $group: {
-        _id: "$bloodGroup",
-        totalIn: {
-          $sum: {
-            $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
-          },
-        },
-        totalOut: {
-          $sum: {
-            $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
-          },
-        },
-      },
-    },
+  const [totalIn, totalOut] = await Promise.all([
+    prisma.inventory.aggregate({
+      where: { organizationId, bloodGroup, inventoryType: "in" },
+      _sum: { quantity: true },
+    }),
+    prisma.inventory.aggregate({
+      where: { organizationId, bloodGroup, inventoryType: "out" },
+      _sum: { quantity: true },
+    }),
   ]);
 
-  const totalIn = result[0]?.totalIn || 0;
-  const totalOut = result[0]?.totalOut || 0;
-  return Math.max(totalIn - totalOut, 0);
+  return Math.max(
+    (totalIn._sum.quantity || 0) - (totalOut._sum.quantity || 0),
+    0,
+  );
 };
 
 const getDonorAvailableQuantity = async ({ donorId, bloodGroup }) => {
-  const donor = new mongoose.Types.ObjectId(donorId);
-
-  const result = await InventoryModel.aggregate([
-    {
-      $match: {
-        donor,
-        bloodGroup,
-        inventoryType: { $in: ["in", "out"] },
-      },
-    },
-    {
-      $group: {
-        _id: "$bloodGroup",
-        totalIn: {
-          $sum: {
-            $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
-          },
-        },
-        totalOut: {
-          $sum: {
-            $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
-          },
-        },
-      },
-    },
+  const [totalIn, totalOut] = await Promise.all([
+    prisma.inventory.aggregate({
+      where: { donorId, bloodGroup, inventoryType: "in" },
+      _sum: { quantity: true },
+    }),
+    prisma.inventory.aggregate({
+      where: { donorId, bloodGroup, inventoryType: "out" },
+      _sum: { quantity: true },
+    }),
   ]);
 
-  const totalIn = result[0]?.totalIn || 0;
-  const totalOut = result[0]?.totalOut || 0;
-  return Math.max(totalIn - totalOut, 0);
+  return Math.max(
+    (totalIn._sum.quantity || 0) - (totalOut._sum.quantity || 0),
+    0,
+  );
 };
 
 const findDonorOrganizationForOut = async ({ donorId, bloodGroup }) => {
-  const donation = await InventoryModel.findOne({
-    donor: donorId,
-    inventoryType: "in",
-    bloodGroup,
-  })
-    .sort({ createdAt: -1 })
-    .select("organization");
+  const donation = await prisma.inventory.findFirst({
+    where: {
+      donorId,
+      inventoryType: "in",
+      bloodGroup,
+    },
+    orderBy: { createdAt: "desc" },
+    select: { organizationId: true },
+  });
 
-  return donation?.organization || null;
+  return donation?.organizationId || null;
 };
 
 const sendBloodRequestEmails = async ({
@@ -118,7 +113,10 @@ const sendBloodRequestEmails = async ({
   city,
   quantity,
 }) => {
-  const admins = await userModel.find({ role: "admin" }).select("email");
+  const admins = await prisma.user.findMany({
+    where: { role: "admin" },
+    select: { email: true },
+  });
   const recipients = [
     ...admins.map((admin) => admin?.email).filter(Boolean),
     targetUser?.email,
@@ -126,8 +124,13 @@ const sendBloodRequestEmails = async ({
 
   if (!recipients.length) return;
 
-  const receiverName = toDisplayName(receiver);
-  const targetName = toDisplayName(targetUser);
+  const receiverName = escapeHtml(toDisplayName(receiver));
+  const targetName = escapeHtml(toDisplayName(targetUser));
+  const receiverEmail = escapeHtml(receiver?.email || "");
+  const targetEmail = escapeHtml(targetUser?.email || "");
+  const safeBloodGroup = escapeHtml(bloodGroup);
+  const safeCity = escapeHtml(city || "-");
+  const safeQuantity = escapeHtml(String(quantity));
 
   await sendEmail({
     to: recipients.join(","),
@@ -138,12 +141,12 @@ const sendBloodRequestEmails = async ({
         <p>A receiver has submitted a blood request.</p>
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Receiver</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiverName}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Receiver Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiver?.email || ""}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Receiver Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiverEmail}</td></tr>
           <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Target</strong></td><td style="border:1px solid #ddd; padding:8px;">${targetName}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Target Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${targetUser?.email || ""}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${bloodGroup}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>City</strong></td><td style="border:1px solid #ddd; padding:8px;">${city || "-"}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Requested Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${quantity}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Target Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${targetEmail}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeBloodGroup}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>City</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeCity}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Requested Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeQuantity}</td></tr>
         </table>
       </div>
     `,
@@ -155,9 +158,18 @@ const sendAvailabilityRequestEmailToAdmins = async ({
   bloodGroup,
   quantity,
 }) => {
-  const admins = await userModel.find({ role: "admin" }).select("email");
+  const admins = await prisma.user.findMany({
+    where: { role: "admin" },
+    select: { email: true },
+  });
   const adminEmails = admins.map((admin) => admin?.email).filter(Boolean);
   if (!adminEmails.length) return;
+
+  const safeName = escapeHtml(toDisplayName(receiver));
+  const safeEmail = escapeHtml(receiver?.email || "");
+  const safeNukh = escapeHtml(receiver?.nukh || "-");
+  const safeBloodGroup = escapeHtml(bloodGroup);
+  const safeQuantity = escapeHtml(String(quantity));
 
   await sendEmail({
     to: adminEmails.join(","),
@@ -167,11 +179,11 @@ const sendAvailabilityRequestEmailToAdmins = async ({
         <h2>Receiver Availability Request</h2>
         <p>A receiver requested blood availability from admin.</p>
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Name</strong></td><td style="border:1px solid #ddd; padding:8px;">${toDisplayName(receiver)}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiver?.email || ""}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Nukh</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiver?.nukh || "-"}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${bloodGroup}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${quantity}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Name</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeName}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Email</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeEmail}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Nukh</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeNukh}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeBloodGroup}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeQuantity}</td></tr>
         </table>
       </div>
     `,
@@ -188,8 +200,12 @@ const sendRequestStatusEmailToReceiver = async ({
 }) => {
   if (!receiver?.email) return;
 
-  const targetName = toDisplayName(targetUser);
+  const targetName = escapeHtml(toDisplayName(targetUser));
+  const receiverName = escapeHtml(toDisplayName(receiver));
   const statusText = status === "accepted" ? "Accepted" : "Rejected";
+  const safeBloodGroup = escapeHtml(bloodGroup);
+  const safeQuantity = escapeHtml(String(quantity));
+  const safeCity = escapeHtml(city || "-");
 
   await sendEmail({
     to: receiver.email,
@@ -199,11 +215,11 @@ const sendRequestStatusEmailToReceiver = async ({
         <h2>Blood Request ${statusText}</h2>
         <p>Your blood request has been reviewed.</p>
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Receiver</strong></td><td style="border:1px solid #ddd; padding:8px;">${toDisplayName(receiver)}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Receiver</strong></td><td style="border:1px solid #ddd; padding:8px;">${receiverName}</td></tr>
           <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Handled By</strong></td><td style="border:1px solid #ddd; padding:8px;">${targetName}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${bloodGroup}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Requested Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${quantity}</td></tr>
-          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>City</strong></td><td style="border:1px solid #ddd; padding:8px;">${city || "-"}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Blood Group</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeBloodGroup}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Requested Quantity (ML)</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeQuantity}</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:8px;"><strong>City</strong></td><td style="border:1px solid #ddd; padding:8px;">${safeCity}</td></tr>
           <tr><td style="border:1px solid #ddd; padding:8px;"><strong>Status</strong></td><td style="border:1px solid #ddd; padding:8px;">${statusText}</td></tr>
         </table>
       </div>
@@ -217,7 +233,10 @@ const searchAvailabilityController = async (req, res) => {
 
     const minQuantity = Number(req.body.quantity || 0);
     const receiverId = req.body.userId;
-    const receiver = await userModel.findById(receiverId).select("role");
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverId },
+      select: { role: true },
+    });
 
     if (!receiver || receiver.role !== "receiver") {
       return res.status(403).send({
@@ -233,161 +252,165 @@ const searchAvailabilityController = async (req, res) => {
       });
     }
 
+    if (!isValidBloodGroup(bloodGroup)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid blood group",
+      });
+    }
+
     const cityRegex = buildCityRegex(city);
 
-    const donors = await InventoryModel.aggregate([
-      {
-        $match: {
-
+    const [donorInventory, organizationInventory] = await Promise.all([
+      prisma.inventory.findMany({
+        where: {
           bloodGroup,
-          donor: { $ne: null },
+          donorId: { not: null },
         },
-      },
-      {
-        $group: {
-          _id: "$donor",
-
-          totalIn: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
-            },
-          },
-          totalOut: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
-            },
-          },
+        select: {
+          donorId: true,
+          inventoryType: true,
+          quantity: true,
         },
-      },
-      {
-        $project: {
-          donorId: "$_id",
-          availableQuantity: { $subtract: ["$totalIn", "$totalOut"] },
+      }),
+      prisma.inventory.findMany({
+        where: {
+          bloodGroup,
+          organizationId: { not: null },
         },
-      },
-      ...(minQuantity > 0
-        ? [{ $match: { availableQuantity: { $gte: minQuantity } } }]
-        : [{ $match: { availableQuantity: { $gt: 0 } } }]),
-      {
-        $lookup: {
-          from: "users",
-          localField: "donorId",
-          foreignField: "_id",
-          as: "user",
+        select: {
+          organizationId: true,
+          inventoryType: true,
+          quantity: true,
         },
-      },
-      { $unwind: "$user" },
-      {
-        $match: {
-          "user.role": "donor",
-          "user.city": cityRegex,
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          userId: "$user._id",
-          name: "$user.name",
-          contact: "$user.phone",
-          email: "$user.email",
-          city: "$user.city",
-          availableQuantity: 1,
-          type: { $literal: "donor" },
-        },
-      },
-      { $sort: { name: 1 } },
+      }),
     ]);
 
-    const organizations = await InventoryModel.aggregate([
-      {
-        $match: {
-          inventoryType: { $in: ["in", "out"] },
-          bloodGroup,
-          organization: { $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: "$organization",
-          totalIn: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "in"] }, "$quantity", 0],
-            },
-          },
-          totalOut: {
-            $sum: {
-              $cond: [{ $eq: ["$inventoryType", "out"] }, "$quantity", 0],
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          organizationId: "$_id",
-          availableQuantity: { $subtract: ["$totalIn", "$totalOut"] },
-        },
-      },
+    const donorTotals = aggregateAvailabilityByField(donorInventory, "donorId");
+    const organizationTotals = aggregateAvailabilityByField(
+      organizationInventory,
+      "organizationId",
+    );
 
-      ...(minQuantity > 0
-        ? [{ $match: { availableQuantity: { $gte: minQuantity } } }]
-        : [{ $match: { availableQuantity: { $gt: 0 } } }]),
-      {
-        $lookup: {
-          from: "users",
-          localField: "organizationId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $match: {
-          "user.role": "organization",
-          "user.city": cityRegex,
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          userId: "$user._id",
-          organizationName: "$user.organizationName",
-          contact: "$user.phone",
-          email: "$user.email",
-          city: "$user.city",
-          availableQuantity: 1,
-          type: { $literal: "organization" },
-        },
-      },
-      { $sort: { organizationName: 1 } },
+    const meetsQuantity = (availableQuantity) =>
+      minQuantity > 0 ? availableQuantity >= minQuantity : availableQuantity > 0;
+
+    const donorCandidates = [...donorTotals.entries()]
+      .map(([donorId, { totalIn, totalOut }]) => ({
+        donorId,
+        availableQuantity: totalIn - totalOut,
+      }))
+      .filter(({ availableQuantity }) => meetsQuantity(availableQuantity));
+
+    const organizationCandidates = [...organizationTotals.entries()]
+      .map(([organizationId, { totalIn, totalOut }]) => ({
+        organizationId,
+        availableQuantity: totalIn - totalOut,
+      }))
+      .filter(({ availableQuantity }) => meetsQuantity(availableQuantity));
+
+    const [donorUsers, organizationUsers] = await Promise.all([
+      donorCandidates.length
+        ? prisma.user.findMany({
+            where: {
+              id: { in: donorCandidates.map((item) => item.donorId) },
+              role: "donor",
+            },
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              city: true,
+            },
+          })
+        : [],
+      organizationCandidates.length
+        ? prisma.user.findMany({
+            where: {
+              id: { in: organizationCandidates.map((item) => item.organizationId) },
+              role: "organization",
+            },
+            select: {
+              id: true,
+              organizationName: true,
+              phone: true,
+              email: true,
+              city: true,
+            },
+          })
+        : [],
     ]);
+
+    const donorAvailabilityMap = new Map(
+      donorCandidates.map((item) => [item.donorId, item.availableQuantity]),
+    );
+    const organizationAvailabilityMap = new Map(
+      organizationCandidates.map((item) => [
+        item.organizationId,
+        item.availableQuantity,
+      ]),
+    );
+
+    const donors = donorUsers
+      .filter((user) => cityRegex.test(user.city || ""))
+      .map((user) => ({
+        userId: user.id,
+        name: user.name,
+        contact: user.phone,
+        email: user.email,
+        city: user.city,
+        availableQuantity: donorAvailabilityMap.get(user.id) || 0,
+        type: "donor",
+      }))
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+
+    const organizations = organizationUsers
+      .filter((user) => cityRegex.test(user.city || ""))
+      .map((user) => ({
+        userId: user.id,
+        organizationName: user.organizationName,
+        contact: user.phone,
+        email: user.email,
+        city: user.city,
+        availableQuantity: organizationAvailabilityMap.get(user.id) || 0,
+        type: "organization",
+      }))
+      .sort((a, b) =>
+        String(a.organizationName || "").localeCompare(String(b.organizationName || "")),
+      );
 
     const targetIds = [
       ...donors.map((item) => item.userId),
       ...organizations.map((item) => item.userId),
     ];
 
-
     const requestDocs = targetIds.length
-      ? await ReceiverRequestModel.find({
-          receiver: receiverId,
-          requestType: "blood_request",
-          targetUser: { $in: targetIds },
-
-          bloodGroup,
-        }).select("targetUser status _id")
+      ? await prisma.receiverRequest.findMany({
+          where: {
+            receiverId,
+            requestType: "blood_request",
+            targetUserId: { in: targetIds },
+            bloodGroup,
+          },
+          select: {
+            id: true,
+            targetUserId: true,
+            status: true,
+          },
+        })
       : [];
 
     const requestMap = new Map(
       requestDocs.map((request) => [
-        String(request.targetUser),
-        { status: request.status, requestId: request._id },
+        String(request.targetUserId),
+        { status: request.status, requestId: request.id },
       ]),
     );
 
     return res.status(200).send({
       success: true,
       message: "Availability results fetched successfully",
-
       donors: donors
         .filter(
           (item) =>
@@ -417,7 +440,7 @@ const searchAvailabilityController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while searching availability",
+      message: "Error while searching availability",
     });
   }
 };
@@ -441,6 +464,14 @@ const sendBloodRequestController = async (req, res) => {
         message: "Invalid target type",
       });
     }
+
+    if (!isValidBloodGroup(bloodGroup)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid blood group",
+      });
+    }
+
     if (quantity <= 0) {
       return res.status(400).send({
         success: false,
@@ -448,7 +479,7 @@ const sendBloodRequestController = async (req, res) => {
       });
     }
 
-    const receiver = await userModel.findById(receiverId);
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
     if (!receiver || receiver.role !== "receiver") {
       return res.status(403).send({
         success: false,
@@ -456,14 +487,15 @@ const sendBloodRequestController = async (req, res) => {
       });
     }
 
-
-    const pendingCount = await ReceiverRequestModel.countDocuments({
-      receiver: receiverId,
-      requestType: "blood_request",
-      status: "pending",
+    const pendingCount = await prisma.receiverRequest.count({
+      where: {
+        receiverId,
+        requestType: "blood_request",
+        status: "pending",
+      },
     });
 
-    const targetUser = await userModel.findById(targetUserId);
+    const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
     if (!targetUser || targetUser.role !== targetType) {
       return res.status(404).send({
         success: false,
@@ -471,14 +503,15 @@ const sendBloodRequestController = async (req, res) => {
       });
     }
 
-    const duplicate = await ReceiverRequestModel.findOne({
-      receiver: receiverId,
-      requestType: "blood_request",
-      targetUser: targetUserId,
+    const duplicate = await prisma.receiverRequest.findFirst({
+      where: {
+        receiverId,
+        requestType: "blood_request",
+        targetUserId,
+      },
     });
 
     if (duplicate) {
-
       if (duplicate.status === "rejected") {
         if (pendingCount >= 2) {
           return res.status(409).send({
@@ -488,11 +521,15 @@ const sendBloodRequestController = async (req, res) => {
           });
         }
 
-        duplicate.status = "pending";
-        duplicate.bloodGroup = bloodGroup;
-        duplicate.city = city || "";
-        duplicate.quantity = quantity;
-        await duplicate.save();
+        const updatedRequest = await prisma.receiverRequest.update({
+          where: { id: duplicate.id },
+          data: {
+            status: "pending",
+            bloodGroup,
+            city: city || "",
+            quantity,
+          },
+        });
 
         await sendBloodRequestEmails({
           receiver,
@@ -505,7 +542,7 @@ const sendBloodRequestController = async (req, res) => {
         return res.status(200).send({
           success: true,
           message: "Request resent. Please wait for email confirmation.",
-          request: duplicate,
+          request: mapReceiverRequest(updatedRequest),
         });
       }
 
@@ -526,15 +563,17 @@ const sendBloodRequestController = async (req, res) => {
       });
     }
 
-    await ReceiverRequestModel.create({
-      requestType: "blood_request",
-      receiver: receiverId,
-      targetUser: targetUserId,
-      targetType,
-      bloodGroup,
-      city: city || "",
-      quantity,
-      status: "pending",
+    await prisma.receiverRequest.create({
+      data: {
+        requestType: "blood_request",
+        receiverId,
+        targetUserId,
+        targetType,
+        bloodGroup,
+        city: city || "",
+        quantity,
+        status: "pending",
+      },
     });
 
     await sendBloodRequestEmails({
@@ -550,7 +589,7 @@ const sendBloodRequestController = async (req, res) => {
       message: "Request sent. Please wait for email confirmation.",
     });
   } catch (error) {
-    if (error?.code === 11000) {
+    if (error?.code === "P2002") {
       return res.status(409).send({
         success: false,
         message: "Request already sent to this user",
@@ -560,7 +599,7 @@ const sendBloodRequestController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while sending blood request",
+      message: "Error while sending blood request",
     });
   }
 };
@@ -577,6 +616,14 @@ const requestAvailabilityController = async (req, res) => {
         message: "Blood group and quantity are required",
       });
     }
+
+    if (!isValidBloodGroup(bloodGroup)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid blood group",
+      });
+    }
+
     if (quantity <= 0) {
       return res.status(400).send({
         success: false,
@@ -584,7 +631,7 @@ const requestAvailabilityController = async (req, res) => {
       });
     }
 
-    const receiver = await userModel.findById(receiverId);
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
     if (!receiver || receiver.role !== "receiver") {
       return res.status(403).send({
         success: false,
@@ -592,15 +639,17 @@ const requestAvailabilityController = async (req, res) => {
       });
     }
 
-    await ReceiverRequestModel.create({
-      requestType: "availability_request",
-      receiver: receiverId,
-      targetUser: null,
-      targetType: "admin",
-      bloodGroup,
-      city: receiver.city || "",
-      quantity,
-      status: "pending",
+    await prisma.receiverRequest.create({
+      data: {
+        requestType: "availability_request",
+        receiverId,
+        targetUserId: null,
+        targetType: "admin",
+        bloodGroup,
+        city: receiver.city || "",
+        quantity,
+        status: "pending",
+      },
     });
 
     await sendAvailabilityRequestEmailToAdmins({
@@ -617,35 +666,41 @@ const requestAvailabilityController = async (req, res) => {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error while requesting availability",
+      message: "Error while requesting availability",
     });
   }
 };
 
 const getSentTargetsController = async (req, res) => {
   try {
-    const requests = await ReceiverRequestModel.find({
-      receiver: req.body.userId,
-      requestType: "blood_request",
-      targetUser: { $ne: null },
-    }).select("targetUser");
+    const requests = await prisma.receiverRequest.findMany({
+      where: {
+        receiverId: req.body.userId,
+        requestType: "blood_request",
+        targetUserId: { not: null },
+      },
+      select: { targetUserId: true },
+    });
 
     return res.status(200).send({
       success: true,
-      targetUserIds: requests.map((item) => String(item.targetUser)),
+      targetUserIds: requests.map((item) => String(item.targetUserId)),
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching sent request targets",
+      message: "Error fetching sent request targets",
     });
   }
 };
 
 const getIncomingRequestsController = async (req, res) => {
   try {
-    const currentUser = await userModel.findById(req.body.userId).select("role");
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.body.userId },
+      select: { role: true },
+    });
     if (!currentUser || !["donor", "organization"].includes(currentUser.role)) {
       return res.status(403).send({
         success: false,
@@ -653,23 +708,29 @@ const getIncomingRequestsController = async (req, res) => {
       });
     }
 
-    const requests = await ReceiverRequestModel.find({
-      requestType: "blood_request",
-      targetUser: req.body.userId,
-    })
-      .populate("receiver", "name email phone")
-      .sort({ createdAt: -1 });
+    const requests = await prisma.receiverRequest.findMany({
+      where: {
+        requestType: "blood_request",
+        targetUserId: req.body.userId,
+      },
+      include: {
+        receiver: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).send({
       success: true,
       message: "Incoming blood requests fetched successfully",
-      requests,
+      requests: requests.map(mapReceiverRequest),
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching incoming blood requests",
+      message: "Error fetching incoming blood requests",
     });
   }
 };
@@ -687,7 +748,7 @@ const updateIncomingRequestStatusController = async (req, res) => {
       });
     }
 
-    const currentUser = await userModel.findById(userId);
+    const currentUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!currentUser || !["donor", "organization"].includes(currentUser.role)) {
       return res.status(403).send({
         success: false,
@@ -695,11 +756,18 @@ const updateIncomingRequestStatusController = async (req, res) => {
       });
     }
 
-    const request = await ReceiverRequestModel.findOne({
-      _id: requestId,
-      requestType: "blood_request",
-      targetUser: userId,
-    }).populate("receiver", "name email phone");
+    const request = await prisma.receiverRequest.findFirst({
+      where: {
+        id: requestId,
+        requestType: "blood_request",
+        targetUserId: userId,
+      },
+      include: {
+        receiver: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
+      },
+    });
 
     if (!request) {
       return res.status(404).send({
@@ -715,7 +783,6 @@ const updateIncomingRequestStatusController = async (req, res) => {
       });
     }
 
-
     if (action === "accept") {
       const requestedQuantity = Number(request.quantity);
       if (!requestedQuantity || requestedQuantity <= 0) {
@@ -727,7 +794,7 @@ const updateIncomingRequestStatusController = async (req, res) => {
 
       if (request.targetType === "organization") {
         const available = await getOrganizationAvailableQuantity({
-          organizationId: currentUser._id,
+          organizationId: currentUser.id,
           bloodGroup: request.bloodGroup,
         });
 
@@ -738,17 +805,19 @@ const updateIncomingRequestStatusController = async (req, res) => {
           });
         }
 
-        await InventoryModel.create({
-          inventoryType: "out",
-          bloodGroup: request.bloodGroup,
-          quantity: requestedQuantity,
-          email: request?.receiver?.email || "",
-          organization: currentUser._id,
-          hospital: request.receiver._id,
+        await prisma.inventory.create({
+          data: {
+            inventoryType: "out",
+            bloodGroup: request.bloodGroup,
+            quantity: requestedQuantity,
+            email: request.receiver?.email || "",
+            organizationId: currentUser.id,
+            hospitalId: request.receiverId,
+          },
         });
       } else if (request.targetType === "donor") {
         const available = await getDonorAvailableQuantity({
-          donorId: currentUser._id,
+          donorId: currentUser.id,
           bloodGroup: request.bloodGroup,
         });
 
@@ -760,7 +829,7 @@ const updateIncomingRequestStatusController = async (req, res) => {
         }
 
         const organizationId = await findDonorOrganizationForOut({
-          donorId: currentUser._id,
+          donorId: currentUser.id,
           bloodGroup: request.bloodGroup,
         });
 
@@ -771,28 +840,36 @@ const updateIncomingRequestStatusController = async (req, res) => {
           });
         }
 
-        await InventoryModel.create({
-          inventoryType: "out",
-          bloodGroup: request.bloodGroup,
-          quantity: requestedQuantity,
-          email: request?.receiver?.email || "",
-          organization: organizationId,
-          hospital: request.receiver._id,
-          donor: currentUser._id,
+        await prisma.inventory.create({
+          data: {
+            inventoryType: "out",
+            bloodGroup: request.bloodGroup,
+            quantity: requestedQuantity,
+            email: request.receiver?.email || "",
+            organizationId,
+            hospitalId: request.receiverId,
+            donorId: currentUser.id,
+          },
         });
       }
-
-      request.status = "accepted";
-      await request.save();
-    } else {
-      request.status = "rejected";
-      await request.save();
     }
+
+    const updatedRequest = await prisma.receiverRequest.update({
+      where: { id: request.id },
+      data: {
+        status: action === "accept" ? "accepted" : "rejected",
+      },
+      include: {
+        receiver: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
+      },
+    });
 
     await sendRequestStatusEmailToReceiver({
       receiver: request.receiver,
       targetUser: currentUser,
-      status: request.status,
+      status: updatedRequest.status,
       bloodGroup: request.bloodGroup,
       quantity: request.quantity,
       city: request.city,
@@ -801,24 +878,26 @@ const updateIncomingRequestStatusController = async (req, res) => {
     return res.status(200).send({
       success: true,
       message:
-        request.status === "accepted"
+        updatedRequest.status === "accepted"
           ? "Request accepted successfully"
           : "Request rejected successfully",
-      request,
+      request: mapReceiverRequest(updatedRequest),
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error updating request status",
+      message: "Error updating request status",
     });
   }
 };
 
-
 const getReceiverRequestsController = async (req, res) => {
   try {
-    const currentUser = await userModel.findById(req.body.userId).select("role");
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.body.userId },
+      select: { role: true },
+    });
     if (!currentUser || currentUser.role !== "receiver") {
       return res.status(403).send({
         success: false,
@@ -835,27 +914,41 @@ const getReceiverRequestsController = async (req, res) => {
       });
     }
 
-    const query = {
-      receiver: req.body.userId,
+    const where = {
+      receiverId: req.body.userId,
       requestType: "blood_request",
     };
     if (status !== "all") {
-      query.status = status;
+      where.status = status;
     }
 
-    const requests = await ReceiverRequestModel.find(query)
-      .populate("targetUser", "name organizationName email phone role city")
-      .sort({ createdAt: -1 });
+    const requests = await prisma.receiverRequest.findMany({
+      where,
+      include: {
+        targetUser: {
+          select: {
+            id: true,
+            name: true,
+            organizationName: true,
+            email: true,
+            phone: true,
+            role: true,
+            city: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).send({
       success: true,
-      requests,
+      requests: requests.map(mapReceiverRequest),
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error fetching receiver requests",
+      message: "Error fetching receiver requests",
     });
   }
 };
@@ -867,6 +960,5 @@ module.exports = {
   getSentTargetsController,
   getIncomingRequestsController,
   updateIncomingRequestStatusController,
-
   getReceiverRequestsController,
 };

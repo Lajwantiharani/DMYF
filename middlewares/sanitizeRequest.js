@@ -4,7 +4,6 @@ const sanitizeValue = (value) => {
 
   const sanitized = {};
   for (const [key, item] of Object.entries(value)) {
-    // Prevent Mongo operator injection like {$gt: ""} or dotted keys.
     if (typeof key === "string" && (key.startsWith("$") || key.includes("."))) {
       continue;
     }
@@ -19,4 +18,3 @@ module.exports = () => (req, _res, next) => {
   if (req.params) req.params = sanitizeValue(req.params);
   next();
 };
-
