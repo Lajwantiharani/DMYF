@@ -537,58 +537,83 @@ const updateProfileVerificationStatusController = async (req, res) => {
 
     if (action === "verify") {
       const displayName = escapeHtml(user.name || user.organizationName || "User");
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: "Profile Verification Approved - DMYF",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #b4232b; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+      const admins = await prisma.user.findMany({
+        where: { role: "admin" },
+        select: { email: true },
+      });
+      const adminEmails = admins.map((admin) => admin?.email).filter(Boolean);
+
+      if (adminEmails.length) {
+        try {
+          await sendEmail({
+            to: adminEmails.join(","),
+            subject: "Profile Verification Approved - DMYF",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+                </div>
+                <div style="padding: 30px; color: #333; line-height: 1.6;">
+                  <h2 style="color: #2c3e50; margin-top: 0;">Profile Verified Successfully</h2>
+                  <p>The following user profile has been verified:</p>
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Name</strong></td><td style="padding: 8px; border: 1px solid #eee;">${displayName}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.email}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Role</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.role}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.id}</td></tr>
+                  </table>
+                  <p style="margin-top: 16px;">This user can now access all features in their account.</p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                  <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                    &copy; ${new Date().getFullYear()} DMYF Blood Bank.
+                  </p>
+                </div>
               </div>
-              <div style="padding: 30px; color: #333; line-height: 1.6;">
-                <h2 style="color: #2c3e50; margin-top: 0;">Profile Verified Successfully</h2>
-                <p>Hello <strong>${displayName}</strong>,</p>
-                <p>Your profile has been verified by the admin.</p>
-                <p>You can now access the features in your account.</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
-                <p style="font-size: 12px; color: #777; margin-bottom: 0;">
-                  &copy; ${new Date().getFullYear()} DMYF Blood Bank.
-                </p>
-              </div>
-            </div>
-          `,
-        });
-      } catch (emailError) {
-        console.log("Verification approval email failed:", emailError);
+            `,
+          });
+        } catch (emailError) {
+          console.log("Verification approval email failed:", emailError);
+        }
       }
     } else {
       const displayName = escapeHtml(user.name || user.organizationName || "User");
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: "Profile Verification Rejected - DMYF",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #b4232b; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+      const admins = await prisma.user.findMany({
+        where: { role: "admin" },
+        select: { email: true },
+      });
+      const adminEmails = admins.map((admin) => admin?.email).filter(Boolean);
+
+      if (adminEmails.length) {
+        try {
+          await sendEmail({
+            to: adminEmails.join(","),
+            subject: "Profile Verification Rejected - DMYF",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #b4232b; padding: 20px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">DMYF</h1>
+                </div>
+                <div style="padding: 30px; color: #333; line-height: 1.6;">
+                  <h2 style="color: #dc3545; margin-top: 0;">Profile Verification Rejected</h2>
+                  <p>The following user profile verification has been rejected:</p>
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Name</strong></td><td style="padding: 8px; border: 1px solid #eee;">${displayName}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.email}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>Role</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.role}</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #eee;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #eee;">${user.id}</td></tr>
+                  </table>
+                  <p style="margin-top: 16px;">The user's profile is currently locked. Please contact the user if needed.</p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+                  <p style="font-size: 12px; color: #777; margin-bottom: 0;">
+                    &copy; ${new Date().getFullYear()} DMYF Blood Bank.
+                  </p>
+                </div>
               </div>
-              <div style="padding: 30px; color: #333; line-height: 1.6;">
-                <h2 style="color: #dc3545; margin-top: 0;">Profile Verification Rejected</h2>
-                <p>Hello <strong>${displayName}</strong>,</p>
-                <p>Your profile verification request has been rejected.</p>
-                <p>Your profile is currently locked. Please contact the admin for more information about the reason for rejection.</p>
-                <p>You may update your profile and resubmit for verification after consulting with the admin.</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
-                <p style="font-size: 12px; color: #777; margin-bottom: 0;">
-                  &copy; ${new Date().getFullYear()} DMYF Blood Bank.
-                </p>
-              </div>
-            </div>
-          `,
-        });
-      } catch (emailError) {
-        console.log("Verification rejection email failed:", emailError);
+            `,
+          });
+        } catch (emailError) {
+          console.log("Verification rejection email failed:", emailError);
+        }
       }
     }
 

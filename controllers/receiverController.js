@@ -117,12 +117,9 @@ const sendBloodRequestEmails = async ({
     where: { role: "admin" },
     select: { email: true },
   });
-  const recipients = [
-    ...admins.map((admin) => admin?.email).filter(Boolean),
-    targetUser?.email,
-  ].filter(Boolean);
+  const adminEmails = admins.map((admin) => admin?.email).filter(Boolean);
 
-  if (!recipients.length) return;
+  if (!adminEmails.length) return;
 
   const receiverName = escapeHtml(toDisplayName(receiver));
   const targetName = escapeHtml(toDisplayName(targetUser));
@@ -133,7 +130,7 @@ const sendBloodRequestEmails = async ({
   const safeQuantity = escapeHtml(String(quantity));
 
   await sendEmail({
-    to: recipients.join(","),
+    to: adminEmails.join(","),
     subject: "New Blood Request - DMYF",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
