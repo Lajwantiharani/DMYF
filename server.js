@@ -12,15 +12,27 @@ const apiLogger = require("./middlewares/apiLogger");
 
 dotenv.config();
 
-// Fail fast if critical secrets are missing or weak.
+const isVercel = Boolean(process.env.VERCEL);
+
+const requiredEnvErrors = [];
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
-  console.error("FATAL: JWT_SECRET is missing or too short (min 16 chars). Set a strong secret in .env".red);
-  process.exit(1);
+  requiredEnvErrors.push("JWT_SECRET is missing or too short (min 16 chars)");
 }
 
 if (!process.env.DATABASE_URL) {
-  console.error("FATAL: DATABASE_URL is missing. Set it in .env".red);
-  process.exit(1);
+  requiredEnvErrors.push("DATABASE_URL is missing");
+}
+
+// In a normal Node server, fail fast. In Vercel serverless, do not exit during
+// module loading because that crashes every route, including the React app.
+if (requiredEnvErrors.length > 0) {
+  const message = `FATAL: ${requiredEnvErrors.join("; ")}. Set these in your environment variables.`;
+  if (isVercel) {
+    console.error(message);
+  } else {
+    console.error(message.red);
+    process.exit(1);
+  }
 }
 
 const app = express();
@@ -89,9 +101,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8080;
 
-app.listen(PORT, () => {
-  console.log(
-    `Node Server Running in ${process.env.DEV_MODE || process.env.NODE_ENV || "development"} mode on port ${PORT}`
-      .bgBlue.white,
-  );
-});
+if (!isVercel) {
+  app.listen(PORT, () => {
+    console.log(
+      `Node Server Running in ${process.env.DEV_MODE || process.env.NODE_ENV || "development"} mode on port ${PORT}`
+        .bgBlue.white,
+    );
+  });
+}
+
+module.exports = app;
