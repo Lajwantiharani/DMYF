@@ -78,7 +78,7 @@ app.use("/api", (req, res) => {
 });
 
 const clientBuildPath = path.join(__dirname, "client", "build");
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" && !isVercel) {
   app.use(express.static(clientBuildPath));
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api/")) return next();
