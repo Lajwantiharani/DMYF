@@ -74,19 +74,10 @@ Backend runs on:
 http://localhost:8080
 ```
 
-## Create Default Admin
 
-After `npm run db:setup`, create or update an admin account:
-
-```bash
-npm run seed:admin -- admin@dmyf.com Admin123 Admin
 ```
 
-Default local admin used during setup:
 
-```text
-Email: admin@dmyf.com
-Password: Admin123
 ```
 
 Change this password before using the app publicly.
